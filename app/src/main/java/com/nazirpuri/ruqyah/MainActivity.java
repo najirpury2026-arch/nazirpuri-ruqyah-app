@@ -76,10 +76,14 @@ public class MainActivity extends Activity {
                 while ((length = input.read(data)) != -1) output.write(data, 0, length);
                 input.close();
                 JSONObject release = new JSONObject(output.toString("UTF-8"));
-                String body = release.optString("body", "");
-                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("versionCode\\s*[:=]\\s*(\\d+)").matcher(body);
+                org.json.JSONArray assets = release.optJSONArray("assets");
+                if (assets == null || assets.length() == 0) return;
+                JSONObject apkAsset = assets.getJSONObject(0);
+                String assetName = apkAsset.optString("name", "");
+                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("nazirpuri-(\\d+)\\.apk").matcher(assetName);
                 if (!matcher.find()) return;
                 int latestVersion = Integer.parseInt(matcher.group(1));
+                String downloadUrl = apkAsset.optString("browser_download_url", "");
                 int installedVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
                 if (latestVersion > installedVersion) {
                     mainHandler.post(() -> {
@@ -88,7 +92,7 @@ public class MainActivity extends Activity {
                             .setTitle("নতুন আপডেট available")
                             .setMessage("নাজিরপুরী রুকইয়া ও দাওয়াখানা অ্যাপের নতুন সংস্করণ পাওয়া গেছে। আপডেট করলে নতুন সুবিধাগুলো পাবেন।")
                             .setPositiveButton("আপডেট ডাউনলোড", (dialog, which) -> {
-                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/najirpury2026-arch/nazirpuri-ruqyah-app/releases/download/latest-apk/app-debug.apk"));
+                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl));
                                 try { startActivity(intent); } catch (Exception ignored) { }
                             })
                             .setNegativeButton("পরে", null)
