@@ -552,4 +552,30 @@
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){if(root.classList.contains('nq-open'))showIndex()});
  if(root.classList.contains('nq-open'))showIndex();
 })();
-</script><script>window.openNazQuran=function(){var r=document.getElementById('naz-own-quran');if(r){r.classList.add('nq-open');r.setAttribute('aria-hidden','false');}if(window.nqShowHome)window.nqShowHome();};window.closeNazQuran=function(){if(window.AndroidQuran&&window.AndroidQuran.close){window.AndroidQuran.close();}};window.openNazQuran();</script></body></html>
+</script><script>window.openNazQuran=function(){var r=document.getElementById('naz-own-quran');if(r){r.classList.add('nq-open');r.setAttribute('aria-hidden','false');}if(window.nqShowHome)window.nqShowHome();};window.closeNazQuran=function(){if(window.AndroidQuran&&window.AndroidQuran.close){window.AndroidQuran.close();}};window.openNazQuran();</script><style>#nq-print-toggle{display:none;margin:10px auto;padding:10px 18px;border:0;border-radius:22px;background:#176344;color:#fff;font:600 15px SolaimanLipi,sans-serif}#nq-print-toggle:focus{outline:2px solid #d4ad52}</style>
+<script>
+(function(){
+ var content=document.getElementById('nq-reader-content'),reader=document.getElementById('nq-reader');
+ if(!content||!reader)return;
+ var btn=document.createElement('button');btn.id='nq-print-toggle';btn.type='button';btn.textContent='শুধু তেলাওয়াত';
+ reader.insertBefore(btn,content);
+ var original='',showingPrint=false;
+ btn.addEventListener('click',function(){
+   if(!showingPrint){
+     original=content.innerHTML;
+     content.innerHTML='<div style="width:100%;height:calc(100vh - 150px);min-height:650px;background:#fff"><iframe title="নূরানী হাফেজী কুরআন শরীফ এমদাদিয়া লাইব্রেরী" src="https://drive.google.com/file/d/1nT0VuIJVOaAuFCmYOGy3htSuWePAwLvI/preview" style="width:100%;height:100%;border:0"></iframe></div>';
+     btn.textContent='অনুবাদসহ পড়ুন';showingPrint=true;
+   }else{
+     content.innerHTML=original;btn.textContent='শুধু তেলাওয়াত';showingPrint=false;
+   }
+ });
+ var observer=new MutationObserver(function(){
+   var hasSurah=!!content.querySelector('.nq-surah-title');
+   btn.style.display=hasSurah?'block':'none';
+   if(!hasSurah&&showingPrint){showingPrint=false;original='';btn.textContent='শুধু তেলাওয়াত';}
+ });
+ observer.observe(content,{childList:true,subtree:true});
+ var home=document.getElementById('nq-home');
+ if(home){new MutationObserver(function(){if(!reader.hidden&&content.querySelector('.nq-surah-title'))btn.style.display='block';else btn.style.display='none';}).observe(reader,{attributes:true,attributeFilter:['hidden']});}
+})();
+</script></body></html>
