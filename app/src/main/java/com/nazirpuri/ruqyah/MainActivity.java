@@ -95,13 +95,14 @@ public class MainActivity extends Activity {
                 if (latestVersion < 0 || downloadUrl.isEmpty()) return;
                 int installedVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
                 if (latestVersion > installedVersion) {
+                    final String apkDownloadUrl = downloadUrl;
                     mainHandler.post(() -> {
                         if (isFinishing() || isDestroyed()) return;
                         new android.app.AlertDialog.Builder(this)
                             .setTitle("নতুন আপডেট আবশ্যক")
                             .setMessage("নাজিরপুরী রুকইয়া ও দাওয়াখানা অ্যাপের নতুন সংস্করণ প্রকাশিত হয়েছে। অ্যাপ ব্যবহার চালিয়ে যেতে অনুগ্রহ করে আপডেট ইনস্টল করুন।")
                             .setPositiveButton("আপডেট ডাউনলোড", (dialog, which) -> {
-                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl));
+                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(apkDownloadUrl));
                                 try { startActivity(intent); } catch (Exception ignored) { }
                             })
                             .setCancelable(false)
