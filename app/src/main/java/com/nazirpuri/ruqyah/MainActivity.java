@@ -31,8 +31,8 @@ public class MainActivity extends Activity {
     private ProgressBar progressBar;
     private LinearLayout root;
     private boolean showingWeb = false;
-    private final String[] titles = {"কুরআন","হাদীস","নামাযের সময়","তিলাওয়াত","কিতাব","প্রবন্ধ","কুরআন শিক্ষা","দু'আ","ওয়েবসাইট"};
-    private final String[] icons = {"📖","📚","🕌","🎧","📘","📝","🌙","🤲","🌐"};
+    private final String[] titles = {"কুরআন","হাদীস","নামাযের সময়","তিলাওয়াত","কিতাব","কুরআন শিক্ষা","দু'আ","কিবলা","তাসবীহ্","মসজিদ খুঁজুন","ইসলামিক নাম","ক্যালেন্ডার","গুরুত্বপূর্ণ দিন","অন্যান্য","ওয়েবসাইট"};
+    private final String[] icons = {"📖","📚","🕌","🎧","📘","🌙","🤲","🧭","📿","🕌","👶","🗓️","🌙","☪️","🌐"};
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -121,7 +121,7 @@ public class MainActivity extends Activity {
     }
 
     private void openSection(int index) {
-        String url=index==8?HOME_URL:HOME_URL+"search?q="+Uri.encode(titles[index]);
+        String url=index==14?HOME_URL:HOME_URL+"search?q="+Uri.encode(titles[index]);
         showWeb(url);
     }
 
