@@ -142,8 +142,46 @@ public class MainActivity extends Activity {
             showWeb(HOME_URL);
             return;
         }
+        if (index == 18) {
+            showServicesPlaceholder();
+            return;
+        }
         String url=index==19?HOME_URL:HOME_URL+"search?q="+Uri.encode(titles[index]);
         showWeb(url);
+    }
+
+
+    private void showServicesPlaceholder() {
+        showingWeb = false;
+        root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(Color.rgb(246,249,246));
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setPadding(dp(14), dp(8), dp(14), dp(8));
+        bar.setBackgroundColor(Color.rgb(12,73,52));
+        TextView back = text("‹  বিভাগসমূহ", 16, Color.WHITE, true);
+        back.setOnClickListener(v -> showHome());
+        bar.addView(back);
+        root.addView(bar);
+
+        LinearLayout page = new LinearLayout(this);
+        page.setOrientation(LinearLayout.VERTICAL);
+        page.setGravity(Gravity.CENTER_HORIZONTAL);
+        page.setPadding(dp(20), dp(30), dp(20), dp(24));
+        TextView title = text("আমাদের রুকইয়া সেবা", 23, Color.rgb(12,73,52), true);
+        page.addView(title);
+        TextView intro = text("কুরআন ও সুন্নাহভিত্তিক শরিয়তসম্মত রুকইয়া সেবা", 16, Color.rgb(49,73,57), true);
+        LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(-1, -2);
+        ip.topMargin = dp(14);
+        page.addView(intro, ip);
+        TextView note = text("রুকইয়া সেবা বিভাগের বিস্তারিত লেখা ও সেবার বিবরণ পরবর্তী আপডেটে যুক্ত করা হবে।", 15, Color.rgb(80,90,82), false);
+        LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(-1, -2);
+        np.topMargin = dp(24);
+        page.addView(note, np);
+        root.addView(page, new LinearLayout.LayoutParams(-1, 0, 1));
+        setContentView(root);
     }
 
     private void showSettings() {
