@@ -77,7 +77,7 @@ public class MainActivity extends Activity {
                 input.close();
                 JSONObject release = new JSONObject(output.toString("UTF-8"));
                 String body = release.optString("body", "");
-                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("versionCode\\\\s*[:=]\\\\s*(\\\\d+)").matcher(body);
+                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("versionCode\\s*[:=]\\s*(\\d+)").matcher(body);
                 if (!matcher.find()) return;
                 int latestVersion = Integer.parseInt(matcher.group(1));
                 int installedVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
