@@ -89,13 +89,13 @@ public class MainActivity extends Activity {
                     mainHandler.post(() -> {
                         if (isFinishing() || isDestroyed()) return;
                         new android.app.AlertDialog.Builder(this)
-                            .setTitle("নতুন আপডেট available")
-                            .setMessage("নাজিরপুরী রুকইয়া ও দাওয়াখানা অ্যাপের নতুন সংস্করণ পাওয়া গেছে। আপডেট করলে নতুন সুবিধাগুলো পাবেন।")
+                            .setTitle("নতুন আপডেট আবশ্যক")
+                            .setMessage("নাজিরপুরী রুকইয়া ও দাওয়াখানা অ্যাপের নতুন সংস্করণ প্রকাশিত হয়েছে। অ্যাপ ব্যবহার চালিয়ে যেতে অনুগ্রহ করে আপডেট ইনস্টল করুন।")
                             .setPositiveButton("আপডেট ডাউনলোড", (dialog, which) -> {
                                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl));
                                 try { startActivity(intent); } catch (Exception ignored) { }
                             })
-                            .setNegativeButton("পরে", null)
+                            .setCancelable(false)
                             .show();
                     });
                 }
