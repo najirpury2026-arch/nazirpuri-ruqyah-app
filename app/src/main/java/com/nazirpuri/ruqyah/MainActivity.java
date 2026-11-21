@@ -7,6 +7,9 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
+import android.util.Base64;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -21,6 +24,8 @@ import android.widget.TextView;
 public class MainActivity extends Activity {
     private static final String HOME_URL = "https://nazirpuriruqyah.blogspot.com/";
     private WebView webView;
+    private Typeface banglaTypeface;
+    private String fontBase64 = "";
     private ProgressBar progressBar;
     private LinearLayout root;
     private boolean showingWeb = false;
@@ -31,6 +36,15 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(Color.rgb(12,73,52));
         getWindow().setNavigationBarColor(Color.rgb(8,49,36));
+        try {
+            banglaTypeface = Typeface.createFromAsset(getAssets(), "SolaimanLipi.ttf");
+            InputStream in = getAssets().open("SolaimanLipi.ttf");
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192]; int count;
+            while ((count = in.read(buffer)) != -1) out.write(buffer, 0, count);
+            in.close();
+            fontBase64 = Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
+        } catch (Exception ignored) { }
         showHome();
     }
 
@@ -93,7 +107,17 @@ public class MainActivity extends Activity {
         webView=new WebView(this); WebSettings s=webView.getSettings();
         s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setLoadsImagesAutomatically(true);
         s.setSupportZoom(true); s.setBuiltInZoomControls(true); s.setDisplayZoomControls(false);
-        webView.setWebViewClient(new WebViewClient());
+        webView.getSettings().setAllowFileAccess(true);
+        webView.setWebViewClient(new WebViewClient(){
+            @Override public void onPageFinished(WebView view, String pageUrl){
+                super.onPageFinished(view, pageUrl);
+                if (!fontBase64.isEmpty()) {
+                    String css = "@font-face{font-family:SolaimanLipi;src:url(data:font/ttf;base64," + fontBase64 + ") format('truetype');font-weight:100 900;}*{font-family:SolaimanLipi,sans-serif !important;}";
+                    String js = "(function(){var st=document.createElement('style');st.type='text/css';st.appendChild(document.createTextNode('" + css + "'));document.head.appendChild(st);})();";
+                    view.evaluateJavascript(js, null);
+                }
+            }
+        });
         webView.setWebChromeClient(new WebChromeClient(){
             @Override public void onProgressChanged(WebView v,int p){
                 progressBar.setProgress(p); progressBar.setVisibility(p>=100?View.GONE:View.VISIBLE);
@@ -105,7 +129,10 @@ public class MainActivity extends Activity {
 
     private TextView text(String value,int size,int color,boolean bold){
         TextView v=new TextView(this); v.setText(value); v.setTextSize(size); v.setTextColor(color);
-        if(bold)v.setTypeface(Typeface.DEFAULT,Typeface.BOLD); v.setGravity(Gravity.CENTER); return v;
+        boolean hasBangla = value.codePoints().anyMatch(c -> c >= 0x0980 && c <= 0x09FF);
+        if (hasBangla && banglaTypeface != null) v.setTypeface(Typeface.create(banglaTypeface, bold ? Typeface.BOLD : Typeface.NORMAL));
+        else if(bold) v.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        v.setGravity(Gravity.CENTER); return v;
     }
     private int dp(int n){return (int)(n*getResources().getDisplayMetrics().density+0.5f);}
     @Override public void onBackPressed(){
