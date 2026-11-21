@@ -13,6 +13,9 @@ import android.view.Gravity;
 import android.util.Base64;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import org.json.JSONObject;
 import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -52,6 +55,52 @@ public class MainActivity extends Activity {
             fontBase64 = Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
         } catch (Exception ignored) { }
         showHome();
+        checkForAppUpdate();
+    }
+
+    private void checkForAppUpdate() {
+        new Thread(() -> {
+            HttpURLConnection connection = null;
+            try {
+                URL url = new URL("https://api.github.com/repos/najirpury2026-arch/nazirpuri-ruqyah-app/releases/tags/latest-apk");
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setConnectTimeout(8000);
+                connection.setReadTimeout(8000);
+                connection.setRequestProperty("Accept", "application/vnd.github+json");
+                int status = connection.getResponseCode();
+                if (status != 200) return;
+                InputStream input = connection.getInputStream();
+                ByteArrayOutputStream output = new ByteArrayOutputStream();
+                byte[] data = new byte[4096]; int length;
+                while ((length = input.read(data)) != -1) output.write(data, 0, length);
+                input.close();
+                JSONObject release = new JSONObject(output.toString("UTF-8"));
+                String body = release.optString("body", "");
+                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("versionCode\\\\s*[:=]\\\\s*(\\\\d+)").matcher(body);
+                if (!matcher.find()) return;
+                int latestVersion = Integer.parseInt(matcher.group(1));
+                int installedVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+                if (latestVersion > installedVersion) {
+                    mainHandler.post(() -> {
+                        if (isFinishing() || isDestroyed()) return;
+                        new android.app.AlertDialog.Builder(this)
+                            .setTitle("নতুন আপডেট available")
+                            .setMessage("নাজিরপুরী রুকইয়া ও দাওয়াখানা অ্যাপের নতুন সংস্করণ পাওয়া গেছে। আপডেট করলে নতুন সুবিধাগুলো পাবেন।")
+                            .setPositiveButton("আপডেট ডাউনলোড", (dialog, which) -> {
+                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/najirpury2026-arch/nazirpuri-ruqyah-app/releases/download/latest-apk/app-debug.apk"));
+                                try { startActivity(intent); } catch (Exception ignored) { }
+                            })
+                            .setNegativeButton("পরে", null)
+                            .show();
+                    });
+                }
+            } catch (Exception ignored) {
+                // Keep the app usable when the network or update service is unavailable.
+            } finally {
+                if (connection != null) connection.disconnect();
+            }
+        }).start();
     }
 
     private void showHome() {
