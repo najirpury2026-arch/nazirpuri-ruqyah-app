@@ -31,6 +31,7 @@ public class MainActivity extends Activity {
     private ProgressBar progressBar;
     private LinearLayout root;
     private boolean showingWeb = false;
+    private boolean openQuranWhenLoaded = false;
     private final String[] titles = {"কুরআন","হাদীস","নামাযের সময়","তিলাওয়াত","কিতাব","কুরআন শিক্ষা","দু'আ","কিবলা","তাসবীহ্","মসজিদ খুঁজুন","ইসলামিক নাম","ক্যালেন্ডার","গুরুত্বপূর্ণ দিন","অন্যান্য","ওয়েবসাইট"};
     private final String[] icons = {"📖","📚","🕌","🎧","📘","🌙","🤲","🧭","📿","🕌","👶","🗓️","🌙","☪️","🌐"};
 
@@ -121,6 +122,12 @@ public class MainActivity extends Activity {
     }
 
     private void openSection(int index) {
+        if (index == 0) {
+            // Open the website's own embedded Quran reader inside this app's WebView.
+            openQuranWhenLoaded = true;
+            showWeb(HOME_URL);
+            return;
+        }
         String url=index==14?HOME_URL:HOME_URL+"search?q="+Uri.encode(titles[index]);
         showWeb(url);
     }
@@ -148,6 +155,11 @@ public class MainActivity extends Activity {
                     String css = "@font-face{font-family:SolaimanLipi;src:url(data:font/ttf;base64," + fontBase64 + ") format('truetype');font-weight:100 900;}html,body,body *:not(i):not([class*='icon']){font-family:SolaimanLipi,sans-serif !important;}";
                     String js = "(function(){var st=document.getElementById('nazirpuri-solaiman-font');if(!st){st=document.createElement('style');st.id='nazirpuri-solaiman-font';document.head.appendChild(st);}st.textContent='" + css + "';})();";
                     view.evaluateJavascript(js, null);
+                }
+                if (openQuranWhenLoaded) {
+                    openQuranWhenLoaded = false;
+                    // The Blogger theme exposes this function for its own Quran reader.
+                    view.evaluateJavascript("(function(){if(typeof window.openNazQuran==='function'){window.openNazQuran();}else{var a=document.querySelector('a[data-open-own-quran=\\\"true\\\"]');if(a)a.click();}})();", null);
                 }
             }
         });
