@@ -159,7 +159,7 @@ public class MainActivity extends Activity {
                 if (openQuranWhenLoaded) {
                     openQuranWhenLoaded = false;
                     // The Blogger theme exposes this function for its own Quran reader.
-                    view.evaluateJavascript("(function(){if(typeof window.openNazQuran==='function'){window.openNazQuran();}else{var a=document.querySelector('a[data-open-own-quran=\\\"true\\\"]');if(a)a.click();}})();", null);
+                                        view.evaluateJavascript("(function(){var n=0;function openOwnQuran(){if(typeof window.openNazQuran==='function'){window.openNazQuran();return;}if(n++<30){setTimeout(openOwnQuran,500);}}openOwnQuran();})();", null);
                 }
             }
         });
