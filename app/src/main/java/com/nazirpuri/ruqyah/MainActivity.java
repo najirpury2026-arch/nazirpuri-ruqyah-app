@@ -38,7 +38,7 @@ public class MainActivity extends Activity {
     private boolean showingWeb = false;
     private boolean openQuranWhenLoaded = false;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private final String[] titles = {"কুরআন","তাফসীর","হাদীস","নামাযের সময়","তিলাওয়াত","অডিও তেলাওয়াত","অনুবাদসহ তেলাওয়াত","রুকইয়া","কিতাব","কুরআন শিক্ষা","দু'আ","কিবলা","তাসবীহ্","মসজিদ খুঁজুন","ইসলামিক নাম","ক্যালেন্ডার","গুরুত্বপূর্ণ দিন","অন্যান্য","আমাদের সেবা","ওয়েবসাইট"};
+    private final String[] titles = {"কুরআন","তাফসীর","হাদীস","নামাযের সময়","তিলাওয়াত","অডিও তেলাওয়াত","অনুবাদসহ তেলাওয়াত","রুকইয়া","কিতাব","কুরআন শিক্ষা","দু'আ","কিবলা","তাসবীহ্","মসজিদ খুঁজুন","ইসলামিক নাম","ক্যালেন্ডার","গুরুত্বপূর্ণ দিন","অন্যান্য","আমাদের সেবা","আমাদের ওয়েবসাইট"};
     private final String[] icons = {"📖","📜","📚","🕌","🎧","🔊","🎙️","🤲","📘","🌙","🤲","🧭","📿","🕌","👶","🗓️","🌙","☪️","🤝","🌐"};
 
     @Override protected void onCreate(Bundle savedInstanceState) {
