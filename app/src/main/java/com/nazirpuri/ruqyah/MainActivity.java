@@ -35,8 +35,8 @@ public class MainActivity extends Activity {
     private boolean showingWeb = false;
     private boolean openQuranWhenLoaded = false;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private final String[] titles = {"কুরআন","তাফসীর","হাদীস","নামাযের সময়","তিলাওয়াত","কিতাব","কুরআন শিক্ষা","দু'আ","কিবলা","তাসবীহ্","মসজিদ খুঁজুন","ইসলামিক নাম","ক্যালেন্ডার","গুরুত্বপূর্ণ দিন","অন্যান্য","ওয়েবসাইট"};
-    private final String[] icons = {"📖","📜","📚","🕌","🎧","📘","🌙","🤲","🧭","📿","🕌","👶","🗓️","🌙","☪️","🌐"};
+    private final String[] titles = {"কুরআন","তাফসীর","হাদীস","নামাযের সময়","তিলাওয়াত","কিতাব","কুরআন শিক্ষা","দু'আ","কিবলা","তাসবীহ্","মসজিদ খুঁজুন","ইসলামিক নাম","ক্যালেন্ডার","গুরুত্বপূর্ণ দিন","অন্যান্য","আমাদের সেবা","ওয়েবসাইট"};
+    private final String[] icons = {"📖","📜","📚","🕌","🎧","📘","🌙","🤲","🧭","📿","🕌","👶","🗓️","🌙","☪️","🤝","🌐"};
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,16 +81,16 @@ public class MainActivity extends Activity {
         for(int i=0;i<titles.length;i++){
             final int index=i;
             LinearLayout tile=new LinearLayout(this); tile.setOrientation(LinearLayout.VERTICAL);
-            tile.setGravity(Gravity.CENTER); tile.setPadding(dp(4),dp(15),dp(4),dp(15));
+            tile.setGravity(Gravity.CENTER); tile.setPadding(dp(4),dp(11),dp(4),dp(11));
             GradientDrawable bg=new GradientDrawable(); bg.setColor(Color.WHITE);
             bg.setCornerRadius(dp(16)); bg.setStroke(dp(1),Color.rgb(221,231,221));
             tile.setBackground(bg); tile.setElevation(dp(2));
-            tile.addView(text(icons[i],20,Color.rgb(12,73,52),false));
+            tile.addView(text(icons[i],22,Color.rgb(12,73,52),false));
             TextView label=text(titles[i],13,Color.rgb(31,63,45),true);
             LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);
             lp.topMargin=dp(8); tile.addView(label,lp);
             GridLayout.LayoutParams gp=new GridLayout.LayoutParams();
-            gp.width=0; gp.height=dp(112); gp.columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);
+            gp.width=0; gp.height=dp(104); gp.columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);
             gp.setMargins(dp(5),dp(5),dp(5),dp(5)); grid.addView(tile,gp);
             tile.setOnClickListener(v->openSection(index));
         }
@@ -99,16 +99,16 @@ public class MainActivity extends Activity {
         LinearLayout footer=new LinearLayout(this);
         footer.setOrientation(LinearLayout.VERTICAL);
         footer.setGravity(Gravity.CENTER);
-        footer.setPadding(dp(14),dp(16),dp(14),dp(18));
+        footer.setPadding(dp(14),dp(9),dp(14),dp(10));
         footer.setBackgroundColor(Color.rgb(12,73,52));
         TextView managed=text("পরিচালনায়",15,Color.rgb(232,216,165),true);
         footer.addView(managed);
         TextView name=text("মুফতী রুহুল আমীন নাজিরপুরী",18,Color.WHITE,true);
         LinearLayout.LayoutParams np=new LinearLayout.LayoutParams(-1,-2);
-        np.topMargin=dp(5); footer.addView(name,np);
+        np.topMargin=dp(3); footer.addView(name,np);
         TextView role=text("মুফতী, মুহাদ্দিস, লেখক এবং বিশিষ্ট রাক্বী ও মুদাব্বির",13,Color.WHITE,false);
         LinearLayout.LayoutParams rp=new LinearLayout.LayoutParams(-1,-2);
-        rp.topMargin=dp(4); footer.addView(role,rp);
+        rp.topMargin=dp(2); footer.addView(role,rp);
         TextView whatsapp=text("হোয়াটসঅ্যাপ নাম্বার 01614-776592",15,Color.rgb(255,224,130),true);
         whatsapp.setPaintFlags(whatsapp.getPaintFlags() | android.graphics.Paint.UNDERLINE_TEXT_FLAG);
         whatsapp.setOnClickListener(v->{
@@ -117,7 +117,7 @@ public class MainActivity extends Activity {
         });
         whatsapp.setContentDescription("হোয়াটসঅ্যাপে যোগাযোগ করুন");
         LinearLayout.LayoutParams wp=new LinearLayout.LayoutParams(-1,-2);
-        wp.topMargin=dp(8); footer.addView(whatsapp,wp);
+        wp.topMargin=dp(5); footer.addView(whatsapp,wp);
         content.addView(footer);
         scroll.addView(content);
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
@@ -131,7 +131,7 @@ public class MainActivity extends Activity {
             showWeb(HOME_URL);
             return;
         }
-        String url=index==15?HOME_URL:HOME_URL+"search?q="+Uri.encode(titles[index]);
+        String url=index==16?HOME_URL:HOME_URL+"search?q="+Uri.encode(titles[index]);
         showWeb(url);
     }
 
