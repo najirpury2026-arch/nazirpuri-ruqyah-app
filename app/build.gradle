@@ -2,6 +2,12 @@ plugins {
     id 'com.android.application'
 }
 
+def ciBuildNumber = (System.getenv('GITHUB_RUN_NUMBER') ?: '1000').toInteger()
+
+def appVersionCode = 1000 + ciBuildNumber
+
+def appVersionName = "1.2.${ciBuildNumber}"
+
 android {
     namespace 'com.nazirpuri.ruqyah'
     compileSdk 35
@@ -19,8 +25,10 @@ android {
         applicationId 'com.nazirpuri.ruqyah'
         minSdk 23
         targetSdk 35
-        versionCode 3
-        versionName '1.2'
+        // GitHub Actions run number increases automatically for every new build.
+        // Keep the same applicationId and signing key for in-place updates.
+        versionCode appVersionCode
+        versionName appVersionName
     }
 
     buildTypes {
