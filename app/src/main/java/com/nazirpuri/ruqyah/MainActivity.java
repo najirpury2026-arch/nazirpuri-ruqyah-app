@@ -309,6 +309,8 @@ public class MainActivity extends Activity {
         view.evaluateJavascript("(function(){if(typeof window.openNazQuran==='function'){window.openNazQuran();return 'opened';}return 'waiting';})();", result -> {
             if (view != webView || !showingWeb) return;
             if ("\"opened\"".equals(result)) {
+                // App-side repair: make the 30-para index open the selected juz inside this WebView.
+                view.evaluateJavascript(buildAppJuzFixScript(), null);
                 view.postDelayed(() -> {
                     if (view == webView && showingWeb) view.setVisibility(View.VISIBLE);
                 }, 900);
@@ -318,6 +320,29 @@ public class MainActivity extends Activity {
                 // Do not expose the homepage as a fallback; the requested destination is Quran.
             }
         });
+    }
+
+    private String buildAppJuzFixScript() {
+        return "(function(){"
+            + "if(window.__nqAppJuzFixInstalled)return;window.__nqAppJuzFixInstalled=true;"
+            + "var root=document.getElementById('naz-own-quran'),home=document.getElementById('nq-home'),reader=document.getElementById('nq-reader'),content=document.getElementById('nq-reader-content'),status=document.getElementById('nq-reader-status');"
+            + "function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}"
+            + "function digits(n){return String(n).replace(/\\d/g,function(d){return '০১২৩৪৫৬৭৮৯'[Number(d)];});}"
+            + "function getEdition(j,e){var bases=['https://api.alquran.cloud/v1','https://alquran.api.islamic.network/v1','https://alquran.api.alislam.ru/v1'];"
+            + "function go(i){if(i>=bases.length)return Promise.reject(new Error('Quran API unavailable'));"
+            + "return fetch(bases[i]+'/juz/'+j+'/'+e,{mode:'cors',credentials:'omit',cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})"
+            + ".then(function(x){if(!x||x.code!==200||!x.data||!x.data.ayahs)throw new Error('Invalid Quran data');return x.data;}).catch(function(){return go(i+1);});}return go(0);}"
+            + "window.nqOpenJuz=function(juz){juz=Number(juz);if(!juz||juz<1||juz>30||!root||!content)return;"
+            + "if(home)home.hidden=true;if(reader)reader.hidden=false;if(status)status.textContent='লোড হচ্ছে…';"
+            + "content.innerHTML='<div class=\"nq-status\">'+digits(juz)+' নম্বর পারার আরবি ও বাংলা অনুবাদ আনা হচ্ছে…</div>';"
+            + "Promise.all([getEdition(juz,'quran-uthmani'),getEdition(juz,'bn.bengali')]).then(function(d){var ar=d[0],bn=d[1];"
+            + "if(window.__nqSetCurrentData)window.__nqSetCurrentData(ar,bn);"
+            + "var html=ar.ayahs.map(function(a,i){var tr=bn.ayahs[i]||{},s=a.surah||{},sn=s.number||1,si=a.numberInSurah||1,st=esc(s.englishName||s.name||('সূরা '+sn));"
+            + "return '<article id=\"nq-ayah-'+a.number+'\" class=\"nq-card\"><div class=\"nq-ayah-top\"><span>'+st+' · আয়াত '+digits(si)+'</span><span>পারা '+digits(juz)+'</span></div><div class=\"nq-arabic\" lang=\"ar\">'+esc(a.text)+'</div><div class=\"nq-translation\">'+esc(tr.text||'বাংলা অনুবাদ পাওয়া যায়নি')+'</div><div class=\"nq-actions\"><button type=\"button\" onclick=\"window.nqPlayAyah('+a.number+',this)\">▶ তিলাওয়াত</button><button type=\"button\" onclick=\"window.nqWordByWord('+sn+','+si+')\">শব্দে শব্দে</button><button type=\"button\" onclick=\"window.nqSpeakTranslation('+a.number+')\">অনুবাদ শুনুন</button><button type=\"button\" onclick=\"window.nqOpenTafsir('+sn+','+si+')\">তাফসির</button><button type=\"button\" onclick=\"window.nqShareAyah('+sn+','+si+')\">শেয়ার</button></div><div id=\"nq-audio-'+a.number+'\"></div><div id=\"nq-words-'+a.number+'\"></div></article>';}).join('');"
+            + "content.innerHTML='<div class=\"nq-surah-title\"><b>পারা '+digits(juz)+'</b><span>'+digits(ar.ayahs.length)+' আয়াত</span></div>'+html;if(status)status.textContent='';"
+            + "}).catch(function(){if(status)status.textContent='';content.innerHTML='<div class=\"nq-status\">এই মুহূর্তে পারাটি লোড করা যাচ্ছে না। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।<br><button class=\"nq-primary\" type=\"button\" onclick=\"window.nqOpenJuz('+juz+')\">আবার চেষ্টা করুন</button></div>';});};"
+            + "document.addEventListener('click',function(ev){var el=ev.target&&ev.target.closest?ev.target.closest('[data-nq-juz]'):null;if(el){ev.preventDefault();window.nqOpenJuz(el.getAttribute('data-nq-juz'));}},true);"
+            + "})();";
     }
 
     private TextView text(String value,int size,int color,boolean bold){
