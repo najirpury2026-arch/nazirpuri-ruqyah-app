@@ -269,9 +269,6 @@
   var safe=needle.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   try{return value.replace(new RegExp(safe,'giu'),function(hit){return '<mark class="nq-search-highlight">'+esc(hit)+'</mark>'})}catch(e){return esc(value)}
  }
- function bnDigits(n){');
-  try{return value.replace(new RegExp(safe,'giu'),function(hit){return '<mark class="nq-search-highlight">'+esc(hit)+'</mark>'})}catch(e){return esc(value)}
- }
  function bnDigits(n){return String(n).replace(/\d/g,function(d){return '০১২৩৪৫৬৭৮৯'[+d]})}
  function request(url){
   var path=url.replace(api,'');
