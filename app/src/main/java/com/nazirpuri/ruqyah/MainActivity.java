@@ -78,12 +78,21 @@ public class MainActivity extends Activity {
                 JSONObject release = new JSONObject(output.toString("UTF-8"));
                 org.json.JSONArray assets = release.optJSONArray("assets");
                 if (assets == null || assets.length() == 0) return;
-                JSONObject apkAsset = assets.getJSONObject(0);
-                String assetName = apkAsset.optString("name", "");
-                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("nazirpuri-(\\d+)\\.apk").matcher(assetName);
-                if (!matcher.find()) return;
-                int latestVersion = Integer.parseInt(matcher.group(1));
-                String downloadUrl = apkAsset.optString("browser_download_url", "");
+                int latestVersion = -1;
+                String downloadUrl = "";
+                java.util.regex.Pattern versionPattern = java.util.regex.Pattern.compile("nazirpuri-(\\d+)\\.apk");
+                for (int i = 0; i < assets.length(); i++) {
+                    JSONObject candidate = assets.getJSONObject(i);
+                    java.util.regex.Matcher matcher = versionPattern.matcher(candidate.optString("name", ""));
+                    if (matcher.matches()) {
+                        int candidateVersion = Integer.parseInt(matcher.group(1));
+                        if (candidateVersion > latestVersion) {
+                            latestVersion = candidateVersion;
+                            downloadUrl = candidate.optString("browser_download_url", "");
+                        }
+                    }
+                }
+                if (latestVersion < 0 || downloadUrl.isEmpty()) return;
                 int installedVersion = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
                 if (latestVersion > installedVersion) {
                     mainHandler.post(() -> {
