@@ -42,10 +42,11 @@ jobs:
         with:
           name: Nazirpuri-Ruqyah-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
-      - name: Prepare release version notes
+      - name: Prepare versioned APK
         run: |
-          echo "versionCode: $((1000 + GITHUB_RUN_NUMBER))" > release-notes.txt
-          echo "versionName: 1.2.${GITHUB_RUN_NUMBER}" >> release-notes.txt
+          VERSION_CODE=$((1000 + GITHUB_RUN_NUMBER))
+          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+          cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/nazirpuri-$VERSION_CODE.apk"
       - name: Publish direct APK download
         uses: softprops/action-gh-release@v2
         with:
@@ -53,6 +54,6 @@ jobs:
           name: Latest Nazirpuri Ruqyah APK
           body: "versionCode: ${{ 1000 + github.run_number }}\nversionName: 1.2.${{ github.run_number }}"
           make_latest: true
-          files: app/build/outputs/apk/debug/app-debug.apk
+          files: app/build/outputs/apk/debug/nazirpuri-${{ env.VERSION_CODE }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
