@@ -263,6 +263,12 @@
  var bnSurahNames=['আল-ফাতিহা', 'আল-বাকারা', 'আলে ইমরান', 'আন-নিসা', 'আল-মায়িদাহ', 'আল-আনআম', 'আল-আরাফ', 'আল-আনফাল', 'আত-তাওবাহ', 'ইউনুস', 'হুদ', 'ইউসুফ', 'আর-রাদ', 'ইবরাহিম', 'আল-হিজর', 'আন-নাহল', 'আল-ইসরা', 'আল-কাহফ', 'মারইয়াম', 'ত্ব-হা', 'আল-আম্বিয়া', 'আল-হজ্জ', 'আল-মুমিনুন', 'আন-নূর', 'আল-ফুরকান', 'আশ-শুআরা', 'আন-নামল', 'আল-কাসাস', 'আল-আনকাবুত', 'আর-রূম', 'লুকমান', 'আস-সাজদাহ', 'আল-আহযাব', 'সাবা', 'ফাতির', 'ইয়াসিন', 'আস-সাফফাত', 'সাদ', 'আয-যুমার', 'গাফির', 'ফুসসিলাত', 'আশ-শূরা', 'আয-যুখরুফ', 'আদ-দুখান', 'আল-জাসিয়াহ', 'আল-আহকাফ', 'মুহাম্মদ', 'আল-ফাতহ', 'আল-হুজুরাত', 'কাফ', 'আয-যারিয়াত', 'আত-তূর', 'আন-নাজম', 'আল-কামার', 'আর-রহমান', 'আল-ওয়াকিয়াহ', 'আল-হাদিদ', 'আল-মুজাদালাহ', 'আল-হাশর', 'আল-মুমতাহিনাহ', 'আস-সাফ', 'আল-জুমুআহ', 'আল-মুনাফিকুন', 'আত-তাগাবুন', 'আত-তালাক', 'আত-তাহরিম', 'আল-মুলক', 'আল-কলম', 'আল-হাক্কাহ', 'আল-মাআরিজ', 'নূহ', 'আল-জিন', 'আল-মুযযাম্মিল', 'আল-মুদ্দাসসির', 'আল-কিয়ামাহ', 'আল-ইনসান', 'আল-মুরসালাত', 'আন-নাবা', 'আন-নাযিআত', 'আবাসা', 'আত-তাকভির', 'আল-ইনফিতার', 'আল-মুতাফফিফিন', 'আল-ইনশিকাক', 'আল-বুরুজ', 'আত-তারিক', 'আল-আলা', 'আল-গাশিয়াহ', 'আল-ফাজর', 'আল-বালাদ', 'আশ-শামস', 'আল-লাইল', 'আদ-দুহা', 'আশ-শারহ', 'আত-তিন', 'আল-আলাক', 'আল-কদর', 'আল-বাইয়্যিনাহ', 'আয-যিলযাল', 'আল-আদিয়াত', 'আল-কারিআহ', 'আত-তাকাসুর', 'আল-আসর', 'আল-হুমাযাহ', 'আল-ফিল', 'কুরাইশ', 'আল-মাউন', 'আল-কাউসার', 'আল-কাফিরুন', 'আন-নাসর', 'আল-মাসাদ', 'আল-ইখলাস', 'আল-ফালাক', 'আন-নাস'];
  var $=function(id){return document.getElementById(id)};
  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+ function highlightSearchTerm(text,term){
+  var value=String(text==null?'':text),needle=String(term==null?'':term).trim();
+  if(!needle)return esc(value);
+  var safe=needle.replace(/[.*+?^\${}()|[\]\\]/g,'\\ function bnDigits(n){');
+  try{return value.replace(new RegExp(safe,'giu'),function(hit){return '<mark class="nq-search-highlight">'+esc(hit)+'</mark>'})}catch(e){return esc(value)}
+ }
  function bnDigits(n){return String(n).replace(/\d/g,function(d){return '০১২৩৪৫৬৭৮৯'[+d]})}
  function request(url){
   var path=url.replace(api,'');
@@ -307,7 +313,9 @@
   request(api+'/search/'+encodeURIComponent(raw)+'/all/'+edition).then(function(d){
    var matches=d.matches||[];
    if(!matches.length){$('nq-list').innerHTML='<div class="nq-status">কোনো মিল পাওয়া যায়নি। বানান পরিবর্তন করে আবার চেষ্টা করুন।</div>';return}
-   $('nq-list').innerHTML=matches.slice(0,50).map(function(m){var topicText=String(m.text||m.numberInSurah).replace(/[\u200B-\u200F\uFEFF]/g,'').replace(/\s+/g,' ').trim();return '<button type="button" class="nq-surah nq-topic-result" onclick="window.nqOpenSurah('+m.surah.number+','+m.numberInSurah+')"><span class="nq-num">'+bnDigits(m.surah.number)+':'+bnDigits(m.numberInSurah)+'</span><span class="nq-surah-main"><b>'+esc(m.surah.englishName)+'</b><small class="nq-topic-arabic" lang="ar" dir="rtl">'+esc(topicText)+'</small></span></button>'}).join('');
+       var total=Number(d.count);if(!Number.isFinite(total)||total<1)total=matches.length;
+    var resultHeader='<div class="nq-status nq-search-count">“'+esc(raw)+'” শব্দটি পূর্ণ কুরআনে মোট <strong>'+bnDigits(total)+'</strong> স্থানে পাওয়া গেছে। নিচে প্রথম '+bnDigits(Math.min(matches.length,50))+'টি ফলাফল দেখানো হলো।</div>';
+    $('nq-list').innerHTML=resultHeader+matches.slice(0,50).map(function(m){var topicText=String(m.text||m.numberInSurah).replace(/[\u200B-\u200F\uFEFF]/g,'').replace(/\s+/g,' ').trim();return '<button type="button" class="nq-surah nq-topic-result" onclick="window.nqOpenSurah('+m.surah.number+','+m.numberInSurah+')"><span class="nq-num">'+bnDigits(m.surah.number)+':'+bnDigits(m.numberInSurah)+'</span><span class="nq-surah-main"><b>'+esc(m.surah.englishName)+'</b><small class="nq-topic-arabic" lang="ar" dir="auto">'+highlightSearchTerm(topicText,raw)+'</small></span></button>'}).join('');
   }).catch(function(){ $('nq-list').innerHTML='<div class="nq-status">অনুসন্ধান সেবা এই মুহূর্তে সাড়া দিচ্ছে না। ইন্টারনেট সংযোগ পরীক্ষা করুন অথবা উন্নত অনুসন্ধান ব্যবহার করুন।</div>'});
  };
  window.nqReloadList=function(){surahs=[];loadList()};
@@ -552,7 +560,10 @@
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){if(root.classList.contains('nq-open'))showIndex()});
  if(root.classList.contains('nq-open'))showIndex();
 })();
-</script><script>window.openNazQuran=function(){var r=document.getElementById('naz-own-quran');if(r){r.classList.add('nq-open');r.setAttribute('aria-hidden','false');}if(window.nqShowHome)window.nqShowHome();};window.closeNazQuran=function(){if(window.AndroidQuran&&window.AndroidQuran.close){window.AndroidQuran.close();}};window.openNazQuran();</script><style>#nq-print-toggle{display:none;margin:10px auto;padding:10px 18px;border:0;border-radius:22px;background:#176344;color:#fff;font:600 15px SolaimanLipi,sans-serif}#nq-print-toggle:focus{outline:2px solid #d4ad52}</style>
+</script><script>window.openNazQuran=function(){var r=document.getElementById('naz-own-quran');if(r){r.classList.add('nq-open');r.setAttribute('aria-hidden','false');}if(window.nqShowHome)window.nqShowHome();};window.closeNazQuran=function(){if(window.AndroidQuran&&window.AndroidQuran.close){window.AndroidQuran.close();}};window.openNazQuran();</script><style>#nq-print-toggle{display:none;margin:10px auto;padding:10px 18px;border:0;border-radius:22px;background:#176344;color:#fff;font:600 15px SolaimanLipi,sans-serif}#nq-print-toggle:focus{outline:2px solid #d4ad52}#naz-own-quran .nq-search-highlight{background:#ffe36a!important;color:#7b2500!important;border-radius:4px;padding:0 2px;font-weight:800;box-shadow:0 0 0 1px #f3c84b}
+#naz-own-quran .nq-search-count{background:#eef8f1;border:1px solid #cce7d4;border-radius:12px;padding:11px 13px;margin:10px 4px 13px;color:#24583b;font-size:14px;line-height:1.7}
+#naz-own-quran .nq-search-count strong{color:#075d36;font-size:19px}
+</style>
 <script>
 (function(){
  var content=document.getElementById('nq-reader-content'),reader=document.getElementById('nq-reader');
