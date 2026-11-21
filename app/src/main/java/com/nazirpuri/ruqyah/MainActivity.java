@@ -85,7 +85,7 @@ public class MainActivity extends Activity {
             GradientDrawable bg=new GradientDrawable(); bg.setColor(Color.WHITE);
             bg.setCornerRadius(dp(16)); bg.setStroke(dp(1),Color.rgb(221,231,221));
             tile.setBackground(bg); tile.setElevation(dp(2));
-            tile.addView(text(icons[i],29,Color.rgb(12,73,52),false));
+            tile.addView(text(icons[i],24,Color.rgb(12,73,52),false));
             TextView label=text(titles[i],13,Color.rgb(31,63,45),true);
             LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);
             lp.topMargin=dp(8); tile.addView(label,lp);
