@@ -2,6 +2,8 @@ package com.nazirpuri.ruqyah;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.net.Uri;
 import android.content.Intent;
 import android.graphics.Color;
@@ -32,6 +34,7 @@ public class MainActivity extends Activity {
     private LinearLayout root;
     private boolean showingWeb = false;
     private boolean openQuranWhenLoaded = false;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final String[] titles = {"কুরআন","হাদীস","নামাযের সময়","তিলাওয়াত","কিতাব","কুরআন শিক্ষা","দু'আ","কিবলা","তাসবীহ্","মসজিদ খুঁজুন","ইসলামিক নাম","ক্যালেন্ডার","গুরুত্বপূর্ণ দিন","অন্যান্য","ওয়েবসাইট"};
     private final String[] icons = {"📖","📚","🕌","🎧","📘","🌙","🤲","🧭","📿","🕌","👶","🗓️","🌙","☪️","🌐"};
 
@@ -144,7 +147,9 @@ public class MainActivity extends Activity {
         progressBar.setMax(100);
         progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(Color.rgb(190,150,55)));
         root.addView(progressBar,new LinearLayout.LayoutParams(-1,dp(3)));
-        webView=new WebView(this); WebSettings s=webView.getSettings();
+        webView=new WebView(this);
+        if (openQuranWhenLoaded) webView.setVisibility(View.INVISIBLE);
+        WebSettings s=webView.getSettings();
         s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setLoadsImagesAutomatically(true);
         s.setSupportZoom(true); s.setBuiltInZoomControls(true); s.setDisplayZoomControls(false);
         s.setAllowFileAccess(true);
@@ -158,8 +163,8 @@ public class MainActivity extends Activity {
                 }
                 if (openQuranWhenLoaded) {
                     openQuranWhenLoaded = false;
-                    // The Blogger theme exposes this function for its own Quran reader.
-                                        view.evaluateJavascript("(function(){var n=0;function openOwnQuran(){if(typeof window.openNazQuran==='function'){window.openNazQuran();return;}if(n++<30){setTimeout(openOwnQuran,500);}}openOwnQuran();})();", null);
+                    // Keep the Blogger homepage hidden; reveal only after the Quran reader opens.
+                    tryOpenOwnQuran(view, 0);
                 }
             }
         });
@@ -170,6 +175,22 @@ public class MainActivity extends Activity {
         });
         root.addView(webView,new LinearLayout.LayoutParams(-1,0,1)); setContentView(root);
         webView.loadUrl(url);
+    }
+
+    private void tryOpenOwnQuran(WebView view, int attempt) {
+        if (view != webView || !showingWeb) return;
+        view.evaluateJavascript("(function(){if(typeof window.openNazQuran==='function'){window.openNazQuran();return 'opened';}return 'waiting';})();", result -> {
+            if (view != webView || !showingWeb) return;
+            if ("\"opened\"".equals(result)) {
+                view.postDelayed(() -> {
+                    if (view == webView && showingWeb) view.setVisibility(View.VISIBLE);
+                }, 900);
+            } else if (attempt < 40) {
+                mainHandler.postDelayed(() -> tryOpenOwnQuran(view, attempt + 1), 500);
+            } else {
+                // Do not expose the homepage as a fallback; the requested destination is Quran.
+            }
+        });
     }
 
     private TextView text(String value,int size,int color,boolean bold){
