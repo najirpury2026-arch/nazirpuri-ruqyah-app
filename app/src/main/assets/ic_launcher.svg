@@ -1,24 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
 <defs>
- <radialGradient id="g"><stop stop-color="#19b84c"/><stop offset="1" stop-color="#003c20"/></radialGradient>
- <linearGradient id="gold" x2="0" y2="1"><stop stop-color="#fff3a0"/><stop offset=".45" stop-color="#ffc928"/><stop offset="1" stop-color="#a96500"/></linearGradient>
- <filter id="s"><feGaussianBlur stdDeviation="3"/></filter>
+ <radialGradient id="bg"><stop stop-color="#159447"/><stop offset="1" stop-color="#002e19"/></radialGradient>
+ <linearGradient id="gold" x2="0" y2="1"><stop stop-color="#fff6ad"/><stop offset=".5" stop-color="#ffc629"/><stop offset="1" stop-color="#a76500"/></linearGradient>
+ <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur in="SourceAlpha" stdDeviation="3"/><feOffset dy="3"/><feComponentTransfer><feFuncA type="linear" slope=".65"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 </defs>
-<circle cx="256" cy="256" r="250" fill="#00351b"/>
-<circle cx="256" cy="256" r="241" fill="url(#g)" stroke="url(#gold)" stroke-width="12"/>
-<circle cx="256" cy="256" r="224" fill="none" stroke="#ffe17a" stroke-width="3"/>
-<path d="M75 310V230q0-32 28-32t28 32v80M381 310V230q0-32 28-32t28 32v80" fill="#f8f2d6" stroke="#c28a18" stroke-width="5"/>
-<path d="M90 310V230q0-15 13-15t13 15v80M396 310V230q0-15 13-15t13 15v80" fill="#08763b"/>
-<path d="M142 307V225q0-48 42-48t42 48v82M286 307V225q0-48 42-48t42 48v82" fill="#f9f1d5" stroke="#d6a32b" stroke-width="5"/>
-<path d="M157 307V226q0-31 27-31t27 31v81M301 307V226q0-31 27-31t27 31v81" fill="#08763b"/>
-<path d="M184 307v-82q0-72 72-72t72 72v82z" fill="#f7f1d7" stroke="#d6a32b" stroke-width="6"/>
-<path d="M199 307v-82q0-57 57-57t57 57v82z" fill="#07833c"/>
-<path d="M256 150c-22-20-22-44-4-69 2 20 13 31 31 35-11 4-19 16-27 34z" fill="url(#gold)"/>
-<path d="M146 318h220" stroke="url(#gold)" stroke-width="9" stroke-linecap="round"/>
-<path d="M170 328l86 48 86-48-86 24z" fill="#713d14" stroke="#f5c84b" stroke-width="4"/>
-<path d="M174 323l82 33 82-33-82 18z" fill="#fffdf3" stroke="#dca72c" stroke-width="3"/>
-<path d="M256 356v-15" stroke="#dca72c" stroke-width="3"/>
-<path d="M52 386Q256 352 460 386v76H52z" fill="#004522" stroke="url(#gold)" stroke-width="6"/>
-<text x="256" y="412" text-anchor="middle" font-family="Noto Sans Bengali, sans-serif" font-size="49" font-weight="900" fill="#fff" stroke="#00351b" stroke-width="2" paint-order="stroke">নাজিরপুরী</text>
-<text x="256" y="459" text-anchor="middle" font-family="Noto Sans Bengali, sans-serif" font-size="43" font-weight="900" fill="#ffdf20" stroke="#00351b" stroke-width="2" paint-order="stroke">রুকইয়া ও দাওয়াখানা</text>
+<rect width="512" height="512" rx="54" fill="#002d18"/>
+<rect x="8" y="8" width="496" height="496" rx="48" fill="url(#bg)" stroke="url(#gold)" stroke-width="12"/>
+<rect x="21" y="21" width="470" height="470" rx="39" fill="none" stroke="#ffdf70" stroke-width="2"/>
+<path d="M32 78L78 32M434 32l46 46M32 434l46 46M434 480l46-46" stroke="#ffdf70" stroke-width="4"/>
+<path d="M90 250V172q0-37 30-37t30 37v78M362 250V172q0-37 30-37t30 37v78" fill="#f8f0d5" stroke="#dca72b" stroke-width="5"/>
+<path d="M103 250V173q0-22 17-22t17 22v77M375 250V173q0-22 17-22t17 22v77" fill="#08753a"/>
+<path d="M174 246v-70q0-73 82-73t82 73v70z" fill="#f8f0d5" stroke="#e0ad36" stroke-width="6"/>
+<path d="M190 246v-70q0-57 66-57t66 57v70z" fill="#07833d"/>
+<path d="M256 103c-24-22-22-49-3-72 1 22 14 35 33 39-14 7-23 18-30 33z" fill="url(#gold)"/>
+<path d="M256 104v-17" stroke="#ffdb55" stroke-width="5"/>
+<path d="M163 250h186" stroke="url(#gold)" stroke-width="8" stroke-linecap="round"/>
+<path d="M185 257l71 37 71-37-71 17z" fill="#6e3b12" stroke="#f3c44a" stroke-width="3"/>
+<path d="M190 253l66 29 66-29-66 16z" fill="#fffdf2" stroke="#dca72b" stroke-width="2"/>
+<path d="M256 282v-12" stroke="#c58d21" stroke-width="2"/>
+<path d="M46 313Q256 286 466 313v151H46z" fill="#003a20" stroke="url(#gold)" stroke-width="7"/>
+<path d="M62 323Q256 300 450 323" fill="none" stroke="#ffdf70" stroke-width="2"/>
+<g text-anchor="middle" font-family="Noto Sans Bengali, sans-serif" font-weight="900" filter="url(#shadow)" paint-order="stroke">
+ <text x="256" y="365" font-size="54" fill="#fff" stroke="#003018" stroke-width="3">নাজিরপুরী</text>
+ <text x="256" y="416" font-size="49" fill="#ffdf20" stroke="#003018" stroke-width="3">রুকইয়া ও</text>
+ <text x="256" y="463" font-size="47" fill="#fff" stroke="#003018" stroke-width="3">দাওয়াখানা</text>
+</g>
 </svg>
