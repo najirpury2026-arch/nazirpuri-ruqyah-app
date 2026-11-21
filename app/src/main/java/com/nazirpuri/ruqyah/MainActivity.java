@@ -3,6 +3,7 @@ package com.nazirpuri.ruqyah;
 import android.app.Activity;
 import android.os.Bundle;
 import android.net.Uri;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -23,6 +24,7 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
     private static final String HOME_URL = "https://nazirpuriruqyah.blogspot.com/";
+    private static final String WHATSAPP_URL = "https://wa.me/8801614776592";
     private WebView webView;
     private Typeface banglaTypeface;
     private String fontBase64 = "";
@@ -53,6 +55,7 @@ public class MainActivity extends Activity {
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.rgb(246,249,246));
+
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.VERTICAL);
         header.setGravity(Gravity.CENTER);
@@ -62,11 +65,15 @@ public class MainActivity extends Activity {
         TextView sub = text("কুরআন • সুন্নাহ • ইলম • আমল",13,Color.rgb(232,216,165),false);
         LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-2,-2);
         sp.topMargin=dp(7); header.addView(sub,sp); root.addView(header);
+
         TextView heading=text("আপনার পছন্দের বিভাগ নির্বাচন করুন",16,Color.rgb(35,65,49),true);
         heading.setPadding(dp(10),dp(18),dp(10),dp(10)); root.addView(heading);
+
         ScrollView scroll=new ScrollView(this);
+        LinearLayout content=new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
         GridLayout grid=new GridLayout(this); grid.setColumnCount(3);
-        grid.setPadding(dp(10),dp(4),dp(10),dp(18));
+        grid.setPadding(dp(10),dp(4),dp(10),dp(12));
         for(int i=0;i<titles.length;i++){
             final int index=i;
             LinearLayout tile=new LinearLayout(this); tile.setOrientation(LinearLayout.VERTICAL);
@@ -83,7 +90,33 @@ public class MainActivity extends Activity {
             gp.setMargins(dp(5),dp(5),dp(5),dp(5)); grid.addView(tile,gp);
             tile.setOnClickListener(v->openSection(index));
         }
-        scroll.addView(grid); root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
+        content.addView(grid);
+
+        LinearLayout footer=new LinearLayout(this);
+        footer.setOrientation(LinearLayout.VERTICAL);
+        footer.setGravity(Gravity.CENTER);
+        footer.setPadding(dp(14),dp(16),dp(14),dp(18));
+        footer.setBackgroundColor(Color.rgb(12,73,52));
+        TextView managed=text("পরিচালনায়",15,Color.rgb(232,216,165),true);
+        footer.addView(managed);
+        TextView name=text("মুফতী রুহুল আমীন নাজিরপুরী",18,Color.WHITE,true);
+        LinearLayout.LayoutParams np=new LinearLayout.LayoutParams(-1,-2);
+        np.topMargin=dp(5); footer.addView(name,np);
+        TextView role=text("মুফতী, মুহাদ্দিস, লেখক এবং বিশিষ্ট রাক্বী ও মুদাব্বির",13,Color.WHITE,false);
+        LinearLayout.LayoutParams rp=new LinearLayout.LayoutParams(-1,-2);
+        rp.topMargin=dp(4); footer.addView(role,rp);
+        TextView whatsapp=text("হোয়াটসঅ্যাপ নাম্বার 01614-776592",15,Color.rgb(255,224,130),true);
+        whatsapp.setPaintFlags(whatsapp.getPaintFlags() | android.graphics.Paint.UNDERLINE_TEXT_FLAG);
+        whatsapp.setOnClickListener(v->{
+            try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(WHATSAPP_URL))); }
+            catch (Exception ignored) { }
+        });
+        whatsapp.setContentDescription("হোয়াটসঅ্যাপে যোগাযোগ করুন");
+        LinearLayout.LayoutParams wp=new LinearLayout.LayoutParams(-1,-2);
+        wp.topMargin=dp(8); footer.addView(whatsapp,wp);
+        content.addView(footer);
+        scroll.addView(content);
+        root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         setContentView(root);
     }
 
@@ -107,13 +140,13 @@ public class MainActivity extends Activity {
         webView=new WebView(this); WebSettings s=webView.getSettings();
         s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setLoadsImagesAutomatically(true);
         s.setSupportZoom(true); s.setBuiltInZoomControls(true); s.setDisplayZoomControls(false);
-        webView.getSettings().setAllowFileAccess(true);
+        s.setAllowFileAccess(true);
         webView.setWebViewClient(new WebViewClient(){
             @Override public void onPageFinished(WebView view, String pageUrl){
                 super.onPageFinished(view, pageUrl);
                 if (!fontBase64.isEmpty()) {
-                    String css = "@font-face{font-family:SolaimanLipi;src:url(data:font/ttf;base64," + fontBase64 + ") format('truetype');font-weight:100 900;}*{font-family:SolaimanLipi,sans-serif !important;}";
-                    String js = "(function(){var st=document.createElement('style');st.type='text/css';st.appendChild(document.createTextNode('" + css + "'));document.head.appendChild(st);})();";
+                    String css = "@font-face{font-family:SolaimanLipi;src:url(data:font/ttf;base64," + fontBase64 + ") format('truetype');font-weight:100 900;}html,body,body *:not(i):not([class*='icon']){font-family:SolaimanLipi,sans-serif !important;}";
+                    String js = "(function(){var st=document.getElementById('nazirpuri-solaiman-font');if(!st){st=document.createElement('style');st.id='nazirpuri-solaiman-font';document.head.appendChild(st);}st.textContent='" + css + "';})();";
                     view.evaluateJavascript(js, null);
                 }
             }
