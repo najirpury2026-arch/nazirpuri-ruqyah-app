@@ -266,7 +266,10 @@
  function highlightSearchTerm(text,term){
   var value=String(text==null?'':text),needle=String(term==null?'':term).trim();
   if(!needle)return esc(value);
-  var safe=needle.replace(/[.*+?^\${}()|[\]\\]/g,'\\ function bnDigits(n){');
+  var safe=needle.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  try{return value.replace(new RegExp(safe,'giu'),function(hit){return '<mark class="nq-search-highlight">'+esc(hit)+'</mark>'})}catch(e){return esc(value)}
+ }
+ function bnDigits(n){');
   try{return value.replace(new RegExp(safe,'giu'),function(hit){return '<mark class="nq-search-highlight">'+esc(hit)+'</mark>'})}catch(e){return esc(value)}
  }
  function bnDigits(n){return String(n).replace(/\d/g,function(d){return '০১২৩৪৫৬৭৮৯'[+d]})}
