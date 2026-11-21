@@ -1,0 +1,555 @@
+<!doctype html><html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5"><meta name="theme-color" content="#176344"><title>আল-কুরআন</title><style>html,body{margin:0;min-height:100%;background:#fff;font-family:SolaimanLipi,sans-serif}body{padding-bottom:env(safe-area-inset-bottom)}#naz-own-quran{display:block!important;position:relative!important;inset:auto!important;width:100%!important;min-height:100vh!important;overflow:visible!important;z-index:1!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}</style></head><body><style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;500;600;700&display=swap');
+#naz-own-quran{display:none;position:fixed;inset:0;z-index:2147483646;overflow:auto;background:#f4f8f4;color:#20382c;font-family:'Noto Serif Bengali',serif;}
+#naz-own-quran.nq-open{display:block!important}
+#naz-own-quran *{box-sizing:border-box}
+#naz-own-quran .nq-head{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(110deg,#075236,#0b754b);color:#fff;box-shadow:0 3px 12px #063c2b25}
+#naz-own-quran .nq-icon{width:38px;height:38px;border:1px solid #ffffff55;border-radius:50%;background:#ffffff18;color:#fff;font-size:22px;cursor:pointer}
+#naz-own-quran .nq-head-title{font-size:17px;font-weight:700;flex:1}
+#naz-own-quran .nq-wrap{max-width:850px;margin:auto;padding:12px 12px 78px}
+#naz-own-quran .nq-hero{padding:18px 12px;margin:3px 0 12px;text-align:center;border:1px solid #c9e6d2;border-radius:17px;background:linear-gradient(135deg,#e5f5e9,#c9ebd3);color:#075236}
+#naz-own-quran .nq-bism{font-family:'Noto Naskh Arabic',serif;font-size:29px;line-height:1.8}
+#naz-own-quran .nq-sub{font-size:13px;color:#547463;margin-top:3px}
+#naz-own-quran .nq-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}
+#naz-own-quran .nq-stat{background:#fff;border:1px solid #e0ebe2;border-radius:12px;padding:9px;text-align:center}
+#naz-own-quran .nq-stat b{display:block;color:#087148;font-size:18px}
+#naz-own-quran .nq-stat span{font-size:12px;color:#718276}
+#naz-own-quran .nq-search{display:flex;gap:7px;margin:11px 0}
+#naz-own-quran .nq-search input{flex:1;min-width:0;border:1px solid #d4e2d7;border-radius:11px;background:#fff;padding:10px 12px;font:inherit;font-size:15px;color:#233c2d}
+#naz-own-quran .nq-search button,.nq-primary{border:0;border-radius:11px;background:#087148;color:#fff;padding:9px 13px;font:inherit;font-size:14px;cursor:pointer}
+#naz-own-quran .nq-list{display:grid;gap:7px}
+#naz-own-quran .nq-surah{display:flex;align-items:center;gap:10px;width:100%;padding:10px;background:#fff;border:1px solid #e0e9e1;border-radius:12px;text-align:left;color:#213b2c;cursor:pointer}
+#naz-own-quran .nq-num{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:10px;background:#e4f3e8;color:#087148;font-weight:700;font-size:14px}
+#naz-own-quran .nq-surah-main{min-width:0;flex:1}
+#naz-own-quran .nq-surah-main b{display:block;font-size:15px;font-weight:700}
+#naz-own-quran .nq-surah-main small{display:block;margin-top:2px;color:#718276;font-size:11px}
+#naz-own-quran .nq-arname{font-family:'Noto Naskh Arabic',serif;font-size:21px;color:#846d38;direction:rtl}
+#naz-own-quran .nq-card{background:#fff;border:1px solid #e0e9e1;border-radius:14px;padding:12px;margin:9px 0;box-shadow:0 2px 8px #173c2208}
+#naz-own-quran .nq-surah-title{text-align:center;padding:14px 10px;border-radius:14px;background:linear-gradient(120deg,#075236,#0b754b);color:#fff;margin-bottom:10px}
+#naz-own-quran .nq-surah-title .nq-arname{display:block;color:#fff;font-size:27px}
+#naz-own-quran .nq-surah-title b{display:block;font-size:17px;margin-top:3px}
+#naz-own-quran .nq-ayah-top{display:flex;align-items:center;justify-content:space-between;color:#8a713b;font-size:12px;border-bottom:1px solid #edf1e9;padding-bottom:7px}
+#naz-own-quran .nq-arabic{font-family:'Noto Naskh Arabic',serif;direction:rtl;text-align:right;font-size:29px;line-height:1.95;color:#172b20;margin:10px 0 13px}
+#naz-own-quran .nq-translation{font-size:16px;line-height:1.85;color:#2d4736;background:#f7faf5;border-left:3px solid #c4a45a;border-radius:8px;padding:9px 11px}
+#naz-own-quran .nq-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+#naz-own-quran .nq-actions button{border:1px solid #dce9dc;border-radius:20px;background:#edf5ed;color:#17603e;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer}
+#naz-own-quran .nq-status{text-align:center;padding:20px 12px;background:#fff;border:1px solid #e0e9e1;border-radius:13px;color:#66796c;font-size:14px}
+#naz-own-quran .nq-backrow{display:flex;align-items:center;gap:8px;margin:4px 0 10px}
+#naz-own-quran .nq-backrow button{border:1px solid #d5e5d9;border-radius:20px;background:#fff;color:#17603e;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}
+#naz-own-quran .nq-foot{text-align:center;color:#849187;font-size:10px;padding:14px 0 4px}
+#naz-own-quran audio{width:100%;height:38px;margin-top:8px}
+@media(max-width:420px){#naz-own-quran .nq-wrap{padding:9px 9px 76px}#naz-own-quran .nq-bism{font-size:25px}#naz-own-quran .nq-arabic{font-size:26px;line-height:1.9}#naz-own-quran .nq-translation{font-size:15px}#naz-own-quran .nq-surah-title .nq-arname{font-size:24px}}
+/* V227 visual refresh: match the site's deep-green, ivory and gold identity */
+#naz-own-quran{background:#f4f7f5;color:#173b2c;font-family:'Noto Serif Bengali',serif}
+#naz-own-quran .nq-head{position:sticky;top:0;background:#fff;color:#142d22;padding:12px 16px;border-bottom:1px solid #dce7e1;box-shadow:0 2px 8px #123c2610}
+#naz-own-quran .nq-icon{width:44px;height:44px;border:0;border-radius:16px;background:#eaf3ee;color:#185c40;font-size:26px}
+#naz-own-quran .nq-head-title{font-size:19px;color:#162e23}
+#naz-own-quran .nq-wrap{max-width:760px;padding:16px 18px 112px}
+#naz-own-quran .nq-hero{display:none}
+#naz-own-quran .nq-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0 16px}
+#naz-own-quran .nq-stat{border:1px solid #dce6e1;border-radius:20px;padding:16px 7px;background:#fff;min-height:96px;display:flex;flex-direction:column;justify-content:center;gap:4px}
+#naz-own-quran .nq-stat b{font-size:25px;color:#176344}
+#naz-own-quran .nq-stat span{font-size:14px;color:#829087}
+#naz-own-quran .nq-search{gap:0;margin:14px 0 16px;align-items:stretch}
+#naz-own-quran .nq-search select{max-width:94px;border:1px solid #d3dfd9;border-right:0;border-radius:16px 0 0 16px;background:#fff;color:#315c49;padding:8px 4px;font:inherit;font-size:12px}
+#naz-own-quran .nq-search input{border:1px solid #d3dfd9;border-radius:16px 0 0 16px;padding:14px 14px;font-size:15px;min-height:58px}
+#naz-own-quran .nq-search select+input{border-radius:0}
+#naz-own-quran .nq-search button{border-radius:0 16px 16px 0;padding:10px 17px;background:#096239;font-size:15px;min-width:76px}
+#naz-own-quran .nq-tools{display:flex;gap:9px;overflow-x:auto;white-space:nowrap;margin:8px 0 17px;padding:2px 0 4px;scrollbar-width:none}
+#naz-own-quran .nq-tools::-webkit-scrollbar{display:none}
+#naz-own-quran .nq-tools a{display:inline-flex;align-items:center;justify-content:center;border:1px solid #d6e1dc;border-radius:28px;background:#fff;color:#315d49;padding:11px 17px;text-decoration:none;font-size:14px;flex:0 0 auto}
+#naz-own-quran .nq-tools a.active{background:#176344;border-color:#176344;color:#fff}
+#naz-own-quran .nq-search-note{display:none}
+#naz-own-quran .nq-list{display:block;border:1px solid #dce5e1;border-radius:22px;overflow:hidden;background:#fff}
+#naz-own-quran .nq-surah{border:0;border-bottom:1px solid #e5ece8;border-radius:0;padding:17px 16px;min-height:88px;gap:13px;background:#fff}
+#naz-own-quran .nq-surah:last-child{border-bottom:0}
+#naz-own-quran .nq-num{width:48px;height:48px;flex-basis:48px;border:1px solid #d9e5df;border-radius:15px;background:#fff;color:#176344;font-size:17px;font-weight:500}
+#naz-own-quran .nq-surah-main b{font-size:17px;color:#1d392b;font-weight:500}
+#naz-own-quran .nq-surah-main small{font-size:13px;color:#829087;margin-top:5px}
+#naz-own-quran .nq-arname{font-size:21px;color:#8c7138}
+#naz-own-quran .nq-card{border-radius:18px;padding:15px;border-color:#e0e9e4}
+#naz-own-quran .nq-surah-title{background:linear-gradient(120deg,#075236,#0b754b);border:2px solid #d4b64e;border-radius:18px}
+#naz-own-quran .nq-bottom{position:fixed;z-index:8;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:#fffffff2;border:1px solid #dce5e1;border-radius:28px 28px 0 0;box-shadow:0 -4px 18px #153d2918;backdrop-filter:blur(12px)}
+#naz-own-quran .nq-bottom button,#naz-own-quran .nq-bottom a{min-width:0;min-height:66px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1px solid #d9e4de;border-radius:17px;background:#f8faf9;color:#365d4a;text-decoration:none;font:inherit;font-size:11px;padding:5px 2px;cursor:pointer;white-space:normal}
+#naz-own-quran .nq-bottom span{font-size:18px;line-height:1.2}
+#naz-own-quran .nq-bottom .nq-bottom-main{background:#176344;border-color:#176344;color:#fff}
+#naz-own-quran .nq-foot{padding-bottom:10px}
+@media(max-width:420px){#naz-own-quran .nq-wrap{padding:10px 10px 112px}#naz-own-quran .nq-stat{min-height:90px}#naz-own-quran .nq-surah{padding:15px 12px}#naz-own-quran .nq-bottom{gap:5px;padding-left:8px;padding-right:8px}#naz-own-quran .nq-bottom button,#naz-own-quran .nq-bottom a{font-size:10px;min-height:64px}}
+
+/* V230: preserve the existing Quran app structure and behavior; restyle its interface */
+#naz-own-quran{background:#f3faf4!important;color:#172c22!important;font-family:'Noto Serif Bengali',serif!important}
+#naz-own-quran .nq-head{background:#f6fbf6!important;min-height:76px!important;padding:10px 16px!important;border:0!important;box-shadow:0 2px 8px #153b2510!important}
+#naz-own-quran .nq-head-title{font-size:21px!important;font-weight:700!important;color:#133b29!important}
+#naz-own-quran .nq-icon{width:48px!important;height:48px!important;border-radius:50%!important;background:#fff!important;color:#176344!important;border:1px solid #dce8df!important;box-shadow:0 2px 5px #123b2010!important}
+#naz-own-quran .nq-wrap{max-width:760px!important;padding:0 0 112px!important}
+#naz-own-quran .nq-hero{display:block!important;position:relative!important;overflow:hidden!important;min-height:260px!important;margin:0!important;padding:30px 16px 26px!important;text-align:center!important;border-radius:0!important;color:#fff!important;background:linear-gradient(110deg,#24150dcb,#58351bd9),radial-gradient(ellipse at 50% 100%,#c58a43,#342015)!important}
+#naz-own-quran .nq-hero:before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 100%,#d7a15a55,transparent 65%),linear-gradient(145deg,transparent 35%,#f4d9a01c 36%,transparent 55%);pointer-events:none}
+#naz-own-quran .nq-hero:after{content:"কুরআনের সূরা সমূহ";display:block;position:relative;margin:0 auto 8px;font-size:32px;font-weight:700;color:#fff8e9;text-shadow:0 2px 9px #170c06}
+#naz-own-quran .nq-bism{position:relative;font-size:24px!important;line-height:1.9!important;color:#fff0ce!important;text-shadow:0 2px 8px #180d08!important}
+#naz-own-quran .nq-sub{position:relative;color:#fff!important;font-size:16px!important}
+#naz-own-quran .nq-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:9px!important;margin:-1px 14px 15px!important;padding-top:13px!important}
+#naz-own-quran .nq-stat{min-height:88px!important;padding:12px 5px!important;border-radius:18px!important;background:#fff!important;border:1px solid #e2ebe4!important;box-shadow:0 3px 12px #173d2108!important;text-align:center!important}
+#naz-own-quran .nq-stat b{font-size:24px!important;color:#176344!important}
+#naz-own-quran .nq-stat span{font-size:14px!important;color:#718178!important}
+#naz-own-quran .nq-search{display:flex!important;gap:0!important;max-width:calc(100% - 30px)!important;margin:0 auto 17px!important;padding:5px!important;background:#fff!important;border:1px solid #e0e9e2!important;border-radius:30px!important;box-shadow:0 4px 16px #153b2512!important}
+#naz-own-quran .nq-search select{order:3!important;max-width:94px!important;min-width:78px!important;border:0!important;border-left:1px solid #e5ebe6!important;border-radius:0 25px 25px 0!important;background:#f4f7f5!important;color:#315d49!important;padding:7px 4px!important;font:inherit!important;font-size:12px!important}
+#naz-own-quran .nq-search input{order:1!important;flex:1!important;width:30px!important;min-width:0!important;min-height:52px!important;border:0!important;border-radius:25px 0 0 25px!important;padding:10px 13px!important;background:#fff!important;font:inherit!important;font-size:14px!important}
+#naz-own-quran .nq-search button{order:2!important;min-width:52px!important;width:52px!important;border-radius:50%!important;background:#69dca0!important;color:#075334!important;padding:8px!important;font-size:0!important}
+#naz-own-quran .nq-search button:before{content:"⌕";font-size:26px!important;line-height:1}
+#naz-own-quran .nq-tools{display:flex!important;justify-content:space-around!important;gap:8px!important;margin:0 15px 15px!important;padding:0 0 8px!important;border-bottom:1px solid #e4ece5!important;overflow-x:auto!important}
+#naz-own-quran .nq-tools a{flex:1 0 auto!important;border:0!important;border-radius:0!important;border-bottom:3px solid transparent!important;background:transparent!important;color:#17281e!important;padding:10px 12px!important;font-size:16px!important;font-weight:700!important}
+#naz-own-quran .nq-tools a.active{border-bottom-color:#08744b!important;color:#08744b!important}
+#naz-own-quran .nq-search-note{display:none!important}
+#naz-own-quran .nq-list{display:block!important;margin:0 14px!important;border:0!important;border-radius:0!important;background:transparent!important;overflow:visible!important}
+#naz-own-quran .nq-surah{display:flex!important;align-items:center!important;min-height:120px!important;margin:0 0 13px!important;padding:17px 15px!important;gap:13px!important;border:1px solid #edf1ed!important;border-radius:23px!important;background:#fff!important;box-shadow:0 3px 12px #173d2108!important}
+#naz-own-quran .nq-num{width:56px!important;height:56px!important;flex:0 0 56px!important;border:0!important;border-radius:18px!important;background:#e1f3e8!important;color:#176344!important;font-size:20px!important}
+#naz-own-quran .nq-surah-main{flex:1!important;min-width:0!important;text-align:left!important}
+#naz-own-quran .nq-surah-main b{display:block!important;font-size:22px!important;font-weight:700!important;color:#172c22!important}
+#naz-own-quran .nq-surah-main small{display:inline-block!important;font-size:14px!important;color:#6d7d72!important;margin-top:8px!important}
+#naz-own-quran .nq-arname{font-size:23px!important;color:#77766e!important;white-space:nowrap!important}
+#naz-own-quran .nq-bottom{position:fixed!important;z-index:2147483000!important;left:0!important;right:0!important;bottom:0!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:6px!important;padding:9px 8px calc(9px + env(safe-area-inset-bottom))!important;background:#fffffff2!important;border:1px solid #dce5e1!important;border-radius:26px 26px 0 0!important;box-shadow:0 -4px 18px #153d2918!important;backdrop-filter:blur(12px)!important}
+#naz-own-quran .nq-bottom button,#naz-own-quran .nq-bottom a{min-width:0!important;min-height:66px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;border:1px solid #d9e4de!important;border-radius:16px!important;background:#f8faf9!important;color:#365d4a!important;text-decoration:none!important;font:inherit!important;font-size:11px!important;padding:5px 2px!important;white-space:normal!important}
+#naz-own-quran .nq-bottom span{font-size:19px!important;line-height:1.2!important}
+#naz-own-quran .nq-bottom .nq-bottom-main{background:#176344!important;border-color:#176344!important;color:#fff!important}
+#naz-own-quran .nq-reader-tools{background:#fff!important;border:1px solid #e3ece5!important;border-radius:18px!important}
+@media(max-width:480px){
+#naz-own-quran .nq-hero{min-height:245px!important;padding-top:26px!important}
+#naz-own-quran .nq-hero:after{font-size:28px!important}
+#naz-own-quran .nq-bism{font-size:21px!important}
+#naz-own-quran .nq-stat{min-height:78px!important}
+#naz-own-quran .nq-stat b{font-size:22px!important}
+#naz-own-quran .nq-search{max-width:calc(100% - 22px)!important}
+#naz-own-quran .nq-search select{max-width:82px!important;min-width:72px!important;font-size:11px!important}
+#naz-own-quran .nq-surah{min-height:112px!important;padding:14px 12px!important}
+#naz-own-quran .nq-surah-main b{font-size:19px!important}
+#naz-own-quran .nq-arname{font-size:19px!important}
+#naz-own-quran .nq-bottom{gap:5px!important;padding-left:6px!important;padding-right:6px!important}
+#naz-own-quran .nq-bottom button,#naz-own-quran .nq-bottom a{font-size:10px!important;min-height:62px!important}
+}
+
+
+/* V231: Quran list screen styled after the supplied reference screenshot */
+#naz-own-quran{background:#eef3f7!important;color:#243c36!important;font-family:'Noto Serif Bengali',serif!important}
+#naz-own-quran .nq-head{display:flex!important;align-items:center!important;gap:12px!important;min-height:76px!important;padding:10px 17px!important;background:#eef3f7!important;border:0!important;box-shadow:none!important}
+#naz-own-quran .nq-head .nq-icon:first-child{width:42px!important;height:48px!important;border:0!important;background:transparent!important;box-shadow:none!important;color:#101916!important;font-size:30px!important}
+#naz-own-quran .nq-head-title{flex:1!important;color:#101916!important;font-size:22px!important;font-weight:500!important}
+#naz-own-quran .nq-head .nq-icon:last-child{width:42px!important;height:48px!important;border:0!important;background:transparent!important;box-shadow:none!important;color:#101916!important;font-size:26px!important}
+#naz-own-quran .nq-wrap{max-width:760px!important;padding:0 0 104px!important}
+#naz-own-quran #nq-home .nq-hero{display:none!important}
+#naz-own-quran #nq-home .nq-stats{display:none!important}
+#naz-own-quran .nq-search{margin:14px 16px 14px!important;max-width:none!important;padding:4px!important;background:#f8fbfd!important;border:1px solid #d5e0e5!important;border-radius:22px!important;box-shadow:none!important}
+#naz-own-quran .nq-search input{min-height:46px!important;background:transparent!important;font-size:14px!important}
+#naz-own-quran .nq-search select{background:transparent!important;border-left:1px solid #d8e0e4!important}
+#naz-own-quran .nq-search button{width:44px!important;min-width:44px!important;height:44px!important;background:#dce9ee!important;color:#315d50!important}
+#naz-own-quran .nq-tools{display:flex!important;gap:9px!important;margin:10px 16px 16px!important;padding:0!important;border:0!important;overflow-x:auto!important}
+#naz-own-quran .nq-tools a{flex:0 0 auto!important;border:1px solid #ccd8dd!important;border-radius:24px!important;background:#f2f6f8!important;color:#52635f!important;padding:10px 17px!important;font-size:14px!important;font-weight:400!important}
+#naz-own-quran .nq-tools a.active{background:#dce9ee!important;border:1px solid #aabfc5!important;color:#34584e!important}
+#naz-own-quran .nq-search-note{display:none!important}
+#naz-own-quran .nq-list{display:block!important;margin:0 16px!important;border:1px solid #dbe3e7!important;border-radius:22px!important;background:#f3f7fa!important;overflow:hidden!important;box-shadow:0 2px 8px #203c4a0a!important}
+#naz-own-quran .nq-surah{position:relative!important;display:flex!important;align-items:center!important;gap:13px!important;width:100%!important;min-height:124px!important;margin:0!important;padding:15px 16px!important;border:0!important;border-bottom:1px solid #d8e1e5!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;text-align:left!important}
+#naz-own-quran .nq-surah:last-child{border-bottom:0!important}
+#naz-own-quran .nq-num{display:flex!important;align-items:center!important;justify-content:center!important;width:48px!important;height:48px!important;flex:0 0 48px!important;transform:rotate(45deg)!important;border:1px solid #d4e0e5!important;border-radius:11px!important;background:#edf3f7!important;color:#345c50!important;font-size:18px!important}
+#naz-own-quran .nq-num{line-height:1!important}
+#naz-own-quran .nq-num::first-line{transform:rotate(-45deg)!important}
+#naz-own-quran .nq-arname{display:block!important;flex:0 0 88px!important;max-width:88px!important;white-space:nowrap!important;text-align:center!important;color:#315b50!important;font-family:'Noto Naskh Arabic',serif!important;font-size:25px!important;line-height:1.7!important}
+#naz-own-quran .nq-surah-main{display:flex!important;flex:1!important;min-width:0!important;flex-direction:column!important;align-items:flex-start!important;text-align:left!important}
+#naz-own-quran .nq-surah-main b{font-size:18px!important;font-weight:500!important;color:#315b50!important;line-height:1.5!important}
+#naz-own-quran .nq-surah-main small{margin-top:4px!important;color:#687772!important;font-size:13px!important;line-height:1.6!important}
+#naz-own-quran .nq-surah-main em{display:inline-block!important;margin-top:4px!important;padding:2px 9px!important;border-radius:15px!important;background:#e3ebf0!important;color:#687b83!important;font-size:11px!important;font-style:normal!important}
+#naz-own-quran .nq-chevron{flex:0 0 15px!important;color:#879398!important;font-size:28px!important;font-family:Arial,sans-serif!important}
+#naz-own-quran .nq-bottom{position:fixed!important;z-index:2147483000!important;left:16px!important;right:16px!important;bottom:calc(10px + env(safe-area-inset-bottom))!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:3px!important;padding:8px 9px!important;background:#f4f8faed!important;border:1px solid #d4dfe4!important;border-radius:27px!important;box-shadow:0 2px 12px #243c3618!important;backdrop-filter:blur(10px)!important}
+#naz-own-quran .nq-bottom button,#naz-own-quran .nq-bottom a{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;min-width:0!important;min-height:52px!important;padding:4px 1px!important;border:0!important;border-radius:15px!important;background:transparent!important;color:#5f6c70!important;font:inherit!important;font-size:11px!important;text-decoration:none!important;white-space:normal!important}
+#naz-own-quran .nq-bottom span{font-size:18px!important}
+#naz-own-quran .nq-bottom .nq-bottom-main{background:#dce9e5!important;color:#315b50!important}
+#naz-own-quran .nq-foot{padding:18px!important;color:#718078!important;font-size:11px!important}
+@media(max-width:480px){
+#naz-own-quran .nq-surah{min-height:122px!important;padding:13px 12px!important;gap:10px!important}
+#naz-own-quran .nq-arname{flex-basis:76px!important;max-width:76px!important;font-size:22px!important}
+#naz-own-quran .nq-surah-main b{font-size:17px!important}
+#naz-own-quran .nq-num{width:42px!important;height:42px!important;flex-basis:42px!important}
+#naz-own-quran .nq-list{margin-left:14px!important;margin-right:14px!important}
+#naz-own-quran .nq-tools{margin-left:14px!important;margin-right:14px!important}
+#naz-own-quran .nq-bottom{left:12px!important;right:12px!important}
+}
+
+
+
+
+#naz-quran-app{background:#f0f3f7!important;color:#263b34!important}
+#naz-quran-app .nqa-top{background:#f0f3f7!important;border-bottom:1px solid #e7ecef!important;box-shadow:none!important;min-height:62px!important}
+#naz-quran-app .nqa-back{background:transparent!important;color:#171d1b!important;border:0!important}
+#naz-quran-app .nqa-title{color:#171d1b!important;font-weight:600!important}
+#naz-quran-app .nqa-wrap{padding:12px 14px 108px!important}
+#naz-quran-app .nqa-stats{gap:8px!important;margin:4px 0 12px!important}
+#naz-quran-app .nqa-stat{background:transparent!important;border:1px solid #dce4e8!important;border-radius:16px!important;box-shadow:none!important}
+#naz-quran-app .nqa-searchline{margin:12px 0 14px!important}
+#naz-quran-app .nqa-search{background:#f7faf8!important;border:2px solid #a9d4bf!important;border-radius:15px!important;min-height:54px!important}
+#naz-quran-app #nqa-search-btn{background:#168252!important;border-radius:14px!important;min-width:54px!important}
+#naz-quran-app .nqa-tabs{display:flex!important;position:fixed!important;z-index:30!important;left:14px!important;right:14px!important;bottom:18px!important;max-width:820px!important;margin:0 auto!important;gap:2px!important;justify-content:space-around!important;align-items:center!important;padding:6px!important;background:#f2f5f6!important;border:1px solid #d5dfe2!important;border-radius:28px!important;box-shadow:0 2px 9px #233a3010!important}
+#naz-quran-app .nqa-tab{flex:1 1 25%!important;min-width:0!important;white-space:nowrap!important;background:transparent!important;border:0!important;border-radius:20px!important;color:#727c79!important;padding:10px 3px!important;font-size:13px!important;font-weight:500!important}
+#naz-quran-app .nqa-tab.active{background:#dce8ed!important;color:#315d4c!important;box-shadow:none!important}
+#naz-quran-app .nqa-quick{gap:8px!important;margin:12px 0 10px!important}
+#naz-quran-app .nqa-quick button{background:transparent!important;border:1px solid #d9e1e5!important;border-radius:16px!important;box-shadow:none!important;padding:12px 9px!important;color:#243e34!important}
+#naz-quran-app .nqa-recent{background:transparent!important;border:0!important;border-radius:0!important;padding:4px 0 8px!important;margin:8px 0 10px!important}
+#naz-quran-app .nqa-recent-title{font-size:16px!important;color:#304b3f!important;font-weight:600!important;margin:0 0 9px!important}
+#naz-quran-app .nqa-recent-list button{background:#e4edf2!important;border:1px solid #d4e0e5!important;border-radius:22px!important;color:#405e52!important}
+#naz-quran-app .nqa-list{display:block!important;background:#f0f3f7!important;border:1px solid #dce3e7!important;border-radius:20px!important;overflow:hidden!important}
+#naz-quran-app .nqa-row{display:flex!important;min-height:86px!important;gap:13px!important;padding:13px 15px!important;background:#f0f3f7!important;border:0!important;border-bottom:1px solid #d9e0e4!important;border-radius:0!important;box-shadow:none!important}
+#naz-quran-app .nqa-row:last-child{border-bottom:0!important}
+#naz-quran-app .nqa-num{width:43px!important;height:43px!important;flex-basis:43px!important;border-radius:11px!important;transform:rotate(45deg)!important;background:#edf2f6!important;border:1px solid #d8e2e9!important;color:#315e4c!important}
+#naz-quran-app .nqa-num>*{transform:rotate(-45deg)!important}
+#naz-quran-app .nqa-rowmain strong{font-size:18px!important;color:#315b4a!important;font-weight:600!important}
+#naz-quran-app .nqa-meta{font-size:14px!important;color:#67736e!important}
+#naz-quran-app .nqa-arname{font-size:23px!important;color:#315e4d!important}
+#naz-quran-app .nqa-bottom{background:#f0f3f7!important;border-top:1px solid #d9e2e6!important}
+#naz-quran-app .nqa-bottom button{background:#f0f3f7!important;color:#456052!important;border:0!important}
+#naz-quran-app .nqa-bottom button.active{background:#dce8ed!important;color:#245b43!important}
+@media(max-width:480px){
+ #naz-quran-app .nqa-wrap{padding:10px 9px 110px!important}
+ #naz-quran-app .nqa-row{min-height:82px!important;padding:11px 10px!important;gap:11px!important}
+ #naz-quran-app .nqa-rowmain strong{font-size:16px!important}
+ #naz-quran-app .nqa-arname{font-size:20px!important}
+ #naz-quran-app .nqa-meta{font-size:13px!important}
+ #naz-quran-app .nqa-tab{font-size:12px!important;padding:9px 2px!important}
+ #naz-quran-app .nqa-tabs{left:10px!important;right:10px!important;bottom:14px!important}
+}
+
+/* Keep the Bengali number upright while drawing the tilted diamond frame. */
+#naz-quran-app .nqa-num{position:relative!important;transform:none!important;border:0!important;background:transparent!important;isolation:isolate!important}
+#naz-quran-app .nqa-num:before{content:"";position:absolute;z-index:-1;inset:5px;border:1px solid #d8e2e9;border-radius:7px;background:#edf2f6;transform:rotate(45deg)}
+
+/* V380: Keep Quran home list and selected-surah reader mutually exclusive. */
+#naz-own-quran #nq-home[hidden],#naz-own-quran #nq-reader[hidden]{display:none!important}
+#naz-own-quran #nq-home:not([hidden]){display:block!important}
+#naz-own-quran #nq-reader:not([hidden]){display:block!important}
+
+/* V371: Quran reader settings, working tabs and reader controls */
+#naz-own-quran .nq-head{display:flex;align-items:center;gap:12px}#naz-own-quran .nq-head-actions{margin-left:auto;display:flex;gap:7px}#naz-own-quran .nq-head-actions .nq-icon{margin:0}#naz-own-quran .nq-settings-panel{position:fixed;inset:0;z-index:2147483647;background:#101b18a8;display:flex;align-items:flex-start;justify-content:flex-end;padding:68px 12px 16px;overflow:auto}#naz-own-quran .nq-settings-panel[hidden]{display:none!important}#naz-own-quran .nq-settings-card{width:min(100%,390px);max-height:calc(100vh - 90px);overflow:auto;background:#fff;border:1px solid #d8c58c;border-radius:18px;padding:16px;box-shadow:0 12px 35px #0003;color:#234536}#naz-own-quran .nq-settings-title{display:flex;align-items:center;justify-content:space-between;font-size:18px;margin-bottom:12px}#naz-own-quran .nq-settings-title button{border:0;background:#edf3ef;border-radius:50%;width:34px;height:34px;font-size:24px;color:#24543d}#naz-own-quran .nq-settings-card>label{display:block;margin:13px 0;font-size:14px;font-weight:600}#naz-own-quran .nq-settings-card>label span{float:right;color:#8a7133}#naz-own-quran .nq-settings-card input[type=range],#naz-own-quran .nq-settings-card select{display:block;width:100%;margin-top:8px;accent-color:#176344}#naz-own-quran .nq-settings-card select{padding:10px;border:1px solid #d8e4dc;border-radius:10px;background:#f8faf8;color:#244b39}#naz-own-quran .nq-settings-checks{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}#naz-own-quran .nq-settings-checks label{background:#f2f7f3;border-radius:10px;padding:9px;font-size:13px}#naz-own-quran .nq-settings-note{font-size:12px;color:#718078;line-height:1.7;margin-bottom:0}#naz-own-quran .nq-tools button{border:1px solid #d8e5dc;background:#fff;color:#315b48;border-radius:22px;padding:8px 12px;font:inherit;cursor:pointer}#naz-own-quran .nq-tools button.active{background:#176344;color:#fff;border-color:#176344}#naz-own-quran .nq-bottom button{cursor:pointer}#naz-own-quran .nq-bottom .nq-bottom-main{background:#dcebe3;color:#155b3e}#naz-own-quran.nq-dark{background:#15211c!important;color:#e7eee9!important}#naz-own-quran.nq-dark .nq-wrap,#naz-own-quran.nq-dark .nq-card,#naz-own-quran.nq-dark .nq-list,#naz-own-quran.nq-dark .nq-settings-card{background:#1e2d26!important;color:#e7eee9!important}#naz-own-quran.nq-dark .nq-translation,#naz-own-quran.nq-dark .nq-sub{color:#d2dfd6!important}#naz-own-quran.nq-dark .nq-surah{background:#1e2d26!important;color:#e7eee9!important;border-color:#3a5145!important}#naz-own-quran.nq-dark .nq-arabic{color:#f3f0df!important}#naz-own-quran.nq-tajweed .nq-arabic{color:#176344;text-shadow:0 0 0 #176344}#naz-own-quran .nq-arabic{font-size:var(--nq-ar-size,29px)}#naz-own-quran .nq-translation{font-size:var(--nq-bn-size,16px)}
+</style>
+<div id="naz-own-quran" aria-hidden="true">
+ <div class="nq-head"><button class="nq-icon" type="button" onclick="window.closeNazQuran()" aria-label="বন্ধ করুন">‹</button><div class="nq-head-title">আল-কুরআন</div><div class="nq-head-actions"><button class="nq-icon" type="button" onclick="window.nqShowHome()" aria-label="সূরার তালিকা">⌂</button><button class="nq-icon nq-settings-open" type="button" onclick="window.nqOpenSettings()" aria-label="কুরআন পাঠের সেটিংস">⚙</button></div></div>
+ <div id="nq-settings-panel" class="nq-settings-panel" hidden="hidden" role="dialog" aria-modal="true" aria-label="কুরআন পাঠের সেটিংস"><div class="nq-settings-card"><div class="nq-settings-title"><b>পাঠের সেটিংস</b><button type="button" onclick="window.nqCloseSettings()" aria-label="বন্ধ করুন">×</button></div><label>আরবি ফন্টের আকার <span id="nq-font-value">২৯ px</span><input id="nq-font-range" type="range" min="20" max="42" value="29" oninput="window.nqSetFont(this.value)"/></label><label>বাংলা অনুবাদের আকার <span id="nq-bn-font-value">১৬ px</span><input id="nq-bn-font-range" type="range" min="13" max="24" value="16" oninput="window.nqSetBnFont(this.value)"/></label><label>তিলাওয়াতের ক্বারী<select id="nq-qari" onchange="window.nqSaveSettings()"><option value="ar.alafasy">মিশারি রাশিদ আল-আফাসি</option><option value="ar.abdurrahmaansudais">আব্দুর রহমান আস-সুদাইস</option><option value="ar.husary">মাহমুদ খলিল আল-হুসারি</option><option value="ar.minshawi">মুহাম্মদ সিদ্দিক আল-মিনশাওয়ি</option></select></label><label>বাংলা অনুবাদ<select id="nq-translation-edition" onchange="window.nqSaveSettings()"><option value="bn.bengali">মুহিউদ্দীন খান</option><option value="bn">বাংলা অনুবাদ (ডিফল্ট)</option></select></label><div class="nq-settings-checks"><label><input id="nq-dark-mode" type="checkbox" onchange="window.nqApplySettings()"/> ডার্ক মোড</label><label><input id="nq-auto-next" type="checkbox" onchange="window.nqSaveSettings()"/> অডিও শেষে পরের আয়াত</label><label><input id="nq-repeat" type="checkbox" onchange="window.nqSaveSettings()"/> আয়াত পুনরাবৃত্তি</label><label><input id="nq-tajweed" type="checkbox" onchange="window.nqToggleTajweed(this)"/> তাজবিদ রঙ</label></div><p class="nq-settings-note">অনুবাদ, তাফসির ও অডিওর কিছু সুবিধা ইন্টারনেট সংযোগের ওপর নির্ভরশীল।</p></div></div>
+ <main class="nq-wrap">
+  <section id="nq-home">
+   <div class="nq-hero"><div class="nq-bism">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><div class="nq-sub">পবিত্র আল-কুরআন · আরবি ও বাংলা অর্থ</div></div>
+   <div class="nq-stats"><div class="nq-stat"><b>১১৪</b><span>সূরা</span></div><div class="nq-stat"><b>৩০</b><span>পারা</span></div><div class="nq-stat"><b>৬২৩৬</b><span>আয়াত</span></div></div>
+   <div class="nq-search"><select id="nq-search-mode" aria-label="অনুসন্ধানের ভাষা"><option value="bn">বাংলা শব্দ</option><option value="ar">আরবি শব্দ</option></select><input id="nq-query" type="search" placeholder="সূরার নাম, নম্বর বা আয়াতের শব্দ লিখুন" aria-label="কুরআন অনুসন্ধান"/><button type="button" onclick="window.nqFilterSurahs()">খুঁজুন</button></div>
+   <div class="nq-tools" aria-label="কুরআনের বিভাগ"><button class="active" type="button" onclick="window.nqShowHome()">সূরাসমূহ</button><button type="button" onclick="window.nqShowJuzList()">পারা</button><button type="button" onclick="window.nqShowTopics()">বিষয়ভিত্তিক</button><button type="button" onclick="window.nqShowBookmarks()">বুকমার্ক</button></div>
+   <div class="nq-sub nq-search-note">বাংলা বা আরবি শব্দ লিখে খুঁজুন। সূরার নাম ও নম্বর দিয়েও অনুসন্ধান করা যাবে।</div>
+   <div id="nq-list" class="nq-list"><div class="nq-status">সূরার তালিকা লোড হচ্ছে…</div></div>
+  </section>
+  <section id="nq-reader" hidden="hidden"><div class="nq-backrow"><button type="button" onclick="window.nqShowHome()">← সূরার তালিকা</button><span id="nq-reader-status" class="nq-sub"/></div><div id="nq-reader-content"/></section>
+  <div class="nq-foot">সম্পূর্ণ ১১৪ সূরা ও ৬২৩৬ আয়াত · আরবি: Uthmani · বাংলা অনুবাদ: মুহিউদ্দীন খান · তথ্যসূত্র: AlQuran Cloud · শব্দার্থ/তাফসিরের কিছু সুবিধায় অনলাইন সেবা প্রয়োজন</div>
+ </main>
+ <nav class="nq-bottom" aria-label="কুরআন পাঠের দ্রুত সরঞ্জাম">
+  <button type="button" onclick="window.nqToggleTajweed(this)"><span>◉</span>তাজবিদ</button>
+  <button type="button" onclick="window.nqAdjustFont(-1)"><span>Tt−</span>ফন্ট ছোট</button>
+  <button type="button" class="nq-bottom-main" onclick="window.nqPlayCurrentSurah()"><span>▶</span>অডিও শুনুন</button>
+  <button type="button" onclick="window.nqToggleAutoScroll(this)"><span>☷</span>অটো স্ক্রল</button>
+  <button type="button" onclick="window.nqToggleTranslation(this)"><span>▤</span>অনুবাদ মোড</button>
+ </nav>
+</div>
+<!-- V371: expanded Quran reader controls, settings, para, topics and bookmarks -->
+<!-- V240: local surah index fallback, three Quran API mirrors and bounded requests -->
+
+<script type="text/javascript">
+(function(){
+ 'use strict';
+ var root=document.getElementById('naz-own-quran');
+ if(!root) return;
+ var api='https://api.alquran.cloud/v1';
+ var apiFallback='https://alquran.api.islamic.network/v1';
+ var surahs=[], currentSurah=0, currentData=null, audioEl=null;
+ var bnSurahNames=['আল-ফাতিহা', 'আল-বাকারা', 'আলে ইমরান', 'আন-নিসা', 'আল-মায়িদাহ', 'আল-আনআম', 'আল-আরাফ', 'আল-আনফাল', 'আত-তাওবাহ', 'ইউনুস', 'হুদ', 'ইউসুফ', 'আর-রাদ', 'ইবরাহিম', 'আল-হিজর', 'আন-নাহল', 'আল-ইসরা', 'আল-কাহফ', 'মারইয়াম', 'ত্ব-হা', 'আল-আম্বিয়া', 'আল-হজ্জ', 'আল-মুমিনুন', 'আন-নূর', 'আল-ফুরকান', 'আশ-শুআরা', 'আন-নামল', 'আল-কাসাস', 'আল-আনকাবুত', 'আর-রূম', 'লুকমান', 'আস-সাজদাহ', 'আল-আহযাব', 'সাবা', 'ফাতির', 'ইয়াসিন', 'আস-সাফফাত', 'সাদ', 'আয-যুমার', 'গাফির', 'ফুসসিলাত', 'আশ-শূরা', 'আয-যুখরুফ', 'আদ-দুখান', 'আল-জাসিয়াহ', 'আল-আহকাফ', 'মুহাম্মদ', 'আল-ফাতহ', 'আল-হুজুরাত', 'কাফ', 'আয-যারিয়াত', 'আত-তূর', 'আন-নাজম', 'আল-কামার', 'আর-রহমান', 'আল-ওয়াকিয়াহ', 'আল-হাদিদ', 'আল-মুজাদালাহ', 'আল-হাশর', 'আল-মুমতাহিনাহ', 'আস-সাফ', 'আল-জুমুআহ', 'আল-মুনাফিকুন', 'আত-তাগাবুন', 'আত-তালাক', 'আত-তাহরিম', 'আল-মুলক', 'আল-কলম', 'আল-হাক্কাহ', 'আল-মাআরিজ', 'নূহ', 'আল-জিন', 'আল-মুযযাম্মিল', 'আল-মুদ্দাসসির', 'আল-কিয়ামাহ', 'আল-ইনসান', 'আল-মুরসালাত', 'আন-নাবা', 'আন-নাযিআত', 'আবাসা', 'আত-তাকভির', 'আল-ইনফিতার', 'আল-মুতাফফিফিন', 'আল-ইনশিকাক', 'আল-বুরুজ', 'আত-তারিক', 'আল-আলা', 'আল-গাশিয়াহ', 'আল-ফাজর', 'আল-বালাদ', 'আশ-শামস', 'আল-লাইল', 'আদ-দুহা', 'আশ-শারহ', 'আত-তিন', 'আল-আলাক', 'আল-কদর', 'আল-বাইয়্যিনাহ', 'আয-যিলযাল', 'আল-আদিয়াত', 'আল-কারিআহ', 'আত-তাকাসুর', 'আল-আসর', 'আল-হুমাযাহ', 'আল-ফিল', 'কুরাইশ', 'আল-মাউন', 'আল-কাউসার', 'আল-কাফিরুন', 'আন-নাসর', 'আল-মাসাদ', 'আল-ইখলাস', 'আল-ফালাক', 'আন-নাস'];
+ var $=function(id){return document.getElementById(id)};
+ function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'<','>':'>','"':'"',"'":'''}[c]})}
+ function bnDigits(n){return String(n).replace(/\d/g,function(d){return '০১২৩৪৫৬৭৮৯'[+d]})}
+ function request(url){
+  var path=url.replace(api,'');
+  /* V240: try three public mirrors with a bounded timeout on each request. */
+  var bases=[api,apiFallback,'https://alquran.api.alislam.ru/v1'];
+  function get(full){
+   var controller=window.AbortController?new AbortController():null;
+   var timer;
+   var options={mode:'cors',credentials:'omit',cache:'force-cache'};
+   if(controller)options.signal=controller.signal;
+   var timeout=new Promise(function(resolve,reject){timer=setTimeout(function(){if(controller)controller.abort();reject(new Error('Quran API timeout'))},6500)});
+   var network=fetch(full,options).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(function(j){if(!j||j.code!==200||typeof j.data==='undefined')throw new Error((j&&j.status)||'API error');return j.data});
+   return Promise.race([network,timeout]).then(function(data){clearTimeout(timer);return data},function(err){clearTimeout(timer);throw err});
+  }
+  var chain=Promise.reject(new Error('start'));
+  bases.forEach(function(base){chain=chain.catch(function(){return get(base+path)})});
+  return chain;
+ }
+ /* Local index: the 114 surah names and ayah totals remain available even if every remote API is blocked. */
+ function localSurahIndex(){
+  var counts=[7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+  return bnSurahNames.map(function(name,i){return {number:i+1,name:'',englishName:name,numberOfAyahs:counts[i],revelationType:''}});
+ }
+ function loadList(){
+  if(surahs.length){renderList(surahs);return}
+  /* Render the local index immediately; network success only enriches its Arabic metadata. */
+  surahs=localSurahIndex();
+  renderList(surahs);
+  request(api+'/surah').then(function(data){if(data&&data.length){surahs=data;renderList(surahs)}}).catch(function(){var note=document.createElement('div');note.className='nq-status';note.style.marginTop='10px';note.innerHTML='সূরার তালিকা প্রস্তুত। আয়াত, অনুবাদ ও অডিওর জন্য ইন্টারনেট সংযোগ প্রয়োজন। <button class="nq-primary" type="button" onclick="window.nqReloadList()">আবার সংযোগ</button>';$('nq-list').appendChild(note)})
+ }
+ function renderList(items){
+  if(!items.length){$('nq-list').innerHTML='<div class="nq-status">কোনো সূরা পাওয়া যায়নি।</div>';return}
+  $('nq-list').innerHTML=items.map(function(s){var bnName=bnSurahNames[s.number-1]||s.englishName;return '<button type="button" class="nq-surah" onclick="window.nqOpenSurah('+s.number+')"><span class="nq-num">'+bnDigits(s.number)+'</span><span class="nq-arname" lang="ar">'+esc(s.name)+'</span><span class="nq-surah-main"><b>'+esc(bnName)+'</b><small>'+(s.number===1?'সূচনা':(bnName+' সূরা'))+' · '+bnDigits(s.numberOfAyahs)+' আয়াত</small><em>'+(s.revelationType==='Meccan'?'মাক্কী':(s.revelationType==='Medinan'?'মাদানী':''))+'</em></span><span class="nq-chevron">›</span></button>'}).join('')
+ }
+ window.nqFilterSurahs=function(){
+  var raw=($('nq-query').value||'').trim(),q=raw.toLowerCase();
+  if(!q){renderList(surahs);return}
+  var qLatin=q.replace(/[০-৯]/g,function(d){return '০১২৩৪৫৬৭৮৯'.indexOf(d)});var found=surahs.filter(function(s){return String(s.number)===qLatin||s.englishName.toLowerCase().indexOf(q)>-1||(bnSurahNames[s.number-1]||'').toLowerCase().indexOf(q)>-1||(s.name||'').indexOf(raw)>-1});
+  if(found.length){renderList(found);return}
+  $('nq-list').innerHTML='<div class="nq-status">'+(($('nq-search-mode').value==='ar')?'আরবি আয়াত':'বাংলা অনুবাদ')+' অনুসন্ধান হচ্ছে…</div>';
+  var edition=$('nq-search-mode').value==='ar'?'quran-uthmani':'bn';
+  request(api+'/search/'+encodeURIComponent(raw)+'/all/'+edition).then(function(d){
+   var matches=d.matches||[];
+   if(!matches.length){$('nq-list').innerHTML='<div class="nq-status">কোনো মিল পাওয়া যায়নি। বানান পরিবর্তন করে আবার চেষ্টা করুন।</div>';return}
+   $('nq-list').innerHTML=matches.slice(0,50).map(function(m){var topicText=String(m.text||m.numberInSurah).replace(/[\u200B-\u200F\uFEFF]/g,'').replace(/\s+/g,' ').trim();return '<button type="button" class="nq-surah nq-topic-result" onclick="window.nqOpenSurah('+m.surah.number+','+m.numberInSurah+')"><span class="nq-num">'+bnDigits(m.surah.number)+':'+bnDigits(m.numberInSurah)+'</span><span class="nq-surah-main"><b>'+esc(m.surah.englishName)+'</b><small class="nq-topic-arabic" lang="ar" dir="rtl">'+esc(topicText)+'</small></span></button>'}).join('');
+  }).catch(function(){ $('nq-list').innerHTML='<div class="nq-status">অনুসন্ধান সেবা এই মুহূর্তে সাড়া দিচ্ছে না। ইন্টারনেট সংযোগ পরীক্ষা করুন অথবা উন্নত অনুসন্ধান ব্যবহার করুন।</div>'});
+ };
+ window.nqReloadList=function(){surahs=[];loadList()};
+ window.nqShowHome=function(){if(audioEl){audioEl.pause();audioEl=null}var reader=$('nq-reader'),home=$('nq-home');reader.hidden=true;reader.style.display='none';home.hidden=false;home.style.display='block';currentSurah=0;currentData=null;root.scrollTop=0};
+ window.nqOpenSurah=function(id,targetAyah){
+  /* V377: ensure metadata exists even when the visual 114-surah fallback list was rendered first. */if(!surahs||!surahs.length)surahs=localSurahIndex();var meta=surahs.filter(function(s){return Number(s.number)===Number(id)})[0]||localSurahIndex()[Number(id)-1];if(!meta)return;
+  currentSurah=id;var home=$('nq-home'),reader=$('nq-reader');home.hidden=true;home.style.display='none';reader.hidden=false;reader.style.display='block';$('nq-reader-status').textContent='লোড হচ্ছে…';$('nq-reader-content').innerHTML='<div class="nq-status">আয়াত ও অনুবাদ আনা হচ্ছে…</div>';root.scrollTop=0;
+  Promise.all([request(api+'/surah/'+id+'/quran-uthmani'),request(api+'/surah/'+id+'/'+((localStorage.getItem('nq-translation-edition'))||'bn.bengali'))]).then(function(data){
+   if(currentSurah!==id)return;
+   var ar=data[0],bn=data[1];currentData={ar:ar,bn:bn};
+   var title='<div class="nq-surah-title"><span class="nq-arname">'+esc(ar.name)+'</span><b>'+esc(ar.englishName)+' · '+(meta.revelationType==='Meccan'?'মাক্কী':'মাদানী')+'</b><span>'+bnDigits(ar.numberOfAyahs)+' আয়াত</span></div>';
+   var verses=ar.ayahs.map(function(a,i){var tr=bn.ayahs[i]||{};return '<article id="nq-ayah-'+a.number+'" class="nq-card"><div class="nq-ayah-top"><span>আয়াত '+bnDigits(a.numberInSurah)+'</span><span>পারা '+bnDigits(a.juz||'')+'</span></div><div class="nq-arabic" lang="ar">'+esc(a.text)+'</div><div class="nq-translation">'+esc(tr.text||'বাংলা অনুবাদ পাওয়া যায়নি')+'</div><div class="nq-actions"><button type="button" onclick="window.nqPlayAyah('+a.number+',this)">▶ তিলাওয়াত</button><button type="button" onclick="window.nqWordByWord('+id+','+a.numberInSurah+','+a.number+')">শব্দে শব্দে</button><button type="button" onclick="window.nqSpeakTranslation('+a.number+')">অনুবাদ শুনুন</button><button type="button" onclick="window.nqStopTranslation()">■ অনুবাদ বন্ধ</button><button type="button" onclick="window.nqOpenTafsir('+id+','+a.numberInSurah+')">তাফসির</button><button type="button" onclick="window.nqToggleBookmark('+id+','+a.numberInSurah+',this)">☆ বুকমার্ক</button><button type="button" onclick="window.nqShareAyah('+id+','+a.numberInSurah+')">শেয়ার</button></div><div id="nq-audio-'+a.number+'"></div><div id="nq-words-'+a.number+'"></div></article>'}).join('');
+   $('nq-reader-content').innerHTML=title+verses;$('nq-reader-status').textContent='';if(targetAyah){var hit=ar.ayahs.filter(function(v){return v.numberInSurah===targetAyah})[0];if(hit){var node=$('nq-ayah-'+hit.number);if(node)setTimeout(function(){node.scrollIntoView({behavior:'smooth',block:'start'})},120)}}
+  }).catch(function(){if(currentSurah===id){$('nq-reader-status').textContent='';$('nq-reader-content').innerHTML='<div class="nq-status">এই মুহূর্তে সূরাটি লোড করা যাচ্ছে না।<br/><button class="nq-primary" type="button" onclick="window.nqOpenSurah('+id+')">আবার চেষ্টা করুন</button></div>'}})
+ };
+ window.nqPlayAyah=function(globalNo,btn){
+  var slot=$('nq-audio-'+globalNo);if(!slot)return;
+  if(audioEl){audioEl.pause();audioEl=null}
+  slot.innerHTML='<span class="nq-sub">তিলাওয়াত লোড হচ্ছে…</span>';
+  request(api+'/ayah/'+globalNo+'/'+((localStorage.getItem('nq-qari'))||'ar.alafasy')).then(function(d){if(!d.audio)throw new Error('No audio');slot.innerHTML='<audio controls autoplay preload="none" src="'+esc(d.audio)+'"></audio>';audioEl=slot.querySelector('audio');if(audioEl){audioEl.loop=$('nq-repeat')&&$('nq-repeat').checked;audioEl.onended=function(){if($('nq-auto-next')&&$('nq-auto-next').checked&&currentData&&currentData.ar&&currentData.ar.ayahs){var ix=currentData.ar.ayahs.findIndex(function(v){return v.number===globalNo});var nx=currentData.ar.ayahs[ix+1];if(nx)window.nqPlayAyah(nx.number)}};audioEl.play().catch(function(){})}}).catch(function(){slot.textContent='তিলাওয়াত লোড করা যায়নি। আবার চেষ্টা করুন।'})
+ };
+ window.nqWordByWord=function(s,a,globalNo){
+  var ayahData=null;
+  if(currentData && currentData.ar && Array.isArray(currentData.ar.ayahs)){
+   ayahData=currentData.ar.ayahs.filter(function(x){return (globalNo && Number(x.number)===Number(globalNo)) || Number(x.numberInSurah)===Number(a)})[0] || null;
+   if(!globalNo && ayahData)globalNo=ayahData.number;
+  }
+  var slot=globalNo && $('nq-words-'+globalNo);if(!slot)return;
+  slot.innerHTML='<div class="nq-status">শব্দে শব্দে বাংলা অর্থ লোড হচ্ছে…</div>';
+  var url='https://api.quran.com/api/v4/verses/by_key/'+encodeURIComponent(s+':'+a)+'?words=true&language=bn&word_fields=text_uthmani,text_imlaei,position,char_type_name';
+  fetch(url,{mode:'cors',credentials:'omit',headers:{'Accept':'application/json'}})
+   .then(function(r){if(!r.ok)throw new Error('word data unavailable ('+r.status+')');return r.json()})
+   .then(function(j){
+    var verse=j.verse || (j.verses && j.verses[0]) || (j.data && (j.data.verse || j.data.verses && j.data.verses[0]));
+    var words=verse && Array.isArray(verse.words) ? verse.words.filter(function(w){return w.char_type_name!=='end'}) : [];
+    words.sort(function(x,y){return Number(x.position||0)-Number(y.position||0)});
+    var arabicWords=ayahData && ayahData.text ? String(ayahData.text).trim().split(/\s+/).filter(Boolean) : [];
+    if(!words.length && !arabicWords.length)throw new Error('no word data');
+    var total=Math.max(words.length,arabicWords.length),rows='';
+    for(var i=0;i<total;i++){
+     var w=words[i]||{},tr=w.translation||{};
+     var meaning=(tr.text||tr.name)||(w.translations && w.translations[0] && (w.translations[0].text||w.translations[0].name))||w.meaning||'';
+     var arabic=arabicWords[i] || w.text_uthmani || w.text_imlaei || w.text || '';
+     if(!arabic)continue;
+     rows+='<div class="nq-word" style="box-sizing:border-box;min-width:105px;max-width:100%;padding:10px 12px;border:1px solid #dce6df;border-radius:12px;background:#f8fbf8;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px"><div class="nq-wordar" dir="rtl" lang="ar" style="font-size:27px;line-height:1.8;font-family:inherit;color:#245b49;white-space:normal">'+esc(arabic)+'</div><div class="nq-wordbn" lang="bn" style="font-size:15px;line-height:1.6;color:#52645b">'+esc(meaning||'শব্দার্থ পাওয়া যায়নি')+'</div></div>';
+    }
+    if(!rows)throw new Error('no renderable words');
+    slot.innerHTML='<div class="nq-status" style="padding:14px"><b>শব্দে শব্দে বাংলা অর্থ</b><div class="nq-wordgrid" style="display:flex;flex-wrap:wrap;direction:rtl;justify-content:center;align-items:stretch;gap:8px;margin-top:12px">'+rows+'</div><small style="display:block;margin-top:12px">শব্দার্থের উৎস: Quran.com</small></div>';
+   })
+   .catch(function(){
+    if(ayahData && ayahData.text){
+     var fallback=String(ayahData.text).trim().split(/\s+/).filter(Boolean).map(function(word){return '<div class="nq-word" style="padding:10px;border:1px solid #dce6df;border-radius:10px;text-align:center"><div dir="rtl" lang="ar" style="font-size:27px;line-height:1.8;color:#245b49">'+esc(word)+'</div><div style="font-size:14px;color:#777">বাংলা শব্দার্থ সাময়িকভাবে পাওয়া যায়নি</div></div>'}).join('');
+     slot.innerHTML='<div class="nq-status"><b>শব্দে শব্দে বাংলা অর্থ</b><div style="display:flex;flex-wrap:wrap;direction:rtl;justify-content:center;gap:8px;margin-top:12px">'+fallback+'</div><p>বাংলা শব্দার্থের তথ্য এই মুহূর্তে পাওয়া যাচ্ছে না। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।</p><button type="button" onclick="window.nqWordByWord('+Number(s)+','+Number(a)+','+Number(globalNo)+')">আবার চেষ্টা করুন</button></div>';
+    }else{
+     slot.innerHTML='<div class="nq-status">এই মুহূর্তে শব্দে শব্দে বাংলা অর্থের তথ্য পাওয়া যাচ্ছে না।<br/><button type="button" onclick="window.nqWordByWord('+Number(s)+','+Number(a)+','+Number(globalNo)+')">আবার চেষ্টা করুন</button></div>';
+    }
+   });
+ };
+ window.nqSpeakTranslation=function(globalNo){var v=currentData&&currentData.bn&&currentData.bn.ayahs?currentData.bn.ayahs.filter(function(x){return x.number===globalNo})[0]:null;if(!v||!v.text)return;if(!('speechSynthesis' in window)){alert('এই ব্রাউজারে বাংলা অনুবাদ পড়ে শোনানোর সুবিধা নেই।');return}window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(v.text);u.lang='bn-BD';u.rate=0.9;window.speechSynthesis.speak(u)};
+ window.nqStopTranslation=function(){if(window.speechSynthesis){window.speechSynthesis.cancel();window.speechSynthesis.resume()}};
+ window.nqOpenTafsir=function(s,a){
+  var key=String(s)+':'+String(a), panel=$('nq-tafsir-panel');
+  if(!panel){
+   panel=document.createElement('section');panel.id='nq-tafsir-panel';
+   panel.style.cssText='position:fixed;inset:0;z-index:2147483646;background:#f4f7f3;display:flex;flex-direction:column;';
+   panel.innerHTML='<header style="height:58px;flex:0 0 58px;display:flex;align-items:center;gap:12px;padding:0 14px;background:linear-gradient(110deg,#064c32,#08734a);color:#fff;box-shadow:0 2px 12px #0002"><button type="button" id="nq-tafsir-back" aria-label="ফিরে যান" style="border:1px solid #ffffff55;background:#ffffff1c;color:#fff;border-radius:10px;width:40px;height:40px;font-size:24px">‹</button><b style="font-size:17px">তাফসীর পাঠ</b><span style="margin-left:auto;font-size:12px;opacity:.9">আয়াত '+String(a)+'</span></header><div id="nq-tafsir-loading" style="padding:18px;text-align:center;color:#365846">তাফসীর পৃষ্ঠা লোড হচ্ছে…</div><iframe id="nq-tafsir-frame" title="কুরআনের তাফসীর" style="border:0;display:block;flex:1;width:100%;background:#fff" referrerpolicy="strict-origin-when-cross-origin"></iframe><div style="padding:8px 12px;text-align:center;background:#fff;color:#718078;font-size:11px">তাফসীরের পাঠ্য ও কপিরাইট সংশ্লিষ্ট প্রকাশকের</div>';
+   document.body.appendChild(panel);
+   $('nq-tafsir-back').addEventListener('click',function(){panel.remove()});
+   $('nq-tafsir-frame').addEventListener('load',function(){$('nq-tafsir-loading').style.display='none'});
+  }
+  $('nq-tafsir-loading').style.display='block';$('nq-tafsir-loading').textContent='তাফসীর পৃষ্ঠা লোড হচ্ছে…';
+  $('nq-tafsir-frame').src='https://quran.com/bn/'+encodeURIComponent(s)+'/'+encodeURIComponent(a)+'/tafsirs';
+ };
+ window.nqShareAyah=function(s,a){var url='https://quran.com/bn/'+s+'/'+a; if(navigator.share){navigator.share({title:'আল-কুরআন',url:url}).catch(function(){})}else if(navigator.clipboard){navigator.clipboard.writeText(url).then(function(){alert('আয়াতের লিংক কপি হয়েছে')}).catch(function(){prompt('লিংক কপি করুন',url)})}else{prompt('লিংক কপি করুন',url)}};
+ var nqAutoTimer=null,nqFontSize=29;
+ window.nqAdjustFont=function(delta){nqFontSize=Math.max(20,Math.min(42,nqFontSize+delta*2));var nodes=root.querySelectorAll('.nq-arabic');for(var i=0;i<nodes.length;i++)nodes[i].style.fontSize=nqFontSize+'px'};
+ window.nqToggleTranslation=function(btn){var nodes=root.querySelectorAll('.nq-translation');var hide=btn.getAttribute('data-hidden')!=='1';for(var i=0;i<nodes.length;i++)nodes[i].style.display=hide?'none':'';btn.setAttribute('data-hidden',hide?'1':'0');btn.lastChild.textContent=hide?'অনুবাদ দেখুন':'অনুবাদ মোড'};
+ window.nqToggleAutoScroll=function(btn){if(nqAutoTimer){clearInterval(nqAutoTimer);nqAutoTimer=null;btn.classList.remove('active');btn.lastChild.textContent='অটো স্ক্রল';return}nqAutoTimer=setInterval(function(){if(root.classList.contains('nq-open'))root.scrollBy({top:1,behavior:'auto'});else{clearInterval(nqAutoTimer);nqAutoTimer=null}},45);btn.classList.add('active');btn.lastChild.textContent='স্ক্রল বন্ধ'};
+ window.nqOpenSettings=function(){var p=$('nq-settings-panel');if(!p)return;p.hidden=false;try{var q=localStorage.getItem('nq-qari')||'ar.alafasy',t=localStorage.getItem('nq-translation-edition')||'bn.bengali';$('nq-qari').value=q;$('nq-translation-edition').value=t;$('nq-font-range').value=nqFontSize;$('nq-font-value').textContent=bnDigits(nqFontSize)+' px';$('nq-bn-font-range').value=localStorage.getItem('nq-bn-font')||16;$('nq-bn-font-value').textContent=bnDigits($('nq-bn-font-range').value)+' px';$('nq-dark-mode').checked=localStorage.getItem('nq-dark')==='1';$('nq-auto-next').checked=localStorage.getItem('nq-auto-next')==='1';$('nq-repeat').checked=localStorage.getItem('nq-repeat')==='1';$('nq-tajweed').checked=root.classList.contains('nq-tajweed')}catch(e){}};
+ window.nqCloseSettings=function(){var p=$('nq-settings-panel');if(p)p.hidden=true};
+ window.nqSetFont=function(v){nqFontSize=Number(v)||29;root.style.setProperty('--nq-ar-size',nqFontSize+'px');var nodes=root.querySelectorAll('.nq-arabic');for(var i=0;i<nodes.length;i++)nodes[i].style.fontSize=nqFontSize+'px';$('nq-font-value').textContent=bnDigits(nqFontSize)+' px';localStorage.setItem('nq-font-size',String(nqFontSize))};
+ window.nqSetBnFont=function(v){var n=Number(v)||16;root.style.setProperty('--nq-bn-size',n+'px');var nodes=root.querySelectorAll('.nq-translation');for(var i=0;i<nodes.length;i++)nodes[i].style.fontSize=n+'px';$('nq-bn-font-value').textContent=bnDigits(n)+' px';localStorage.setItem('nq-bn-font',String(n))};
+ window.nqSaveSettings=function(){localStorage.setItem('nq-qari',$('nq-qari').value);localStorage.setItem('nq-translation-edition',$('nq-translation-edition').value);localStorage.setItem('nq-auto-next',$('nq-auto-next').checked?'1':'0');localStorage.setItem('nq-repeat',$('nq-repeat').checked?'1':'0')};
+ window.nqApplySettings=function(){root.classList.toggle('nq-dark',$('nq-dark-mode').checked);localStorage.setItem('nq-dark',$('nq-dark-mode').checked?'1':'0');window.nqSaveSettings()};
+ window.nqToggleTajweed=function(btn){var on=!root.classList.contains('nq-tajweed');root.classList.toggle('nq-tajweed',on);var c=$('nq-tajweed');if(c)c.checked=on;if(btn&&btn.classList)btn.classList.toggle('active',on)};
+ window.nqPlayCurrentSurah=function(){if(!currentSurah){alert('প্রথমে একটি সূরা খুলুন।');return}var q=localStorage.getItem('nq-qari')||'ar.alafasy';var old=$('nq-surah-audio');if(old){old.play().catch(function(){});return}var slot=document.createElement('div');slot.id='nq-surah-audio';slot.className='nq-status';slot.textContent='সূরার তিলাওয়াত লোড হচ্ছে…';$('nq-reader-content').insertBefore(slot,$('nq-reader-content').firstChild);request(api+'/surah/'+currentSurah+'/'+q).then(function(d){if(!d.audio)throw new Error('audio unavailable');slot.innerHTML='<audio controls autoplay src="'+esc(d.audio)+'"></audio>';audioEl=slot.querySelector('audio');if(audioEl){audioEl.loop=$('nq-repeat').checked;audioEl.play().catch(function(){})}}).catch(function(){slot.textContent='এই সূরার অডিও এখন পাওয়া যাচ্ছে না।'})};
+ function nqBookmarks(){try{return JSON.parse(localStorage.getItem('nq-bookmarks')||'[]')}catch(e){return []}}
+ window.nqToggleBookmark=function(s,a,btn){var list=nqBookmarks(),key=String(s)+':'+String(a),i=list.indexOf(key);if(i>=0)list.splice(i,1);else list.push(key);localStorage.setItem('nq-bookmarks',JSON.stringify(list));if(btn){btn.textContent=i>=0?'☆ বুকমার্ক':'★ সংরক্ষিত';btn.classList.toggle('active',i<0)}};
+ window.nqShowBookmarks=function(){ $('nq-reader').hidden=true;$('nq-home').hidden=false;$('nq-list').innerHTML='';var list=nqBookmarks();if(!list.length){$('nq-list').innerHTML='<div class="nq-status">এখনো কোনো আয়াত বুকমার্ক করা হয়নি। আয়াতের পাশে ☆ বুকমার্ক চাপুন।</div>';return} $('nq-list').innerHTML=list.map(function(k){var p=k.split(':');var n=Number(p[0]),a=Number(p[1]);return '<button class="nq-surah" type="button" onclick="window.nqOpenSurah('+n+','+a+')"><span class="nq-num">★</span><span class="nq-surah-main"><b>'+esc(bnSurahNames[n-1]||('সূরা '+n))+'</b><small>আয়াত '+bnDigits(a)+' · বুকমার্ক</small></span><span class="nq-chevron">›</span></button>'}).join('')};
+ window.nqShowJuzList=function(){ $('nq-reader').hidden=true;$('nq-home').hidden=false;$('nq-list').innerHTML=Array.from({length:30},function(_,i){var n=i+1;return '<button class="nq-surah" type="button" onclick="window.nqOpenJuz('+n+')"><span class="nq-num">'+bnDigits(n)+'</span><span class="nq-surah-main"><b>পারা '+bnDigits(n)+'</b><small>কুরআনের '+bnDigits(n)+' নম্বর পারা</small></span><span class="nq-chevron">›</span></button>'}).join('')};
+ window.nqOpenJuz=function(n){var paraUrl='https://drive.google.com/uc?export=view&id=1nT0VuIJVOaAuFCmYOGy3htSuWePAwLvI';window.location.href=paraUrl;};
+ window.nqShowTopics=function(){var topics=[['ঈমান ও আকিদা','الإيمان'],['নামাজ','الصلاة'],['রোজা','الصيام'],['যাকাত','الزكاة'],['হজ','الحج'],['দোয়া ও যিকির','الدعاء'],['তওবা ও ক্ষমা','التوبة'],['জান্নাত ও জাহান্নাম','الجنة']];$('nq-reader').hidden=true;$('nq-home').hidden=false;$('nq-list').innerHTML=topics.map(function(t){return '<button class="nq-surah" type="button" onclick="window.nqSearchTopic(\''+t[1]+'\')"><span class="nq-num">۞</span><span class="nq-surah-main"><b>'+t[0]+'</b><small>বিষয়ভিত্তিক আয়াত অনুসন্ধান</small></span><span class="nq-chevron">›</span></button>'}).join('')};
+ window.nqSearchTopic=function(term){$('nq-search-mode').value='ar';$('nq-query').value=term;window.nqFilterSurahs()};
+ window.openNazQuran=function(){
+  /* V242: explicitly reveal the reader; do not rely on theme CSS alone. */
+  root.style.setProperty('display','block','important');
+  root.style.setProperty('visibility','visible','important');
+  root.classList.add('nq-open');root.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';root.scrollTop=0;
+  try{if(localStorage.getItem('nq-dark')==='1')root.classList.add('nq-dark');var fs=Number(localStorage.getItem('nq-font-size'));if(fs)nqFontSize=fs;root.style.setProperty('--nq-ar-size',nqFontSize+'px');var bfs=Number(localStorage.getItem('nq-bn-font'))||16;root.style.setProperty('--nq-bn-size',bfs+'px');if(!surahs.length)surahs=localSurahIndex();if(typeof window.nqReloadList==='function'){window.nqReloadList()}else{loadList()}}catch(err){var list=$('nq-list');if(list)list.innerHTML='<div class="nq-status">কুরআনের সূচি চালু করা যায়নি। পৃষ্ঠাটি রিফ্রেশ করে আবার চেষ্টা করুন।</div>'}
+ };
+ window.closeNazQuran=function(){if(nqAutoTimer){clearInterval(nqAutoTimer);nqAutoTimer=null}root.classList.remove('nq-open');root.setAttribute('aria-hidden','true');root.style.removeProperty('display');root.style.removeProperty('visibility');document.body.style.overflow='';if(audioEl){audioEl.pause();audioEl=null}if(window.speechSynthesis)window.speechSynthesis.cancel()};
+ /* V223: capture clicks from the home and footer Quran links, including links inserted later by Blogger. */
+ function interceptQuranLink(e){
+  var target=e.target, link=target&&target.closest?target.closest('a'):null;
+  if(!link || root.contains(link))return;
+  var label=(link.textContent||'').replace(/[\s\u200c\u200d\u0640]+/g,'').trim();
+  var href=(link.getAttribute('href')||'').toLowerCase();
+  var isQuran=link.getAttribute('data-open-own-quran')==='true' || href==='#naz-own-quran' || label==='কুরআন' || label==='কোরআন' || label==='আলকুরআন' || /muslimbangla\.com\/quran|quran\.com\/(bn\/)?quran(?:[/?#]|$)/i.test(href);
+  if(isQuran){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();window.openNazQuran();}
+ }
+ window.addEventListener('click',interceptQuranLink,true);
+ document.addEventListener('click',interceptQuranLink,true);
+ var search=$('nq-query');if(search)search.addEventListener('keydown',function(e){if(e.key==='Enter')window.nqFilterSurahs()});
+ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&root.classList.contains('nq-open'))window.closeNazQuran()});
+})();
+</script>
+<script type="text/javascript">
+(function(){
+  if(window.__nazQuranClickFallback235) return;
+  window.__nazQuranClickFallback235 = true;
+  document.addEventListener('click', function(e){
+    var a = e.target && e.target.closest ? e.target.closest('a') : null;
+    if(!a) return;
+    var label = (a.textContent || '').replace(/[\s\u200c\u200d\u0640]+/g,'').trim();
+    var href = (a.getAttribute('href') || '').toLowerCase();
+    var isQuran = a.getAttribute('data-open-own-quran') === 'true' || label === 'কুরআন' || label === 'কোরআন' || /muslimbangla\.com\/quran/.test(href);
+    if(!isQuran) return;
+    if(typeof window.openNazQuran === 'function'){
+      e.preventDefault();
+      window.openNazQuran();
+    }
+    // If the reader script is unavailable, allow the official Quran URL in href to open.
+  }, true);
+})();
+</script>
+<script type="text/javascript">
+(function(){
+  if(window.__nazQuranInternalOnly237) return;
+  window.__nazQuranInternalOnly237 = true;
+  function openLocalQuran(e){
+    var a=e.target && e.target.closest ? e.target.closest('a') : null;
+    if(!a) return;
+    var label=(a.textContent||'').replace(/[\s\u200c\u200d\u0640]+/g,'').trim();
+    var href=(a.getAttribute('href')||'').toLowerCase();
+    var isQuran=a.getAttribute('data-open-own-quran')==='true' ||
+      label==='কুরআন' || label==='কোরআন' || label==='আলকুরআন' ||
+      href.indexOf('muslimbangla.com/quran')!==-1 ||
+      href.indexOf('quran.com')!==-1 ||
+      href==='#naz-own-quran';
+    if(!isQuran || !window.openNazQuran) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    window.openNazQuran();
+  }
+  document.addEventListener('click',openLocalQuran,true);
+})();
+</script>
+<script type="text/javascript">
+(function(){
+ 'use strict';
+ var names=['আল-ফাতিহা', 'আল-বাকারা', 'আলে ইমরান', 'আন-নিসা', 'আল-মায়িদাহ', 'আল-আনআম', 'আল-আরাফ', 'আল-আনফাল', 'আত-তাওবাহ', 'ইউনুস', 'হুদ', 'ইউসুফ', 'আর-রাদ', 'ইবরাহিম', 'আল-হিজর', 'আন-নাহল', 'আল-ইসরা', 'আল-কাহফ', 'মারইয়াম', 'ত্ব-হা', 'আল-আম্বিয়া', 'আল-হজ্জ', 'আল-মুমিনুন', 'আন-নূর', 'আল-ফুরকান', 'আশ-শুআরা', 'আন-নামল', 'আল-কাসাস', 'আল-আনকাবুত', 'আর-রূম', 'লুকমান', 'আস-সাজদাহ', 'আল-আহযাব', 'সাবা', 'ফাতির', 'ইয়াসিন', 'আস-সাফফাত', 'সাদ', 'আয-যুমার', 'গাফির', 'ফুসসিলাত', 'আশ-শূরা', 'আয-যুখরুফ', 'আদ-দুখান', 'আল-জাসিয়াহ', 'আল-আহকাফ', 'মুহাম্মদ', 'আল-ফাতহ', 'আল-হুজুরাত', 'কাফ', 'আয-যারিয়াত', 'আত-তূর', 'আন-নাজম', 'আল-কামার', 'আর-রহমান', 'আল-ওয়াকিয়াহ', 'আল-হাদিদ', 'আল-মুজাদালাহ', 'আল-হাশর', 'আল-মুমতাহিনাহ', 'আস-সাফ', 'আল-জুমুআহ', 'আল-মুনাফিকুন', 'আত-তাগাবুন', 'আত-তালাক', 'আত-তাহরিম', 'আল-মুলক', 'আল-কলম', 'আল-হাক্কাহ', 'আল-মাআরিজ', 'নূহ', 'আল-জিন', 'আল-মুযযাম্মিল', 'আল-মুদ্দাসসির', 'আল-কিয়ামাহ', 'আল-ইনসান', 'আল-মুরসালাত', 'আন-নাবা', 'আন-নাযিআত', 'আবাসা', 'আত-তাকভির', 'আল-ইনফিতার', 'আল-মুতাফফিফিন', 'আল-ইনশিকাক', 'আল-বুরুজ', 'আত-তারিক', 'আল-আলা', 'আল-গাশিয়াহ', 'আল-ফাজর', 'আল-বালাদ', 'আশ-শামস', 'আল-লাইল', 'আদ-দুহা', 'আশ-শারহ', 'আত-তিন', 'আল-আলাক', 'আল-কদর', 'আল-বাইয়্যিনাহ', 'আয-যিলযাল', 'আল-আদিয়াত', 'আল-কারিআহ', 'আত-তাকাসুর', 'আল-আসর', 'আল-হুমাযাহ', 'আল-ফিল', 'কুরাইশ', 'আল-মাউন', 'আল-কাউসার', 'আল-কাফিরুন', 'আন-নাসর', 'আল-মাসাদ', 'আল-ইখলাস', 'আল-ফালাক', 'আন-নাস'], counts=[7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+ function byId(id){return document.getElementById(id)}
+ function openReader(){
+  var root=byId('naz-own-quran'); if(!root)return false;
+  root.classList.add('nq-open'); root.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+  var list=byId('nq-list');
+  if(list && !list.querySelector('.nq-surah')){
+   list.innerHTML=names.map(function(n,i){var num=i+1;return '<button type="button" class="nq-surah" data-v241-surah="'+num+'"><span class="nq-num">'+('০১২৩৪৫৬৭৮৯'.split('')[Math.floor(num/100)]||'')+(''+num).replace(/\d/g,function(d){return '০১২৩৪৫৬৭৮৯'[+d]})+'</span><span class="nq-surah-main"><b>'+n+'</b><small>'+(num===1?'সূচনা':n+' সূরা')+' · '+(''+counts[i]).replace(/\d/g,function(d){return '০১২৩৪৫৬৭৮৯'[+d]})+' আয়াত</small></span><span class="nq-chevron">›</span></button>'}).join('');
+  }
+  return true;
+ }
+ document.addEventListener('click',function(e){
+  var link=e.target&&e.target.closest?e.target.closest('a'):null;
+  if(!link)return;
+  var label=(link.textContent||'').replace(/[\s\u200c\u200d\u0640]+/g,'').trim();
+  if(link.getAttribute('data-open-own-quran')==='true' || link.getAttribute('href')==='#naz-own-quran' || label==='কুরআন' || label==='কোরআন'){
+   if(openReader()){e.preventDefault();e.stopPropagation();}
+  }
+ },true);
+ document.addEventListener('click',function(e){
+  var b=e.target&&e.target.closest?e.target.closest('[data-v241-surah]'):null;
+  if(!b)return;
+  var n=Number(b.getAttribute('data-v241-surah'));
+  if(typeof window.nqOpenSurah==='function'){window.nqOpenSurah(n);return;}
+  var status=byId('nq-list'); if(status)status.insertAdjacentHTML('beforeend','<div class="nq-status">সূরার পাঠক চালু করা যায়নি। পৃষ্ঠাটি একবার রিফ্রেশ করে আবার চেষ্টা করুন।</div>');
+ });
+})();
+</script>
+<script type="text/javascript">
+(function(){
+ 'use strict';
+ var names=['আল-ফাতিহা', 'আল-বাকারা', 'আলে ইমরান', 'আন-নিসা', 'আল-মায়িদাহ', 'আল-আনআম', 'আল-আরাফ', 'আল-আনফাল', 'আত-তাওবাহ', 'ইউনুস', 'হুদ', 'ইউসুফ', 'আর-রাদ', 'ইবরাহিম', 'আল-হিজর', 'আন-নাহল', 'আল-ইসরা', 'আল-কাহফ', 'মারইয়াম', 'ত্ব-হা', 'আল-আম্বিয়া', 'আল-হজ্জ', 'আল-মুমিনুন', 'আন-নূর', 'আল-ফুরকান', 'আশ-শুআরা', 'আন-নামল', 'আল-কাসাস', 'আল-আনকাবুত', 'আর-রূম', 'লুকমান', 'আস-সাজদাহ', 'আল-আহযাব', 'সাবা', 'ফাতির', 'ইয়াসিন', 'আস-সাফফাত', 'সাদ', 'আয-যুমার', 'গাফির', 'ফুসসিলাত', 'আশ-শূরা', 'আয-যুখরুফ', 'আদ-দুখান', 'আল-জাসিয়াহ', 'আল-আহকাফ', 'মুহাম্মদ', 'আল-ফাতহ', 'আল-হুজুরাত', 'কাফ', 'আয-যারিয়াত', 'আত-তূর', 'আন-নাজম', 'আল-কামার', 'আর-রহমান', 'আল-ওয়াকিয়াহ', 'আল-হাদিদ', 'আল-মুজাদালাহ', 'আল-হাশর', 'আল-মুমতাহিনাহ', 'আস-সাফ', 'আল-জুমুআহ', 'আল-মুনাফিকুন', 'আত-তাগাবুন', 'আত-তালাক', 'আত-তাহরিম', 'আল-মুলক', 'আল-কলম', 'আল-হাক্কাহ', 'আল-মাআরিজ', 'নূহ', 'আল-জিন', 'আল-মুযযাম্মিল', 'আল-মুদ্দাসসির', 'আল-কিয়ামাহ', 'আল-ইনসান', 'আল-মুরসালাত', 'আন-নাবা', 'আন-নাযিআত', 'আবাসা', 'আত-তাকভির', 'আল-ইনফিতার', 'আল-মুতাফফিফিন', 'আল-ইনশিকাক', 'আল-বুরুজ', 'আত-তারিক', 'আল-আলা', 'আল-গাশিয়াহ', 'আল-ফাজর', 'আল-বালাদ', 'আশ-শামস', 'আল-লাইল', 'আদ-দুহা', 'আশ-শারহ', 'আত-তিন', 'আল-আলাক', 'আল-কদর', 'আল-বাইয়্যিনাহ', 'আয-যিলযাল', 'আল-আদিয়াত', 'আল-কারিআহ', 'আত-তাকাসুর', 'আল-আসর', 'আল-হুমাযাহ', 'আল-ফিল', 'কুরাইশ', 'আল-মাউন', 'আল-কাউসার', 'আল-কাফিরুন', 'আন-নাসর', 'আল-মাসাদ', 'আল-ইখলাস', 'আল-ফালাক', 'আন-নাস'], counts=[7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+ var root=document.getElementById('naz-own-quran');
+ if(!root) return;
+ function digits(n){return String(n).replace(/\d/g,function(d){return '০১২৩৪৫৬৭৮৯'[+d]})}
+ function showIndex(){
+   var list=document.getElementById('nq-list');
+   if(!list) return;
+   if(list.querySelector('.nq-surah[data-v243]')) return;
+   list.innerHTML=names.map(function(name,i){
+     var n=i+1;
+     return '<button type="button" class="nq-surah" data-v243="'+n+'"><span class="nq-num">'+digits(n)+'</span><span class="nq-surah-main"><b>'+name+'</b><small>'+digits(counts[i])+' আয়াত</small></span><span class="nq-chevron">›</span></button>';
+   }).join('');
+ }
+ function open(){
+   root.style.setProperty('display','block','important');
+   root.style.setProperty('visibility','visible','important');
+   root.classList.add('nq-open');
+   root.setAttribute('aria-hidden','false');
+   document.body.style.overflow='hidden';
+   showIndex();
+ }
+ document.addEventListener('click',function(e){
+   var b=e.target&&e.target.closest?e.target.closest('[data-v243]'):null;
+   if(b && root.contains(b)){
+     e.preventDefault();
+     var n=Number(b.getAttribute('data-v243'));
+     if(typeof window.nqOpenSurah==='function'){
+       window.nqOpenSurah(n);
+     } else {
+       var list=document.getElementById('nq-list');
+       if(list) list.innerHTML='<div class="nq-status">কুরআন পাঠক চালু হচ্ছে… অনুগ্রহ করে পৃষ্ঠা রিফ্রেশ করে আবার চেষ্টা করুন।</div>';
+     }
+     return;
+   }
+   var a=e.target&&e.target.closest?e.target.closest('a'):null;
+   if(!a || root.contains(a)) return;
+   var label=(a.textContent||'').replace(/[\s\u200c\u200d\u0640]+/g,'').trim();
+   var href=(a.getAttribute('href')||'').toLowerCase();
+   if(a.getAttribute('data-open-own-quran')==='true'||href==='#naz-own-quran'||label==='কুরআন'||label==='কোরআন'||label==='আলকুরআন'){
+     e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation)e.stopImmediatePropagation(); open();
+   }
+ },true);
+ window.nqShowHome=function(){
+   var reader=document.getElementById('nq-reader'), home=document.getElementById('nq-home');
+   if(reader)reader.hidden=true;if(home)home.hidden=false;showIndex();root.scrollTop=0;
+ };
+ window.nqReloadList=showIndex;
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){if(root.classList.contains('nq-open'))showIndex()});
+ if(root.classList.contains('nq-open'))showIndex();
+})();
+</script><script>window.openNazQuran=function(){var r=document.getElementById('naz-own-quran');if(r){r.classList.add('nq-open');r.setAttribute('aria-hidden','false');}if(window.nqShowHome)window.nqShowHome();};window.closeNazQuran=function(){if(window.AndroidQuran&&window.AndroidQuran.close){window.AndroidQuran.close();}};window.openNazQuran();</script></body></html>
