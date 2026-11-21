@@ -3,8 +3,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:allowBackup="true"
-        android:icon="@drawable-nodpi/ic_launcher_photo"
-        android:roundIcon="@drawable-nodpi/ic_launcher_photo"
+        android:icon="@drawable/ic_launcher_photo"
+        android:roundIcon="@drawable/ic_launcher_photo"
         android:label="নাজিরপুরী রুকইয়া ও দাওয়াখানা"
         android:usesCleartextTraffic="false"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
