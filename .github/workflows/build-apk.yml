@@ -52,7 +52,6 @@ jobs:
         with:
           tag_name: latest-apk
           name: Latest Nazirpuri Ruqyah APK
-          body: "versionCode: ${{ 1000 + github.run_number }}\nversionName: 1.2.${{ github.run_number }}"
           make_latest: true
           files: app/build/outputs/apk/debug/nazirpuri-${{ env.VERSION_CODE }}.apk
         env:
