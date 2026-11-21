@@ -35,8 +35,8 @@ public class MainActivity extends Activity {
     private boolean showingWeb = false;
     private boolean openQuranWhenLoaded = false;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private final String[] titles = {"কুরআন","তাফসীর","হাদীস","নামাযের সময়","তিলাওয়াত","কিতাব","কুরআন শিক্ষা","দু'আ","কিবলা","তাসবীহ্","মসজিদ খুঁজুন","ইসলামিক নাম","ক্যালেন্ডার","গুরুত্বপূর্ণ দিন","অন্যান্য","আমাদের সেবা","ওয়েবসাইট"};
-    private final String[] icons = {"📖","📜","📚","🕌","🎧","📘","🌙","🤲","🧭","📿","🕌","👶","🗓️","🌙","☪️","🤝","🌐"};
+    private final String[] titles = {"কুরআন","তাফসীর","হাদীস","নামাযের সময়","তিলাওয়াত","অডিও তেলাওয়াত","অনুবাদসহ তেলাওয়াত","রুকইয়া","কিতাব","কুরআন শিক্ষা","দু'আ","কিবলা","তাসবীহ্","মসজিদ খুঁজুন","ইসলামিক নাম","ক্যালেন্ডার","গুরুত্বপূর্ণ দিন","অন্যান্য","আমাদের সেবা","ওয়েবসাইট"};
+    private final String[] icons = {"📖","📜","📚","🕌","🎧","🔊","🎙️","🤲","📘","🌙","🤲","🧭","📿","🕌","👶","🗓️","🌙","☪️","🤝","🌐"};
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,8 +63,19 @@ public class MainActivity extends Activity {
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.VERTICAL);
         header.setGravity(Gravity.CENTER);
-        header.setPadding(dp(16),dp(25),dp(16),dp(22));
+        header.setPadding(dp(16),dp(10),dp(16),dp(22));
         header.setBackgroundColor(Color.rgb(12,73,52));
+        LinearLayout headerTop = new LinearLayout(this);
+        headerTop.setGravity(Gravity.CENTER_VERTICAL);
+        headerTop.setOrientation(LinearLayout.HORIZONTAL);
+        TextView headerSpacer = text("",20,Color.WHITE,false);
+        headerTop.addView(headerSpacer,new LinearLayout.LayoutParams(0,dp(38),1));
+        TextView settings = text("⚙",26,Color.WHITE,true);
+        settings.setContentDescription("সেটিংস");
+        settings.setPadding(dp(10),dp(3),dp(3),dp(3));
+        settings.setOnClickListener(v -> showSettings());
+        headerTop.addView(settings,new LinearLayout.LayoutParams(dp(44),dp(42)));
+        header.addView(headerTop,new LinearLayout.LayoutParams(-1,dp(42)));
         header.addView(text("নাজিরপুরী রুকইয়া ও দাওয়াখানা",22,Color.WHITE,true));
         TextView sub = text("কুরআন • সুন্নাহ • ইলম • আমল",13,Color.rgb(232,216,165),false);
         LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-2,-2);
@@ -131,8 +142,23 @@ public class MainActivity extends Activity {
             showWeb(HOME_URL);
             return;
         }
-        String url=index==16?HOME_URL:HOME_URL+"search?q="+Uri.encode(titles[index]);
+        String url=index==19?HOME_URL:HOME_URL+"search?q="+Uri.encode(titles[index]);
         showWeb(url);
+    }
+
+    private void showSettings() {
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("সেটিংস")
+            .setItems(new String[]{"ওয়েবসাইট খুলুন", "অ্যাপ সম্পর্কে"}, (dialog, which) -> {
+                if (which == 0) showWeb(HOME_URL);
+                else new android.app.AlertDialog.Builder(this)
+                    .setTitle("নাজিরপুরী রুকইয়া ও দাওয়াখানা")
+                    .setMessage("কুরআন • সুন্নাহ • ইলম • আমল\\n\\nআপনার দ্বীনি সেবা ও তথ্যের সহযোগী অ্যাপ।")
+                    .setPositiveButton("ঠিক আছে", null)
+                    .show();
+            })
+            .setNegativeButton("বন্ধ", null)
+            .show();
     }
 
     private void showWeb(String url) {
