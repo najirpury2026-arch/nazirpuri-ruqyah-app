@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>অডিও তেলাওয়াত</title>
+<style>
+:root{--green:#0c4934;--gold:#c59a43;--bg:#f3f7f3;--ink:#203b2c}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,sans-serif}.hero{padding:22px 18px 20px;background:linear-gradient(135deg,#073629,#176e4d);color:#fff;border-radius:0 0 22px 22px}.hero h1{font-size:23px;margin:0 0 7px}.hero p{font-size:13px;margin:0;color:#e7d8ad}.wrap{padding:15px;max-width:720px;margin:auto}.panel{background:#fff;border:1px solid #e1eae2;border-radius:16px;padding:15px;margin:0 0 13px;box-shadow:0 3px 12px #163d2410}.label{font-size:14px;font-weight:700;margin:0 0 9px;color:var(--green)}select{width:100%;padding:13px;border:1px solid #d6e2d8;border-radius:11px;background:#fbfdfb;font-size:15px;color:#203b2c}.reciters{display:grid;grid-template-columns:1fr 1fr;gap:8px}.reciter{border:1px solid #dce7de;border-radius:12px;background:#f8fbf8;padding:11px 9px;text-align:left;color:#23412e;font-size:13px;min-height:60px}.reciter.active{background:#e7f3eb;border:2px solid var(--green);padding:10px 8px}.reciter small{display:block;color:#6c7d70;margin-top:4px}.surah{display:flex;align-items:center;gap:11px;width:100%;border:0;border-bottom:1px solid #edf1ed;background:#fff;padding:12px 2px;text-align:left;color:#23412e}.surah:last-child{border-bottom:0}.num{width:34px;height:34px;border-radius:10px;background:#edf5ef;display:grid;place-items:center;color:var(--green);font-weight:bold}.surah .bn{font-weight:700;font-size:14px}.surah small{display:block;color:#78867a;font-size:11px;margin-top:3px}.surah .ar{margin-left:auto;font-size:20px;color:var(--green)}.player{position:sticky;bottom:0;background:#073629;color:#fff;padding:14px 16px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -5px 20px #0002}.player strong{display:block;font-size:14px;margin-bottom:8px}.controls{display:flex;align-items:center;gap:10px}.controls button{border:0;border-radius:22px;background:#e6c77e;color:#173c2b;padding:10px 18px;font-weight:bold}.controls span{font-size:12px;color:#d8e6dc}.status{font-size:12px;color:#b9d5c2;margin-top:8px;min-height:16px}.empty{padding:22px;text-align:center;color:#718174;font-size:13px}@media(max-width:360px){.reciters{grid-template-columns:1fr}}
+</style></head>
+<body>
+<header class="hero"><h1>🔊 অডিও তেলাওয়াত</h1><p>ক্বারী নির্বাচন করুন, সূরা বেছে নিয়ে তিলাওয়াত শুনুন</p></header>
+<main class="wrap">
+<section class="panel"><div class="label">১. তিলাওয়াতের ক্বারী নির্বাচন</div><div class="reciters" id="reciters"></div></section>
+<section class="panel"><div class="label">২. সূরা নির্বাচন করুন</div><input id="search" placeholder="সূরার নাম লিখে খুঁজুন…" style="width:100%;padding:11px;border:1px solid #d6e2d8;border-radius:10px;margin-bottom:10px;font-size:14px"><div id="surahs" class="empty">সূরার তালিকা লোড হচ্ছে…</div></section>
+</main>
+<footer class="player"><strong id="now">কোনো সূরা নির্বাচন করা হয়নি</strong><div class="controls"><button id="toggle" onclick="togglePlay()">▶ চালু করুন</button><span id="ayahLabel">তিলাওয়াত প্রস্তুত</span></div><div class="status" id="status">প্রথমবার শুনলে অডিও ডাউনলোড হবে; পরে অফলাইনে চলবে।</div></footer>
+<script>
+const reciters=[
+{id:'qari_sudais',name:'শায়খ আবদুর রহমান সুদাইস',short:'আবদুর রহমান সুদাইস',path:'Abdurrahmaan_As-Sudais_192kbps'},
+{id:'qari_abdulbasit_murattal',name:'কারি আব্দুল বাসিত — মুরাত্তাল',short:'আব্দুল বাসিত (মুরাত্তাল)',path:'Abdul_Basit_Murattal_192kbps'},
+{id:'qari_abdulbasit_mujawwad',name:'কারি আব্দুল বাসিত — মুজাওয়াদ',short:'আব্দুল বাসিত (মুজাওয়াদ)',path:'Abdul_Basit_Mujawwad_128kbps'},
+{id:'qari_mishary',name:'মিশারী রাশিদ আল-আফাসি',short:'মিশারী আল-আফাসি',path:'Mishary_Rashid_Alafasy_128kbps'},
+{id:'qari_maher',name:'মাহের আল-মুয়াইকলি',short:'মাহের আল-মুয়াইকলি',path:'Maher_AlMuaiqly_64kbps'},
+{id:'qari_shaatree',name:'আবু বকর আশ-শাত্রী',short:'আবু বকর আশ-শাত্রী',path:'Abu_Bakr_Ash-Shaatree_128kbps'},
+{id:'qari_ghamdi',name:'সাদ আল-গামিদি',short:'সাদ আল-গামিদি',path:'Saad_Al-Ghamdi_40kbps'}
+];
+let selected=reciters[0],surahs=[],currentSurah=null,ayahs=[],index=0,playing=false,waiting=false;
+const audio=new Audio();audio.preload='none';
+const $=id=>document.getElementById(id);
+function setStatus(t){$('status').textContent=t}
+function renderReciters(){$('reciters').innerHTML=reciters.map(r=>'<button class="reciter '+(r.id===selected.id?'active':'')+'" data-id="'+r.id+'">'+r.name+'<small>'+(r.id===selected.id?'✓ নির্বাচিত':'ক্বারী নির্বাচন করুন')+'</small></button>').join('');$('reciters').querySelectorAll('button').forEach(b=>b.onclick=()=>{selected=reciters.find(x=>x.id===b.dataset.id);renderReciters();setStatus(selected.short+' নির্বাচন করা হয়েছে।');});}
+function bn(n){return String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[+d])}
+function renderSurahs(filter=''){let list=surahs.filter(s=>(s.name+' '+s.englishName+' '+s.englishNameTranslation).toLowerCase().includes(filter.toLowerCase()));$('surahs').className='';$('surahs').innerHTML=list.map(s=>'<button class="surah" data-no="'+s.number+'"><span class="num">'+bn(s.number)+'</span><span><span class="bn">'+s.name+'</span><small>'+s.englishName+' · '+bn(s.numberOfAyahs)+' আয়াত</small></span><span class="ar">۞</span></button>').join('')||'<div class="empty">কোনো সূরা পাওয়া যায়নি</div>';document.querySelectorAll('.surah').forEach(b=>b.onclick=()=>openSurah(+b.dataset.no));}
+async function loadSurahs(){try{let r=await fetch('https://api.alquran.cloud/v1/surah');if(!r.ok)throw 0;let j=await r.json();surahs=j.data||[];renderSurahs();}catch(e){$('surahs').innerHTML='<div class="empty">সূরার তালিকা আনতে ইন্টারনেট সংযোগ প্রয়োজন। আবার চেষ্টা করতে পেজ রিফ্রেশ করুন।</div>';}}
+function audioName(n){return selected.id+'_'+String(n).padStart(6,'0')+'.mp3'}
+function audioUrl(n){return 'https://everyayah.com/data/'+selected.path+'/'+String(n).padStart(6,'0')+'.mp3'}
+function cached(name){try{return window.AndroidQuran&&AndroidQuran.getCachedAudioPath(name)||''}catch(e){return ''}}
+function openSurah(no){let s=surahs.find(x=>x.number===no);if(!s)return;currentSurah=s;index=0;ayahs=Array.from({length:s.numberOfAyahs},(_,i)=>s.number*1000+i+1);$('now').textContent=s.name+' — '+s.englishName;playCurrent();}
+function playCurrent(){if(!currentSurah||index>=ayahs.length){playing=false;$('toggle').textContent='▶ চালু করুন';setStatus('সূরার তিলাওয়াত শেষ হয়েছে।');return;}let n=ayahs[index],name=audioName(n),local=cached(name);$('ayahLabel').textContent='আয়াত '+bn(index+1)+' / '+bn(ayahs.length);$('toggle').textContent='Ⅱ বিরতি';if(local){audio.src=local;audio.play().then(()=>{playing=true;setStatus('সংরক্ষিত অডিও থেকে চলছে — অফলাইন');}).catch(()=>{setStatus('অডিও চালু করা যায়নি। আবার চাপুন।');});return;}if(!window.AndroidQuran){audio.src=audioUrl(n);audio.play().catch(()=>setStatus('অডিও চালু করতে ইন্টারনেট সংযোগ পরীক্ষা করুন।'));return;}waiting=true;playing=true;setStatus('প্রথমবারের অডিও ডাউনলোড হচ্ছে…');window.AndroidQuran.downloadAudio(audioUrl(n),name);}
+audio.onended=()=>{index++;playCurrent()};audio.onerror=()=>{if(playing)setStatus('অডিও চালানো যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করুন।');};
+function togglePlay(){if(!currentSurah){setStatus('আগে একটি সূরা নির্বাচন করুন।');return;}if(playing&&!waiting){audio.pause();playing=false;$('toggle').textContent='▶ চালু করুন';setStatus('বিরতিতে আছে।');}else if(waiting){setStatus('অডিও ডাউনলোড শেষ হওয়ার অপেক্ষা করুন।');}else playCurrent();}
+window.nqAudioDownloadProgress=(name,percent)=>setStatus('অডিও ডাউনলোড হচ্ছে… '+percent+'%');
+window.nqAudioDownloaded=(name)=>{if(!currentSurah||name!==audioName(ayahs[index]))return;waiting=false;playCurrent();};
+window.nqAudioDownloadError=(name,msg)=>{waiting=false;playing=false;$('toggle').textContent='▶ আবার চেষ্টা করুন';setStatus(msg||'অডিও ডাউনলোড করা যায়নি।');};
+$('search').addEventListener('input',e=>renderSurahs(e.target.value));
+renderReciters();loadSurahs();
+</script></body></html>
