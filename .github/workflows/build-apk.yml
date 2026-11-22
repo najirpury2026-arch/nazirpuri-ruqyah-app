@@ -16,11 +16,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Restore bundled SolaimanLipi font
         run: base64 -d app/src/main/assets/SolaimanLipi.ttf.b64 > app/src/main/assets/SolaimanLipi.ttf
-      - name: Download offline Surah Yasin audio
-        run: |
-          python -m pip install --upgrade gdown
-          gdown "https://drive.google.com/file/d/1pWdLu1cTJ3LkyW9wGaOw1o01am9SlfLP/view?usp=drivesdk" -O app/src/main/assets/surah-yasin.mp3
-          test -s app/src/main/assets/surah-yasin.mp3
       - name: Install Bengali font and SVG renderer
         run: |
           sudo apt-get update
