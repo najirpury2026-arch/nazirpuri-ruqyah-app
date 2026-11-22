@@ -527,12 +527,16 @@ public class MainActivity extends Activity {
         root.setBackgroundColor(Color.rgb(244,248,245));
 
         LinearLayout bar = new LinearLayout(this);
-        bar.setGravity(Gravity.CENTER_VERTICAL);
-        TextView back = text("‹  বিভাগসমূহ",16,Color.rgb(12,73,52),true);
-        back.setPadding(dp(4),dp(10),dp(12),dp(10));
+        bar.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
+        bar.setPadding(0, 0, 0, 0);
+        TextView back = text("‹  হোম পেজে ফিরে যান",16,Color.rgb(12,73,52),true);
+        back.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
+        back.setPadding(0,dp(9),dp(12),dp(9));
         back.setOnClickListener(v -> showHome());
         bar.addView(back);
-        root.addView(bar,new LinearLayout.LayoutParams(-1,-2));
+        LinearLayout.LayoutParams backBarLp = new LinearLayout.LayoutParams(-1,-2);
+        backBarLp.topMargin = dp(16);
+        root.addView(bar,backBarLp);
 
         TextView title = text("ডিজিটাল তাসবীহ্",23,Color.rgb(12,73,52),true);
         LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(-1,-2);
