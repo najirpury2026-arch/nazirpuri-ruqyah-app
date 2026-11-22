@@ -53,6 +53,8 @@ public class MainActivity extends Activity {
     private double qiblaBearing = Double.NaN;
     private double userLatitude = Double.NaN, userLongitude = Double.NaN;
     private static final int QIBLA_LOCATION_REQUEST = 741;
+    private static final int MOSQUE_LOCATION_REQUEST = 742;
+    private boolean pendingMosqueSearch = false;
     private volatile boolean yasinDownloading = false;
     private volatile boolean rahmanDownloading = false;
     private volatile boolean mulkDownloading = false;
@@ -423,6 +425,17 @@ public class MainActivity extends Activity {
             if(grantResults.length>0 && grantResults[0]==android.content.pm.PackageManager.PERMISSION_GRANTED) obtainQiblaLocation();
             else if(qiblaLocationText!=null) qiblaLocationText.setText("অবস্থানের অনুমতি ছাড়া কিবলার দিক নির্ণয় করা যাবে না");
         }
+        if(requestCode==MOSQUE_LOCATION_REQUEST) {
+            if(grantResults.length>0 && grantResults[0]==android.content.pm.PackageManager.PERMISSION_GRANTED) locateAndOpenMosques();
+            else {
+                pendingMosqueSearch = false;
+                new android.app.AlertDialog.Builder(this)
+                    .setTitle("অবস্থানের অনুমতি প্রয়োজন")
+                    .setMessage("আপনার বর্তমান অবস্থানের আশেপাশের মসজিদ দেখাতে অবস্থানের অনুমতি দিন।")
+                    .setPositiveButton("আবার চেষ্টা করুন",(d,w)->findNearbyMosques())
+                    .setNegativeButton("বন্ধ",null).show();
+            }
+        }
     }
 
     private void updateQiblaLocation(android.location.Location location) {
@@ -605,6 +618,89 @@ public class MainActivity extends Activity {
         setContentView(root);
     }
 
+    // Find mosques around the phone's current GPS position and open the map results.
+    private void findNearbyMosques() {
+        if(android.os.Build.VERSION.SDK_INT>=23 &&
+           checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)!=android.content.pm.PackageManager.PERMISSION_GRANTED &&
+           checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)!=android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            pendingMosqueSearch = true;
+            requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,android.Manifest.permission.ACCESS_COARSE_LOCATION},MOSQUE_LOCATION_REQUEST);
+            return;
+        }
+        locateAndOpenMosques();
+    }
+
+    private void locateAndOpenMosques() {
+        pendingMosqueSearch = false;
+        try {
+            android.location.LocationManager lm=(android.location.LocationManager)getSystemService(LOCATION_SERVICE);
+            android.location.Location best=null;
+            for(String provider:lm.getProviders(true)) {
+                try {
+                    android.location.Location loc=lm.getLastKnownLocation(provider);
+                    if(loc!=null && (best==null || loc.getTime()>best.getTime() || (loc.getTime()==best.getTime() && loc.getAccuracy()<best.getAccuracy()))) best=loc;
+                } catch(SecurityException ignored) {}
+            }
+            if(best!=null && System.currentTimeMillis()-best.getTime()<10*60*1000L) {
+                openMosqueMap(best.getLatitude(),best.getLongitude());
+                return;
+            }
+            android.location.Criteria criteria=new android.location.Criteria();
+            criteria.setAccuracy(android.location.Criteria.ACCURACY_FINE);
+            String provider=lm.getBestProvider(criteria,true);
+            if(provider==null) {
+                showMosqueLocationError("ফোনের GPS বা অবস্থান সেবা চালু করুন।");
+                return;
+            }
+            final android.app.ProgressDialog progress= new android.app.ProgressDialog(this);
+            progress.setMessage("আপনার বর্তমান অবস্থান খোঁজা হচ্ছে…");
+            progress.setCancelable(false);
+            progress.show();
+            final boolean[] completed={false};
+            final android.location.LocationListener listener=new android.location.LocationListener() {
+                public void onLocationChanged(android.location.Location location) {
+                    if(completed[0]) return;
+                    completed[0]=true; progress.dismiss();
+                    openMosqueMap(location.getLatitude(),location.getLongitude());
+                    try { lm.removeUpdates(this); } catch(Exception ignored) {}
+                }
+                public void onStatusChanged(String p,int status,android.os.Bundle extras){}
+                public void onProviderEnabled(String p){}
+                public void onProviderDisabled(String p){}
+            };
+            lm.requestSingleUpdate(provider,listener,mainHandler.getLooper());
+            mainHandler.postDelayed(() -> {
+                if(!completed[0]) {
+                    completed[0]=true; progress.dismiss();
+                    try { lm.removeUpdates(listener); } catch(Exception ignored) {}
+                    showMosqueLocationError("বর্তমান অবস্থান পাওয়া যায়নি। GPS চালু করে আবার চেষ্টা করুন।");
+                }
+            },15000);
+        } catch(SecurityException e) {
+            showMosqueLocationError("অবস্থানের অনুমতি পাওয়া যায়নি।");
+        } catch(Exception e) {
+            showMosqueLocationError("অবস্থান নির্ণয় করা যায়নি। GPS চালু করে আবার চেষ্টা করুন।");
+        }
+    }
+
+    private void openMosqueMap(double latitude,double longitude) {
+        try {
+            String url="https://www.google.com/maps/search/?api=1&query="+Uri.encode("মসজিদ")+"%26center="+latitude+","+longitude;
+            // Use a location-centred Maps search so nearby mosque results are shown for this GPS position.
+            Uri mapUri=Uri.parse("https://www.google.com/maps/search/মসজিদ/@"+latitude+","+longitude+",15z");
+            Intent intent=new Intent(Intent.ACTION_VIEW,mapUri);
+            startActivity(intent);
+        } catch(Exception e) {
+            showMosqueLocationError("ম্যাপ খোলা যায়নি। Google Maps বা ব্রাউজার ইনস্টল আছে কি না দেখুন।");
+        }
+    }
+
+    private void showMosqueLocationError(String message) {
+        new android.app.AlertDialog.Builder(this).setTitle("মসজিদ খুঁজুন")
+            .setMessage(message).setPositiveButton("আবার চেষ্টা করুন",(d,w)->findNearbyMosques())
+            .setNegativeButton("বন্ধ",null).show();
+    }
+
     private void openSection(int index) {
         if (index == 0) {
             showLocalQuran();
@@ -628,6 +724,10 @@ public class MainActivity extends Activity {
         }
         if (index == 12) {
             showTasbihCounter();
+            return;
+        }
+        if (index == 13) {
+            findNearbyMosques();
             return;
         }
         if (index == 15) {
