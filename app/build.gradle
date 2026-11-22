@@ -2,6 +2,19 @@ plugins {
     id 'com.android.application'
 }
 
+// Decode the bundled Solaiman Lipi font before Android packages the assets.
+tasks.register('prepareSolaimanLipiFont') {
+    doLast {
+        def encodedFont = file('src/main/assets/SolaimanLipi.ttf.b64')
+        def fontFile = file('src/main/assets/SolaimanLipi.ttf')
+        if (!encodedFont.exists()) throw new GradleException('SolaimanLipi.ttf.b64 is missing')
+        if (!fontFile.exists() || fontFile.length() == 0) {
+            fontFile.bytes = java.util.Base64.getMimeDecoder().decode(encodedFont.getText('UTF-8'))
+        }
+    }
+}
+tasks.named('preBuild').configure { dependsOn('prepareSolaimanLipiFont') }
+
 def ciBuildNumber = (System.getenv('GITHUB_RUN_NUMBER') ?: '1000').toInteger()
 
 def appVersionCode = 1000 + ciBuildNumber
