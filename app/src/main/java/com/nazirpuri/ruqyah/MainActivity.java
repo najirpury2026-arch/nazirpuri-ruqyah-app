@@ -634,6 +634,10 @@ public class MainActivity extends Activity {
             showWeb("file:///android_asset/calendar.html");
             return;
         }
+        if (index == 16) {
+            showWeb("file:///android_asset/important_days.html");
+            return;
+        }
         if (index == 18) {
             showServicesPlaceholder();
             return;
