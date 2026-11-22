@@ -218,7 +218,14 @@ public class MainActivity extends Activity {
         GridLayout grid = new GridLayout(this);
         grid.setColumnCount(3);
         grid.setPadding(dp(9),dp(2),dp(9),dp(14));
-        int[] tileColors = {Color.rgb(235,246,239),Color.rgb(250,244,226),Color.rgb(237,242,250)};
+        int[][] tilePalette = {
+            {235,246,239, 20,112,77}, {250,239,226, 190,112,35},
+            {237,242,252, 57,93,170}, {250,235,241, 174,65,105},
+            {232,246,249, 20,126,145}, {245,239,252, 117,75,164},
+            {250,244,226, 170,126,35}, {238,247,233, 76,125,55},
+            {252,238,232, 175,83,51}, {236,241,252, 64,91,159},
+            {248,237,247, 151,68,132}, {231,246,246, 35,121,126}
+        };
         for (int i=0; i<titles.length; i++) {
             final int index = i;
             LinearLayout tile = new LinearLayout(this);
@@ -226,15 +233,16 @@ public class MainActivity extends Activity {
             tile.setGravity(Gravity.CENTER);
             tile.setPadding(dp(3),dp(10),dp(3),dp(9));
             GradientDrawable tileBg = new GradientDrawable();
-            tileBg.setColor(Color.WHITE);
+            int[] palette = tilePalette[i % tilePalette.length];
+            tileBg.setColor(Color.rgb(palette[0],palette[1],palette[2]));
             tileBg.setCornerRadius(dp(17));
-            tileBg.setStroke(dp(1),Color.rgb(226,234,227));
+            tileBg.setStroke(dp(1),Color.rgb(Math.max(0,palette[0]-12),Math.max(0,palette[1]-12),Math.max(0,palette[2]-12)));
             tile.setBackground(tileBg);
             tile.setElevation(dp(2));
 
-            TextView icon = text(icons[i],25,Color.rgb(14,83,59),false);
+            TextView icon = text(icons[i],27,Color.rgb(palette[3],palette[4],palette[5]),false);
             GradientDrawable iconBg = new GradientDrawable();
-            iconBg.setColor(tileColors[i%tileColors.length]);
+            iconBg.setColor(Color.rgb(Math.min(255,palette[0]+7),Math.min(255,palette[1]+7),Math.min(255,palette[2]+7)));
             iconBg.setCornerRadius(dp(15));
             icon.setBackground(iconBg);
             icon.setGravity(Gravity.CENTER);
@@ -252,7 +260,11 @@ public class MainActivity extends Activity {
             gp.columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);
             gp.setMargins(dp(4),dp(4),dp(4),dp(4));
             grid.addView(tile,gp);
-            tile.setOnClickListener(v -> openSection(index));
+            tile.setOnClickListener(v -> {
+                tile.setAlpha(0.82f);
+                tile.postDelayed(() -> tile.setAlpha(1f), 90);
+                openSection(index);
+            });
             tile.setClickable(true);
             tile.setFocusable(true);
         }
@@ -707,6 +719,9 @@ public class MainActivity extends Activity {
         if (openQuranWhenLoaded) webView.setVisibility(View.INVISIBLE);
         WebSettings s=webView.getSettings();
         s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setLoadsImagesAutomatically(true);
+        s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        s.setDatabaseEnabled(true);
+        s.setMediaPlaybackRequiresUserGesture(false);
         s.setSupportZoom(true); s.setBuiltInZoomControls(true); s.setDisplayZoomControls(false);
         s.setAllowFileAccess(true);
         webView.setWebViewClient(new WebViewClient(){
@@ -742,7 +757,7 @@ public class MainActivity extends Activity {
                 view.evaluateJavascript(buildAppJuzFixScript(), null);
                 view.postDelayed(() -> {
                     if (view == webView && showingWeb) view.setVisibility(View.VISIBLE);
-                }, 900);
+                }, 80);
             } else if (attempt < 40) {
                 mainHandler.postDelayed(() -> tryOpenOwnQuran(view, attempt + 1), 500);
             } else {
