@@ -312,6 +312,10 @@ public class MainActivity extends Activity {
             showWeb("file:///android_asset/prayer_times.html");
             return;
         }
+        if (index == 5) {
+            showAudioTilawat();
+            return;
+        }
         if (index == 6) {
             showWeb("file:///android_asset/translation_recitation.html");
             return;
@@ -324,6 +328,42 @@ public class MainActivity extends Activity {
         showWeb(url);
     }
 
+
+    // Dedicated home-page Audio Tilawat section; separate from the Quran reader.
+    private void showAudioTilawat() {
+        showingWeb = true;
+        openQuranWhenLoaded = false;
+        root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(Color.WHITE);
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setPadding(dp(12), dp(5), dp(12), dp(5));
+        bar.setBackgroundColor(Color.rgb(12,73,52));
+        TextView back = text("‹  বিভাগসমূহ",16,Color.WHITE,true);
+        back.setPadding(dp(4),dp(8),dp(14),dp(8));
+        back.setOnClickListener(v -> {
+            if (webView != null) { webView.destroy(); webView = null; }
+            showHome();
+        });
+        bar.addView(back);
+        root.addView(bar);
+        webView = new WebView(this);
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setLoadsImagesAutomatically(true);
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
+        settings.setAllowUniversalAccessFromFileURLs(true);
+        settings.setMediaPlaybackRequiresUserGesture(false);
+        webView.addJavascriptInterface(new QuranBridge(), "AndroidQuran");
+        webView.setWebViewClient(new WebViewClient());
+        webView.setWebChromeClient(new WebChromeClient());
+        root.addView(webView,new LinearLayout.LayoutParams(-1,0,1));
+        setContentView(root);
+        webView.loadUrl("file:///android_asset/audio_tilawat.html");
+    }
 
     private void showLocalQuran() {
         showingWeb = true;
