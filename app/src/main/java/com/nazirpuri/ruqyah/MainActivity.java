@@ -68,6 +68,16 @@ public class MainActivity extends Activity {
         checkForAppUpdate();
     }
 
+    private void refreshAppContent() {
+        android.widget.Toast.makeText(this, "অ্যাপের তথ্য রিফ্রেশ করা হচ্ছে…", android.widget.Toast.LENGTH_SHORT).show();
+        if (webView != null) {
+            webView.reload();
+        } else {
+            showHome();
+        }
+        checkForAppUpdate();
+    }
+
     private void checkForAppUpdate() {
         new Thread(() -> {
             HttpURLConnection connection = null;
@@ -152,6 +162,18 @@ public class MainActivity extends Activity {
         headerTop.setGravity(Gravity.CENTER_VERTICAL);
         TextView brandMark = text("۞", 27, Color.rgb(244,211,130), true);
         headerTop.addView(brandMark, new LinearLayout.LayoutParams(0,dp(42),1));
+        TextView refresh = text("⟳", 27, Color.WHITE, true);
+        refresh.setGravity(Gravity.CENTER);
+        refresh.setContentDescription("সবকিছু রিফ্রেশ ও আপডেট পরীক্ষা");
+        GradientDrawable refreshBg = new GradientDrawable();
+        refreshBg.setColor(0x337FFFFF);
+        refreshBg.setCornerRadius(dp(22));
+        refresh.setBackground(refreshBg);
+        refresh.setOnClickListener(v -> refreshAppContent());
+        LinearLayout.LayoutParams refreshLp = new LinearLayout.LayoutParams(dp(44),dp(42));
+        refreshLp.setMargins(0,0,dp(7),0);
+        headerTop.addView(refresh, refreshLp);
+
         TextView settings = text("⚙", 24, Color.WHITE, true);
         settings.setGravity(Gravity.CENTER);
         settings.setContentDescription("সেটিংস");
