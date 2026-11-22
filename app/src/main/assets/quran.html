@@ -355,9 +355,9 @@ function nqPlayAudioSource(globalNo,slot,source,key){
   if(audioEl){
    audioEl.loop=$('nq-repeat')&&$('nq-repeat').checked;
    audioEl.onended=function(){
-    if($('nq-auto-next')&&$('nq-auto-next').checked&&currentData&&currentData.ar&&currentData.ar.ayahs){
+    if((window.nqContinuousSurah||($('nq-auto-next')&&$('nq-auto-next').checked))&&currentData&&currentData.ar&&currentData.ar.ayahs){
      var ix=currentData.ar.ayahs.findIndex(function(v){return Number(v.number)===Number(globalNo)});
-     var nx=currentData.ar.ayahs[ix+1];if(nx)window.nqPlayAyah(nx.number);
+     var nx=currentData.ar.ayahs[ix+1];if(nx)window.nqPlayAyah(nx.number);else window.nqContinuousSurah=false;
     }
    };
    audioEl.play().catch(function(){});
@@ -388,7 +388,7 @@ window.nqPlayAyah=function(globalNo,btn){
  var slot=$('nq-audio-'+globalNo);if(!slot)return;
  if(audioEl){audioEl.pause();audioEl=null}
  var ayah=nqCurrentAyah(globalNo);
- var surahNo=Number(currentSurah)||1;
+ var surahNo=Number(currentSurah)||(ayah&&ayah.surah&&Number(ayah.surah.number))||1;
  var ayahNo=ayah&&Number(ayah.numberInSurah);
  if(!ayahNo){slot.textContent='আয়াতের নম্বর পাওয়া যায়নি। আবার সূরা খুলুন।';return}
  var qari=localStorage.getItem('nq-qari')||'qari_sudais';
@@ -463,7 +463,7 @@ window.nqPlayAyah=function(globalNo,btn){
  window.nqAdjustFont=function(delta){nqFontSize=Math.max(16,Math.min(42,nqFontSize+delta*2));var nodes=root.querySelectorAll('.nq-arabic');for(var i=0;i<nodes.length;i++)nodes[i].style.fontSize=nqFontSize+'px'};
  window.nqToggleTranslation=function(btn){var nodes=root.querySelectorAll('.nq-translation');var hide=btn.getAttribute('data-hidden')!=='1';for(var i=0;i<nodes.length;i++)nodes[i].style.display=hide?'none':'';btn.setAttribute('data-hidden',hide?'1':'0');btn.lastChild.textContent=hide?'অনুবাদ দেখুন':'অনুবাদ মোড'};
  window.nqToggleAutoScroll=function(btn){if(nqAutoTimer){clearInterval(nqAutoTimer);nqAutoTimer=null;btn.classList.remove('active');btn.lastChild.textContent='অটো স্ক্রল';return}nqAutoTimer=setInterval(function(){if(root.classList.contains('nq-open'))root.scrollBy({top:1,behavior:'auto'});else{clearInterval(nqAutoTimer);nqAutoTimer=null}},45);btn.classList.add('active');btn.lastChild.textContent='স্ক্রল বন্ধ'};
- window.nqOpenSettings=function(){var p=$('nq-settings-panel');if(!p)return;p.hidden=false;try{var q=localStorage.getItem('nq-qari')||'ar.abdurrahmaansudais',t=localStorage.getItem('nq-translation-edition')||'bn.bengali';$('nq-qari').value=q;$('nq-translation-edition').value=t;$('nq-font-range').value=nqFontSize;$('nq-font-value').textContent=bnDigits(nqFontSize)+' px';$('nq-bn-font-range').value=localStorage.getItem('nq-bn-font')||16;$('nq-bn-font-value').textContent=bnDigits($('nq-bn-font-range').value)+' px';$('nq-dark-mode').checked=localStorage.getItem('nq-dark')==='1';$('nq-auto-next').checked=localStorage.getItem('nq-auto-next')==='1';$('nq-repeat').checked=localStorage.getItem('nq-repeat')==='1';$('nq-tajweed').checked=root.classList.contains('nq-tajweed')}catch(e){}};
+ window.nqOpenSettings=function(){var p=$('nq-settings-panel');if(!p)return;p.hidden=false;try{var q=localStorage.getItem('nq-qari')||'qari_sudais',t=localStorage.getItem('nq-translation-edition')||'bn.bengali';$('nq-qari').value=q;$('nq-translation-edition').value=t;$('nq-font-range').value=nqFontSize;$('nq-font-value').textContent=bnDigits(nqFontSize)+' px';$('nq-bn-font-range').value=localStorage.getItem('nq-bn-font')||16;$('nq-bn-font-value').textContent=bnDigits($('nq-bn-font-range').value)+' px';$('nq-dark-mode').checked=localStorage.getItem('nq-dark')==='1';$('nq-auto-next').checked=localStorage.getItem('nq-auto-next')==='1';$('nq-repeat').checked=localStorage.getItem('nq-repeat')==='1';$('nq-tajweed').checked=root.classList.contains('nq-tajweed')}catch(e){}};
  window.nqCloseSettings=function(){var p=$('nq-settings-panel');if(p)p.hidden=true};
  window.nqSetFont=function(v){nqFontSize=Number(v)||29;root.style.setProperty('--nq-ar-size',nqFontSize+'px');var nodes=root.querySelectorAll('.nq-arabic');for(var i=0;i<nodes.length;i++)nodes[i].style.fontSize=nqFontSize+'px';$('nq-font-value').textContent=bnDigits(nqFontSize)+' px';localStorage.setItem('nq-font-size',String(nqFontSize))};
  window.nqSetBnFont=function(v){var n=Number(v)||16;root.style.setProperty('--nq-bn-size',n+'px');var nodes=root.querySelectorAll('.nq-translation');for(var i=0;i<nodes.length;i++)nodes[i].style.fontSize=n+'px';$('nq-bn-font-value').textContent=bnDigits(n)+' px';localStorage.setItem('nq-bn-font',String(n))};
