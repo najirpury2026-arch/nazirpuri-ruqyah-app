@@ -293,6 +293,27 @@ public class MainActivity extends Activity {
                 audioStatus("বিরতিতে আছে।");
             });
         }
+        @JavascriptInterface
+        public void seekYasin(int positionMs) {
+            mainHandler.post(() -> {
+                try {
+                    if (yasinPlayer != null && yasinPlayer.isPlaying() || yasinPlayer != null) {
+                        int safePosition = Math.max(0, Math.min(positionMs, yasinPlayer.getDuration()));
+                        yasinPlayer.seekTo(safePosition);
+                    }
+                } catch (Exception ignored) { }
+            });
+        }
+        @JavascriptInterface
+        public int getYasinPosition() {
+            try { return yasinPlayer != null ? yasinPlayer.getCurrentPosition() : 0; }
+            catch (Exception ignored) { return 0; }
+        }
+        @JavascriptInterface
+        public int getYasinDuration() {
+            try { return yasinPlayer != null ? yasinPlayer.getDuration() : 0; }
+            catch (Exception ignored) { return 0; }
+        }
     }
 
     private void audioStatus(String message) {
