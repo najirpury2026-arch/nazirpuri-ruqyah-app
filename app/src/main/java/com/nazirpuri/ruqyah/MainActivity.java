@@ -1345,6 +1345,8 @@ public class MainActivity extends Activity {
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setSupportZoom(true); s.setBuiltInZoomControls(true); s.setDisplayZoomControls(false);
         s.setAllowFileAccess(true);
+        s.setAllowFileAccessFromFileURLs(true);
+        s.setAllowUniversalAccessFromFileURLs(true);
         webView.setWebViewClient(new WebViewClient(){
             @Override public void onPageFinished(WebView view, String pageUrl){
                 super.onPageFinished(view, pageUrl);
