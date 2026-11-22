@@ -348,9 +348,7 @@ function nqCurrentAyah(globalNo){
   return null;
 }
 function nqPlayAudioSource(globalNo,slot,source,key){
-  slot.innerHTML='<audio controls autoplay preload="none" src="'+esc(source)+'"></audio><button type="button" class="nq-small-btn" data-audio-key="'+key+'">এই আয়াতের ডাউনলোড মুছুন</button>';
-  var deleteButton=slot.querySelector('[data-audio-key]');
-  if(deleteButton)deleteButton.addEventListener('click',function(){window.nqDeleteAyahAudio(this.getAttribute('data-audio-key'))});
+  slot.innerHTML='<audio controls autoplay preload="none" src="'+esc(source)+'"></audio>';
   audioEl=slot.querySelector('audio');
   if(audioEl){
    audioEl.loop=$('nq-repeat')&&$('nq-repeat').checked;
