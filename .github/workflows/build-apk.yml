@@ -19,7 +19,7 @@ jobs:
       - name: Download offline Surah Yasin audio
         run: |
           python -m pip install --upgrade gdown
-          gdown --fuzzy "https://drive.google.com/file/d/1pWdLu1cTJ3LkyW9wGaOw1o01am9SlfLP/view?usp=drivesdk" -O app/src/main/assets/surah-yasin.mp3
+          gdown "https://drive.google.com/file/d/1pWdLu1cTJ3LkyW9wGaOw1o01am9SlfLP/view?usp=drivesdk" -O app/src/main/assets/surah-yasin.mp3
           test -s app/src/main/assets/surah-yasin.mp3
       - name: Install Bengali font and SVG renderer
         run: |
