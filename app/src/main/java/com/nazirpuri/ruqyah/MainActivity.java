@@ -718,6 +718,10 @@ public class MainActivity extends Activity {
             showWeb("file:///android_asset/translation_recitation.html");
             return;
         }
+        if (index == 10) {
+            showWeb("file:///android_asset/dua.html");
+            return;
+        }
         if (index == 11) {
             showQiblaCompass();
             return;
