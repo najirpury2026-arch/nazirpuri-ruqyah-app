@@ -204,6 +204,10 @@ public class MainActivity extends Activity {
             showLocalQuran();
             return;
         }
+        if (index == 6) {
+            showWeb("file:///android_asset/translation_recitation.html");
+            return;
+        }
         if (index == 18) {
             showServicesPlaceholder();
             return;
