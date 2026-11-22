@@ -16,15 +16,12 @@ tasks.register('prepareSolaimanLipiFont') {
 tasks.named('preBuild').configure { dependsOn('prepareSolaimanLipiFont') }
 
 def ciBuildNumber = (System.getenv('GITHUB_RUN_NUMBER') ?: '1000').toInteger()
-
 def appVersionCode = 1000 + ciBuildNumber
-
 def appVersionName = "1.2.${ciBuildNumber}"
 
 android {
     namespace 'com.nazirpuri.ruqyah'
     compileSdk 35
-
     signingConfigs {
         debug {
             storeFile rootProject.file("debug.keystore")
@@ -33,20 +30,15 @@ android {
             keyPassword "android"
         }
     }
-
     defaultConfig {
-        applicationId 'com.nazirpuri.ruqyah'
+        // Separate application ID lets this build install beside the original app.
+        applicationId 'com.nazirpuri.ruqyah.standalone'
         minSdk 23
         targetSdk 35
-        // GitHub Actions run number increases automatically for every new build.
-        // Keep the same applicationId and signing key for in-place updates.
         versionCode appVersionCode
         versionName appVersionName
     }
-
     buildTypes {
-        debug {
-            signingConfig signingConfigs.debug
-        }
+        debug { signingConfig signingConfigs.debug }
     }
 }
