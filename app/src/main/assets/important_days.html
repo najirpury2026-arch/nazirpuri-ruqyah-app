@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="theme-color" content="#222222"><title>গুরুত্বপূর্ণ দিনসমূহ</title>
+<style>
+@font-face{font-family:Solaiman;src:url('SolaimanLipi.ttf')}*{box-sizing:border-box}body{margin:0;background:#303030;color:#fff;font-family:Solaiman,'Noto Sans Bengali',sans-serif}.tabs{display:flex;align-items:stretch;background:#242424;position:sticky;top:0;z-index:5;box-shadow:0 2px 8px #0004}.back{width:58px;flex:none;border:0;border-right:1px solid #393939;background:transparent;color:#fff;font-size:32px}.tab{flex:1;border:0;background:transparent;color:#c9c9c9;font:18px Solaiman,sans-serif;padding:17px 4px 13px;border-bottom:3px solid transparent}.tab.active{color:#fff;border-bottom-color:#c7a85a}.heading{text-align:center;font-size:25px;padding:13px 8px 12px}.year{margin:20px 7% 12px;background:#333;border:1px solid #292929;box-shadow:0 3px 12px #0003;text-align:center;padding:13px;font-size:25px}.rows{padding:0 5% 20px}.event{display:grid;grid-template-columns:1fr 1.25fr 1.25fr;align-items:center;gap:5px;text-align:center;padding:12px 5px;min-height:67px;font-size:15px;line-height:1.45}.event:nth-child(odd){background:#777}.event:nth-child(even){background:#303030}.name{font-size:15px}.hijri{font-size:14px}.greg{font-size:14px}.note{font-size:12px;color:#d2c6a5;text-align:center;padding:4px 14px 20px;line-height:1.6}.empty{padding:25px 10px;text-align:center;color:#ddd}@media(min-width:650px){.rows{max-width:850px;margin:auto}.event{font-size:18px;padding:15px}.name,.hijri,.greg{font-size:17px}.year{max-width:700px;margin-left:auto;margin-right:auto}}
+</style></head><body>
+<nav class="tabs"><button class="back" id="back" aria-label="ফিরে যান">‹</button><button class="tab active" id="important">গুরুত্বপূর্ণ দিনসমূহ</button><button class="tab" id="holidays">ছুটির দিনসমূহ</button></nav>
+<div class="heading" id="pageTitle">গুরুত্বপূর্ণ দিনসমূহ</div><main id="content"></main>
+<div class="note">ইসলামি তারিখ চাঁদ দেখার ওপর নির্ভরশীল। এখানে প্রদত্ত ইংরেজি তারিখ সম্ভাব্য; বাংলাদেশে জাতীয় চাঁদ দেখা কমিটির ঘোষণাই চূড়ান্ত।</div>
+<script>
+const bnDigits=v=>String(v).replace(/[0-9]/g,d=>'০১২৩৪৫৬৭৮৯'[+d]);
+const important={
+2026:[
+['শবে মেরাজ','২৭শে রজব ১৪৪৭','১৭ জানুয়ারি ২০২৬'],
+['শবে বরাত','১৫ই শা’বান ১৪৪৭','০৩–০৪ ফেব্রুয়ারি ২০২৬'],
+['পহেলা রমজান','১লা রমজান ১৪৪৭','১৯ ফেব্রুয়ারি ২০২৬ (সম্ভাব্য)'],
+['লাইলাতুল কদর (শুরু)','২০–২৯ রমজান ১৪৪৭','১০–১৯ মার্চ ২০২৬ (বিগত রাত, সম্ভাব্য)'],
+['জুমাতুল বিদা','শেষ শুক্রবার রমজান ১৪৪৭','২০ মার্চ ২০২৬'],
+['ঈদুল ফিতর','১লা শাওয়াল ১৪৪৭','২১ মার্চ ২০২৬ (সম্ভাব্য)'],
+['আরাফা','৯ই জিলহজ ১৪৪৭','২৭ মে ২০২৬ (সম্ভাব্য)'],
+['ঈদুল আযহা','১০ই জিলহজ ১৪৪৭','২৮ মে ২০২৬ (সম্ভাব্য)'],
+['হজ','৮–১৩ জিলহজ ১৪৪৭','২৬–৩১ মে ২০২৬ (সম্ভাব্য)'],
+['হিজরি নববর্ষ','১লা মহররম ১৪৪৮','১৭ জুন ২০২৬ (সম্ভাব্য)'],
+['আশুরা','১০ই মহররম ১৪৪৮','২৬ জুন ২০২৬ (সম্ভাব্য)'],
+['ঈদে মিলাদুন্নবী (সা.)','১২ই রবিউল আউয়াল ১৪৪৮','২৬ আগস্ট ২০২৬ (সম্ভাব্য)']
+],
+2027:[
+['শবে মেরাজ','২৭শে রজব ১৪৪৮','০৮ জানুয়ারি ২০২৭ (সম্ভাব্য)'],
+['শবে বরাত','১৫ই শা’বান ১৪৪৮','২৬ জানুয়ারি ২০২৭ (সম্ভাব্য)'],
+['পহেলা রমজান','১লা রমজান ১৪৪৮','১০ ফেব্রুয়ারি ২০২৭ (সম্ভাব্য)'],
+['লাইলাতুল কদর','২৭শে রমজান ১৪৪৮','০৮ মার্চ ২০২৭ (সম্ভাব্য)'],
+['ঈদুল ফিতর','১লা শাওয়াল ১৪৪৮','১২ মার্চ ২০২৭ (সম্ভাব্য)'],
+['আরাফা','৯ই জিলহজ ১৪৪৮','১৬ মে ২০২৭ (সম্ভাব্য)'],
+['ঈদুল আযহা','১০ই জিলহজ ১৪৪৮','১৭ মে ২০২৭ (সম্ভাব্য)'],
+['হজ','৮–১৩ জিলহজ ১৪৪৮','১৫–২০ মে ২০২৭ (সম্ভাব্য)'],
+['হিজরি নববর্ষ','১লা মহররম ১৪৪৯','০৭ জুন ২০২৭ (সম্ভাব্য)'],
+['আশুরা','১০ই মহররম ১৪৪৯','১৭ জুন ২০২৭ (সম্ভাব্য)']
+]};
+const holidays={
+2026:[
+['শবে বরাত','১৫ই শা’বান ১৪৪৭','০৪ ফেব্রুয়ারি ২০২৬'],
+['শহীদ দিবস ও আন্তর্জাতিক মাতৃভাষা দিবস','—','২১ ফেব্রুয়ারি ২০২৬'],
+['শবে কদর','২৭শে রমজান ১৪৪৭','১৭ মার্চ ২০২৬'],
+['ঈদুল ফিতর ও জুমাতুল বিদা','—','১৯–২৩ মার্চ ২০২৬'],
+['স্বাধীনতা ও জাতীয় দিবস','—','২৬ মার্চ ২০২৬'],
+['বাংলা নববর্ষ','—','১৪ এপ্রিল ২০২৬'],
+['মে দিবস ও বুদ্ধ পূর্ণিমা','—','০১ মে ২০২৬'],
+['ঈদুল আযহা','১০ই জিলহজ ১৪৪৭','২৬–৩১ মে ২০২৬'],
+['আশুরা','১০ই মহররম ১৪৪৮','২৬ জুন ২০২৬'],
+['জুলাই গণঅভ্যুত্থান দিবস','—','০৫ আগস্ট ২০২৬'],
+['ঈদে মিলাদুন্নবী (সা.)','১২ই রবিউল আউয়াল ১৪৪৮','২৬ আগস্ট ২০২৬'],
+['বিজয় দিবস','—','১৬ ডিসেম্বর ২০২৬'],
+['বড়দিন','—','২৫ ডিসেম্বর ২০২৬']
+],
+2027:[
+['শবে বরাত','১৫ই শা’বান ১৪৪৮','২৬ জানুয়ারি ২০২৭ (সম্ভাব্য)'],
+['পবিত্র রমজান শুরু','১লা রমজান ১৪৪৮','১০ ফেব্রুয়ারি ২০২৭ (সম্ভাব্য)'],
+['শবে কদর','২৭শে রমজান ১৪৪৮','০৮ মার্চ ২০২৭ (সম্ভাব্য)'],
+['ঈদুল ফিতর','১লা শাওয়াল ১৪৪৮','১২ মার্চ ২০২৭ (সম্ভাব্য)'],
+['ঈদুল আযহা','১০ই জিলহজ ১৪৪৮','১৭ মে ২০২৭ (সম্ভাব্য)'],
+['আশুরা','১০ই মহররম ১৪৪৯','১৭ জুন ২০২৭ (সম্ভাব্য)']
+]};
+let mode='important';
+function render(){const data=mode==='important'?important:holidays;const host=document.getElementById('content');host.innerHTML='';document.getElementById('pageTitle').textContent=mode==='important'?'গুরুত্বপূর্ণ দিনসমূহ':'ছুটির দিনসমূহ';
+Object.keys(data).sort().forEach(y=>{const year=document.createElement('div');year.className='year';year.textContent=bnDigits(y);host.appendChild(year);const rows=document.createElement('section');rows.className='rows';data[y].forEach(r=>{const e=document.createElement('div');e.className='event';r.forEach((v,i)=>{const c=document.createElement('div');c.className=i===0?'name':i===1?'hijri':'greg';c.textContent=v;e.appendChild(c)});rows.appendChild(e)});host.appendChild(rows)})}
+document.getElementById('important').onclick=()=>{mode='important';document.getElementById('important').classList.add('active');document.getElementById('holidays').classList.remove('active');render()};
+document.getElementById('holidays').onclick=()=>{mode='holidays';document.getElementById('holidays').classList.add('active');document.getElementById('important').classList.remove('active');render()};
+document.getElementById('back').onclick=()=>{if(window.AndroidApp&&AndroidApp.goHome)AndroidApp.goHome();else history.back()};
+render();
+</script></body></html>
