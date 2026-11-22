@@ -20,6 +20,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import org.json.JSONObject;
 import android.view.View;
+import android.speech.tts.TextToSpeech;
+import java.util.Locale;
 import android.webkit.WebChromeClient;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
@@ -44,6 +46,9 @@ public class MainActivity extends Activity {
     private MediaPlayer yasinPlayer;
     private MediaPlayer rahmanPlayer;
     private MediaPlayer mulkPlayer;
+    private TextToSpeech duaTextToSpeech;
+    private boolean duaTtsReady = false;
+    private String pendingDuaSpeech = "";
 
     private android.hardware.SensorManager compassSensorManager;
     private android.hardware.Sensor compassSensor;
@@ -932,6 +937,59 @@ public class MainActivity extends Activity {
     }
 
 
+
+    private final class DuaTtsBridge {
+        @JavascriptInterface
+        public void speak(String text) {
+            if (text == null || text.trim().isEmpty()) return;
+            final String safeText = text.length() > 4500 ? text.substring(0, 4500) : text;
+            mainHandler.post(() -> {
+                pendingDuaSpeech = safeText;
+                if (duaTextToSpeech == null) {
+                    duaTextToSpeech = new TextToSpeech(MainActivity.this, status -> {
+                        if (status != TextToSpeech.SUCCESS) {
+                            duaTtsReady = false;
+                            notifyDuaTts("আরবি কণ্ঠ চালু হয়নি। ফোনের Text-to-Speech সেটিংসে Arabic কণ্ঠ ইনস্টল করুন।");
+                            return;
+                        }
+                        int languageStatus = duaTextToSpeech.setLanguage(Locale.forLanguageTag("ar"));
+                        if (languageStatus == TextToSpeech.LANG_MISSING_DATA || languageStatus == TextToSpeech.LANG_NOT_SUPPORTED) {
+                            duaTtsReady = false;
+                            notifyDuaTts("ফোনে আরবি TTS কণ্ঠ নেই। Text-to-Speech সেটিংস থেকে Arabic voice data ইনস্টল করুন।");
+                            return;
+                        }
+                        duaTtsReady = true;
+                        speakPendingDua();
+                    });
+                } else if (duaTtsReady) {
+                    speakPendingDua();
+                } else {
+                    notifyDuaTts("আরবি কণ্ঠ প্রস্তুত হচ্ছে…");
+                }
+            });
+        }
+        @JavascriptInterface
+        public void stop() {
+            mainHandler.post(() -> {
+                if (duaTextToSpeech != null) duaTextToSpeech.stop();
+            });
+        }
+    }
+
+    private void speakPendingDua() {
+        if (!duaTtsReady || duaTextToSpeech == null || pendingDuaSpeech.isEmpty()) return;
+        String text = pendingDuaSpeech;
+        pendingDuaSpeech = "";
+        int result = duaTextToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "dua-" + System.currentTimeMillis());
+        if (result == TextToSpeech.ERROR) notifyDuaTts("আরবি কণ্ঠে পড়া যাচ্ছে না। ফোনের Arabic voice data পরীক্ষা করুন।");
+        else notifyDuaTts("আরবি কণ্ঠে দুআ পড়া হচ্ছে…");
+    }
+
+    private void notifyDuaTts(String message) {
+        if (webView == null) return;
+        webView.evaluateJavascript("if(window.duaTtsStatus)window.duaTtsStatus(" + JSONObject.quote(message) + ");", null);
+    }
+
     private final class AudioBridge {
         @JavascriptInterface
         public void playYasin() {
@@ -1278,6 +1336,7 @@ public class MainActivity extends Activity {
         root.addView(progressBar,new LinearLayout.LayoutParams(-1,dp(3)));
         webView=new WebView(this);
         webView.addJavascriptInterface(new AudioBridge(), "AndroidAudio");
+        webView.addJavascriptInterface(new DuaTtsBridge(), "AndroidDuaTts");
         if (openQuranWhenLoaded) webView.setVisibility(View.INVISIBLE);
         WebSettings s=webView.getSettings();
         s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setLoadsImagesAutomatically(true);
@@ -1377,6 +1436,7 @@ public class MainActivity extends Activity {
         if(yasinPlayer!=null){ yasinPlayer.release(); yasinPlayer=null; }
         if(rahmanPlayer!=null){ rahmanPlayer.release(); rahmanPlayer=null; }
         if(mulkPlayer!=null){ mulkPlayer.release(); mulkPlayer=null; }
+        if(duaTextToSpeech!=null){duaTextToSpeech.stop();duaTextToSpeech.shutdown();duaTextToSpeech=null;}
         if(webView!=null){webView.destroy();webView=null;} super.onDestroy();
     }
 }
