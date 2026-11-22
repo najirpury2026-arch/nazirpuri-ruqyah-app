@@ -513,6 +513,94 @@ public class MainActivity extends Activity {
         }
     }
 
+
+    // Persistent digital tasbih counter for the home-page Tasbih tile.
+    private void showTasbihCounter() {
+        showingWeb = false;
+        if (webView != null) { webView.destroy(); webView = null; }
+        final android.content.SharedPreferences prefs = getSharedPreferences("tasbih_counter", MODE_PRIVATE);
+        final int[] count = {prefs.getInt("count", 0)};
+        root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setGravity(Gravity.CENTER_HORIZONTAL);
+        root.setPadding(dp(20), dp(12), dp(20), dp(22));
+        root.setBackgroundColor(Color.rgb(244,248,245));
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        TextView back = text("‹  বিভাগসমূহ",16,Color.rgb(12,73,52),true);
+        back.setPadding(dp(4),dp(10),dp(12),dp(10));
+        back.setOnClickListener(v -> showHome());
+        bar.addView(back);
+        root.addView(bar,new LinearLayout.LayoutParams(-1,-2));
+
+        TextView title = text("ডিজিটাল তাসবীহ্",23,Color.rgb(12,73,52),true);
+        LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(-1,-2);
+        titleLp.topMargin = dp(24);
+        root.addView(title,titleLp);
+        TextView subtitle = text("প্রতিবার তাসবীহ্ পড়ে নিচের বাটনে চাপ দিন",13,Color.rgb(95,117,102),false);
+        LinearLayout.LayoutParams subLp = new LinearLayout.LayoutParams(-1,-2);
+        subLp.topMargin = dp(8);
+        root.addView(subtitle,subLp);
+
+        TextView countView = text(String.valueOf(count[0]),48,Color.rgb(12,73,52),true);
+        countView.setGravity(Gravity.CENTER);
+        TextView countLabel = text("সর্বমোট পড়া হয়েছে",15,Color.rgb(72,99,81),true);
+        countLabel.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams countLp = new LinearLayout.LayoutParams(-1,-2);
+        countLp.topMargin = dp(25);
+        root.addView(countView,countLp);
+        root.addView(countLabel,new LinearLayout.LayoutParams(-1,-2));
+
+        TextView tap = text("📿\nতাসবীহ্ পড়েছি",22,Color.WHITE,true);
+        tap.setGravity(Gravity.CENTER);
+        tap.setLineSpacing(dp(8),1f);
+        GradientDrawable tapBg = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{Color.rgb(16,112,77),Color.rgb(7,65,47)});
+        tapBg.setShape(GradientDrawable.OVAL);
+        tapBg.setStroke(dp(4),Color.rgb(224,185,94));
+        tap.setBackground(tapBg);
+        tap.setElevation(dp(5));
+        LinearLayout.LayoutParams tapLp = new LinearLayout.LayoutParams(dp(220),dp(220));
+        tapLp.gravity = Gravity.CENTER;
+        tapLp.topMargin = dp(28);
+        tapLp.bottomMargin = dp(25);
+        root.addView(tap,tapLp);
+
+        TextView reset = text("↻  রিসেট",16,Color.rgb(155,55,45),true);
+        reset.setGravity(Gravity.CENTER);
+        GradientDrawable resetBg = new GradientDrawable();
+        resetBg.setColor(Color.rgb(255,239,235));
+        resetBg.setCornerRadius(dp(24));
+        resetBg.setStroke(dp(1),Color.rgb(235,199,190));
+        reset.setBackground(resetBg);
+        reset.setPadding(dp(28),dp(12),dp(28),dp(12));
+        root.addView(reset,new LinearLayout.LayoutParams(-2,-2));
+
+        tap.setOnClickListener(v -> {
+            if (count[0] < Integer.MAX_VALUE) count[0]++;
+            countView.setText(String.valueOf(count[0]));
+            prefs.edit().putInt("count",count[0]).apply();
+            tap.setScaleX(0.97f); tap.setScaleY(0.97f);
+            tap.postDelayed(() -> { tap.setScaleX(1f); tap.setScaleY(1f); },90);
+        });
+        reset.setOnClickListener(v -> new android.app.AlertDialog.Builder(this)
+            .setTitle("তাসবীহ্ রিসেট")
+            .setMessage("পড়ার বর্তমান সংখ্যা শূন্য করতে চান?")
+            .setNegativeButton("না",null)
+            .setPositiveButton("রিসেট",(dialog,which) -> {
+                count[0] = 0;
+                countView.setText("0");
+                prefs.edit().putInt("count",0).apply();
+            }).show());
+
+        TextView note = text("আপনার গণনা অ্যাপ বন্ধ করলেও সংরক্ষিত থাকবে।",12,Color.rgb(112,130,117),false);
+        LinearLayout.LayoutParams noteLp = new LinearLayout.LayoutParams(-1,-2);
+        noteLp.topMargin = dp(18);
+        root.addView(note,noteLp);
+        setContentView(root);
+    }
+
     private void openSection(int index) {
         if (index == 0) {
             showLocalQuran();
@@ -532,6 +620,10 @@ public class MainActivity extends Activity {
         }
         if (index == 11) {
             showQiblaCompass();
+            return;
+        }
+        if (index == 12) {
+            showTasbihCounter();
             return;
         }
         if (index == 18) {
