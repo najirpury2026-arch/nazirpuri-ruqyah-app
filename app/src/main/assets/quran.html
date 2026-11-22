@@ -234,7 +234,7 @@
    <div class="nq-hero"><div class="nq-bism">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><div class="nq-sub">পবিত্র আল-কুরআন · আরবি ও বাংলা অর্থ</div></div>
    <div class="nq-stats"><div class="nq-stat"><b>১১৪</b><span>সূরা</span></div><div class="nq-stat"><b>৩০</b><span>পারা</span></div><div class="nq-stat"><b>৬২৩৬</b><span>আয়াত</span></div></div>
    <div class="nq-search"><select id="nq-search-mode" aria-label="অনুসন্ধানের ভাষা"><option value="bn">বাংলা শব্দ</option><option value="ar">আরবি শব্দ</option></select><input id="nq-query" type="search" placeholder="সূরার নাম, নম্বর বা আয়াতের শব্দ লিখুন" aria-label="কুরআন অনুসন্ধান"/><button type="button" onclick="window.nqFilterSurahs()">খুঁজুন</button></div>
-   <div class="nq-tools" aria-label="কুরআনের বিভাগ"><button class="active" type="button" onclick="window.nqShowHome()">সূরাসমূহ</button><button type="button" onclick="window.nqShowJuzList()">পারা</button><button type="button" onclick="window.nqShowTopics()">বিষয়ভিত্তিক</button><button type="button" onclick="window.nqShowBookmarks()">বুকমার্ক</button><button type="button" onclick="window.nqOpenSettings()">অডিও তেলাওয়াত</button></div>
+   <div class="nq-tools" aria-label="কুরআনের বিভাগ"><button class="active" type="button" onclick="window.nqShowHome()">সূরাসমূহ</button><button type="button" onclick="window.nqShowJuzList()">পারা</button><button type="button" onclick="window.nqShowTopics()">বিষয়ভিত্তিক</button><button type="button" onclick="window.nqShowBookmarks()">বুকমার্ক</button><button type="button" onclick="window.nqOpenReciterPicker()">অডিও তেলাওয়াত</button></div>
    <div class="nq-sub nq-search-note">বাংলা বা আরবি শব্দ লিখে খুঁজুন। সূরার নাম ও নম্বর দিয়েও অনুসন্ধান করা যাবে।</div>
    <div id="nq-list" class="nq-list"><div class="nq-status">সূরার তালিকা লোড হচ্ছে…</div></div>
   </section>
@@ -463,6 +463,35 @@ window.nqPlayAyah=function(globalNo,btn){if(btn)window.nqContinuousSurah=false;
  window.nqAdjustFont=function(delta){nqFontSize=Math.max(16,Math.min(42,nqFontSize+delta*2));var nodes=root.querySelectorAll('.nq-arabic');for(var i=0;i<nodes.length;i++)nodes[i].style.fontSize=nqFontSize+'px'};
  window.nqToggleTranslation=function(btn){var nodes=root.querySelectorAll('.nq-translation');var hide=btn.getAttribute('data-hidden')!=='1';for(var i=0;i<nodes.length;i++)nodes[i].style.display=hide?'none':'';btn.setAttribute('data-hidden',hide?'1':'0');btn.lastChild.textContent=hide?'অনুবাদ দেখুন':'অনুবাদ মোড'};
  window.nqToggleAutoScroll=function(btn){if(nqAutoTimer){clearInterval(nqAutoTimer);nqAutoTimer=null;btn.classList.remove('active');btn.lastChild.textContent='অটো স্ক্রল';return}nqAutoTimer=setInterval(function(){if(root.classList.contains('nq-open'))root.scrollBy({top:1,behavior:'auto'});else{clearInterval(nqAutoTimer);nqAutoTimer=null}},45);btn.classList.add('active');btn.lastChild.textContent='স্ক্রল বন্ধ'};
+ window.nqOpenReciterPicker=function(){
+  var items=[
+   ['qari_sudais','শায়খ আব্দুর রহমান আস-সুদাইস','১৯২ kbps'],
+   ['qari_abdulbasit_murattal','কারি আব্দুল বাসিত — মুরাত্তাল','১৯২ kbps'],
+   ['qari_abdulbasit_mujawwad','কারি আব্দুল বাসিত — মুজাওয়াদ','১২৮ kbps · দীর্ঘ টানা তিলাওয়াত'],
+   ['qari_mishary','মিশারি রাশিদ আল-আফাসি','১২৮ kbps'],
+   ['qari_maher','মাহের আল-মুয়াইকলি','৬৪ kbps'],
+   ['qari_shaatree','আবু বকর আশ-শাতরী','১২৮ kbps'],
+   ['qari_ghamdi','সাদ আল-গামিদী','৪০ kbps']
+  ];
+  var panel=document.getElementById('nq-reciter-picker');
+  if(!panel){
+   panel=document.createElement('div');panel.id='nq-reciter-picker';
+   panel.style.cssText='position:fixed;inset:0;z-index:2147483647;background:#10231bd9;display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto';
+   panel.innerHTML='<section style="width:min(100%,440px);max-height:90vh;overflow:auto;background:#fff;border-radius:20px;padding:16px;color:#244b39;box-shadow:0 12px 40px #0005"><header style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><b style="font-size:19px">অডিও তেলাওয়াত · ক্বারী নির্বাচন</b><button id="nq-reciter-close" type="button" style="border:0;border-radius:50%;width:36px;height:36px;font-size:24px;background:#edf4ef;color:#24543d">×</button></header><div id="nq-reciter-list"></div><p style="font-size:12px;line-height:1.7;color:#718078;margin:12px 2px 2px">প্রথমবার চালালে অডিও ডাউনলোড হবে। পরে একই অডিও অফলাইনে শোনা যাবে।</p></section>';
+   document.body.appendChild(panel);
+   document.getElementById('nq-reciter-close').addEventListener('click',function(){panel.remove()});
+  }
+  var selected=localStorage.getItem('nq-qari')||'qari_sudais',list=document.getElementById('nq-reciter-list');
+  list.innerHTML=items.map(function(it){var active=it[0]===selected;return '<button type="button" data-qari="'+it[0]+'" style="display:flex;align-items:center;gap:12px;width:100%;padding:13px 12px;margin:7px 0;border:1px solid '+(active?'#176344':'#dce7df')+';border-radius:13px;background:'+(active?'#e8f4eb':'#fff')+';color:#244b39;text-align:left;font:inherit"><span style="font-size:20px;color:#176344">'+(active?'✓':'▶')+'</span><span style="flex:1"><b style="display:block;font-size:14px">'+it[1]+'</b><small style="display:block;color:#748278;margin-top:3px">'+it[2]+'</small></span></button>'}).join('');
+  list.querySelectorAll('[data-qari]').forEach(function(btn){btn.addEventListener('click',function(){
+   var q=this.getAttribute('data-qari');localStorage.setItem('nq-qari',q);
+   var sel=$('nq-qari');if(sel)sel.value=q;
+   panel.remove();
+   if(currentData&&currentData.ar&&Array.isArray(currentData.ar.ayahs)&&currentData.ar.ayahs.length){
+    window.nqContinuousSurah=true;window.nqPlayAyah(currentData.ar.ayahs[0].number);
+   }else{alert('ক্বারী নির্বাচন হয়েছে। এখন একটি সূরা খুলে তিলাওয়াত চালান।')}
+  })});
+ };
  window.nqOpenSettings=function(){var p=$('nq-settings-panel');if(!p)return;p.hidden=false;try{var q=localStorage.getItem('nq-qari')||'qari_sudais',t=localStorage.getItem('nq-translation-edition')||'bn.bengali';$('nq-qari').value=q;$('nq-translation-edition').value=t;$('nq-font-range').value=nqFontSize;$('nq-font-value').textContent=bnDigits(nqFontSize)+' px';$('nq-bn-font-range').value=localStorage.getItem('nq-bn-font')||16;$('nq-bn-font-value').textContent=bnDigits($('nq-bn-font-range').value)+' px';$('nq-dark-mode').checked=localStorage.getItem('nq-dark')==='1';$('nq-auto-next').checked=localStorage.getItem('nq-auto-next')==='1';$('nq-repeat').checked=localStorage.getItem('nq-repeat')==='1';$('nq-tajweed').checked=root.classList.contains('nq-tajweed')}catch(e){}};
  window.nqCloseSettings=function(){var p=$('nq-settings-panel');if(p)p.hidden=true};
  window.nqSetFont=function(v){nqFontSize=Number(v)||29;root.style.setProperty('--nq-ar-size',nqFontSize+'px');var nodes=root.querySelectorAll('.nq-arabic');for(var i=0;i<nodes.length;i++)nodes[i].style.fontSize=nqFontSize+'px';$('nq-font-value').textContent=bnDigits(nqFontSize)+' px';localStorage.setItem('nq-font-size',String(nqFontSize))};
