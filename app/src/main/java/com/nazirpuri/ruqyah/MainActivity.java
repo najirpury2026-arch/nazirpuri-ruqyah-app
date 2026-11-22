@@ -630,6 +630,10 @@ public class MainActivity extends Activity {
             showTasbihCounter();
             return;
         }
+        if (index == 15) {
+            showWeb("file:///android_asset/calendar.html");
+            return;
+        }
         if (index == 18) {
             showServicesPlaceholder();
             return;
