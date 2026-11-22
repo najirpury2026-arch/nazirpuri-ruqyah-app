@@ -43,8 +43,10 @@ public class MainActivity extends Activity {
     private boolean openQuranWhenLoaded = false;
     private MediaPlayer yasinPlayer;
     private MediaPlayer rahmanPlayer;
+    private MediaPlayer mulkPlayer;
     private volatile boolean yasinDownloading = false;
     private volatile boolean rahmanDownloading = false;
+    private volatile boolean mulkDownloading = false;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final String[] titles = {"কুরআন","তাফসীর","হাদীস","নামাযের সময়","তিলাওয়াত","অডিও তেলাওয়াত","অনুবাদসহ তেলাওয়াত","রুকইয়া","কিতাব","কুরআন শিক্ষা","দু'আ","কিবলা","তাসবীহ্","মসজিদ খুঁজুন","ইসলামিক নাম","ক্যালেন্ডার","গুরুত্বপূর্ণ দিন","অন্যান্য","আমাদের সেবা","আমাদের ওয়েবসাইট"};
     private final String[] icons = {"📖","📜","📚","🕌","🎧","🔊","🎙️","🤲","📘","🌙","🤲","🧭","📿","🕌","👶","🗓️","🌙","☪️","🤝","🌐"};
@@ -317,6 +319,48 @@ public class MainActivity extends Activity {
             catch (Exception ignored) { return 0; }
         }
         @JavascriptInterface
+        public void playMulk() {
+            mainHandler.post(() -> {
+                if (mulkPlayer != null && mulkPlayer.isPlaying()) {
+                    mulkPlayer.pause();
+                    audioMulkStatus("বিরতিতে আছে।");
+                    return;
+                }
+                File cached = new File(getFilesDir(), "surah-al-mulk.mp3");
+                if (cached.exists() && cached.length() > 1000000) startMulkPlayback(cached);
+                else if (!mulkDownloading) {
+                    mulkDownloading = true;
+                    audioMulkStatus("প্রথমবার সূরা আল-মুলকের অডিও প্রস্তুত করা হচ্ছে…");
+                    new Thread(() -> downloadMulk(cached)).start();
+                }
+            });
+        }
+        @JavascriptInterface
+        public void pauseMulk() {
+            mainHandler.post(() -> {
+                if (mulkPlayer != null && mulkPlayer.isPlaying()) mulkPlayer.pause();
+                audioMulkStatus("বিরতিতে আছে।");
+            });
+        }
+        @JavascriptInterface
+        public void seekMulk(int positionMs) {
+            mainHandler.post(() -> {
+                try {
+                    if (mulkPlayer != null) mulkPlayer.seekTo(Math.max(0, Math.min(positionMs, mulkPlayer.getDuration())));
+                } catch (Exception ignored) { }
+            });
+        }
+        @JavascriptInterface
+        public int getMulkPosition() {
+            try { return mulkPlayer != null ? mulkPlayer.getCurrentPosition() : 0; }
+            catch (Exception ignored) { return 0; }
+        }
+        @JavascriptInterface
+        public int getMulkDuration() {
+            try { return mulkPlayer != null ? mulkPlayer.getDuration() : 0; }
+            catch (Exception ignored) { return 0; }
+        }
+        @JavascriptInterface
         public void playRahman() {
             mainHandler.post(() -> {
                 if (rahmanPlayer != null && rahmanPlayer.isPlaying()) {
@@ -370,6 +414,57 @@ public class MainActivity extends Activity {
         if (webView != null) {
             String safe = JSONObject.quote(message);
             webView.evaluateJavascript("window.onRahmanStatus && window.onRahmanStatus(" + safe + ")", null);
+        }
+    }
+    private void audioMulkStatus(String message) {
+        if (webView != null) {
+            String safe = JSONObject.quote(message);
+            webView.evaluateJavascript("window.onMulkStatus && window.onMulkStatus(" + safe + ")", null);
+        }
+    }
+
+    private void downloadMulk(File destination) {
+        File temp = new File(getCacheDir(), "surah-al-mulk.download");
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL("https://drive.usercontent.google.com/download?id=1PfD7_skRJ-_-JHkI-NlEAwBuxWA3xb7Y&export=download&confirm=t");
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setInstanceFollowRedirects(true);
+            connection.setConnectTimeout(20000);
+            connection.setReadTimeout(30000);
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
+            int code = connection.getResponseCode();
+            if (code < 200 || code >= 300) throw new Exception("ডাউনলোড সার্ভার সাড়া দেয়নি (" + code + ")");
+            try (InputStream in = connection.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
+                byte[] buffer = new byte[65536]; int n;
+                while ((n = in.read(buffer)) != -1) out.write(buffer, 0, n);
+            }
+            if (temp.length() < 1000000) throw new Exception("অডিও ফাইলটি সম্পূর্ণ ডাউনলোড হয়নি।");
+            if (destination.exists()) destination.delete();
+            if (!temp.renameTo(destination)) throw new Exception("অডিও সংরক্ষণ করা যায়নি।");
+            mainHandler.post(() -> { mulkDownloading = false; startMulkPlayback(destination); });
+        } catch (Exception e) {
+            temp.delete();
+            mainHandler.post(() -> { mulkDownloading = false; audioMulkStatus("সূরা আল-মুলকের অডিও নামানো যায়নি। Drive ফাইলের অনুমতি ‘যার কাছে লিংক আছে’ করে আবার চেষ্টা করুন।"); });
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
+    }
+
+    private void startMulkPlayback(File audioFile) {
+        try {
+            if (yasinPlayer != null && yasinPlayer.isPlaying()) yasinPlayer.pause();
+            if (rahmanPlayer != null && rahmanPlayer.isPlaying()) rahmanPlayer.pause();
+            if (mulkPlayer != null) { mulkPlayer.release(); mulkPlayer = null; }
+            mulkPlayer = new MediaPlayer();
+            mulkPlayer.setDataSource(audioFile.getAbsolutePath());
+            mulkPlayer.setOnPreparedListener(player -> { player.start(); audioMulkStatus("সূরা আল-মুলকের তেলাওয়াত চলছে।"); });
+            mulkPlayer.setOnCompletionListener(player -> audioMulkStatus("সূরা আল-মুলকের তেলাওয়াত শেষ হয়েছে। আবার শুনতে চাপুন।"));
+            mulkPlayer.setOnErrorListener((player, what, extra) -> { audioMulkStatus("অডিও চালানো যায়নি। আবার চেষ্টা করুন।"); return true; });
+            mulkPlayer.prepareAsync();
+            audioMulkStatus("অডিও চালু হচ্ছে…");
+        } catch (Exception e) {
+            audioMulkStatus("অডিও চালু করা যায়নি।");
         }
     }
 
@@ -617,6 +712,7 @@ public class MainActivity extends Activity {
     @Override protected void onDestroy(){
         if(yasinPlayer!=null){ yasinPlayer.release(); yasinPlayer=null; }
         if(rahmanPlayer!=null){ rahmanPlayer.release(); rahmanPlayer=null; }
+        if(mulkPlayer!=null){ mulkPlayer.release(); mulkPlayer=null; }
         if(webView!=null){webView.destroy();webView=null;} super.onDestroy();
     }
 }
