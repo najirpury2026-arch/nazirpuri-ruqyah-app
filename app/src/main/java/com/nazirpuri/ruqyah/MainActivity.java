@@ -156,7 +156,7 @@ public class MainActivity extends Activity {
         settings.setGravity(Gravity.CENTER);
         settings.setContentDescription("সেটিংস");
         GradientDrawable settingsBg = new GradientDrawable();
-        settingsBg.setColor(0x337FFFFFF);
+        settingsBg.setColor(0x337FFFFF);
         settingsBg.setCornerRadius(dp(22));
         settings.setBackground(settingsBg);
         settings.setOnClickListener(v -> showSettings());
