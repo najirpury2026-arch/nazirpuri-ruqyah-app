@@ -5,6 +5,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.net.Uri;
+import android.media.MediaPlayer;
+import java.io.File;
+import java.io.FileOutputStream;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -38,6 +41,8 @@ public class MainActivity extends Activity {
     private LinearLayout root;
     private boolean showingWeb = false;
     private boolean openQuranWhenLoaded = false;
+    private MediaPlayer yasinPlayer;
+    private volatile boolean yasinDownloading = false;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final String[] titles = {"কুরআন","তাফসীর","হাদীস","নামাযের সময়","তিলাওয়াত","অডিও তেলাওয়াত","অনুবাদসহ তেলাওয়াত","রুকইয়া","কিতাব","কুরআন শিক্ষা","দু'আ","কিবলা","তাসবীহ্","মসজিদ খুঁজুন","ইসলামিক নাম","ক্যালেন্ডার","গুরুত্বপূর্ণ দিন","অন্যান্য","আমাদের সেবা","আমাদের ওয়েবসাইট"};
     private final String[] icons = {"📖","📜","📚","🕌","🎧","🔊","🎙️","🤲","📘","🌙","🤲","🧭","📿","🕌","👶","🗓️","🌙","☪️","🤝","🌐"};
@@ -261,6 +266,85 @@ public class MainActivity extends Activity {
         }
     }
 
+
+    private final class AudioBridge {
+        @JavascriptInterface
+        public void playYasin() {
+            mainHandler.post(() -> {
+                if (yasinPlayer != null && yasinPlayer.isPlaying()) {
+                    yasinPlayer.pause();
+                    audioStatus("বিরতিতে আছে।");
+                    return;
+                }
+                File cached = new File(getFilesDir(), "surah-yasin.mp3");
+                if (cached.exists() && cached.length() > 1000000) {
+                    startYasinPlayback(cached);
+                } else if (!yasinDownloading) {
+                    yasinDownloading = true;
+                    audioStatus("প্রথমবার অডিও প্রস্তুত করা হচ্ছে…");
+                    new Thread(() -> downloadYasin(cached)).start();
+                }
+            });
+        }
+        @JavascriptInterface
+        public void pauseYasin() {
+            mainHandler.post(() -> {
+                if (yasinPlayer != null && yasinPlayer.isPlaying()) yasinPlayer.pause();
+                audioStatus("বিরতিতে আছে।");
+            });
+        }
+    }
+
+    private void audioStatus(String message) {
+        if (webView != null) {
+            String safe = JSONObject.quote(message);
+            webView.evaluateJavascript("window.onYasinStatus && window.onYasinStatus(" + safe + ")", null);
+        }
+    }
+
+    private void downloadYasin(File destination) {
+        File temp = new File(getCacheDir(), "surah-yasin.download");
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL("https://drive.usercontent.google.com/download?id=1pWdLu1cTJ3LkyW9wGaOw1o01am9SlfLP&export=download&confirm=t");
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setInstanceFollowRedirects(true);
+            connection.setConnectTimeout(20000);
+            connection.setReadTimeout(30000);
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
+            int code = connection.getResponseCode();
+            if (code < 200 || code >= 300) throw new Exception("ডাউনলোড সার্ভার সাড়া দেয়নি (" + code + ")");
+            try (InputStream in = connection.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
+                byte[] buffer = new byte[65536]; int n;
+                while ((n = in.read(buffer)) != -1) out.write(buffer, 0, n);
+            }
+            if (temp.length() < 1000000) throw new Exception("অডিও ফাইলটি সম্পূর্ণ ডাউনলোড হয়নি।");
+            if (destination.exists()) destination.delete();
+            if (!temp.renameTo(destination)) throw new Exception("অডিও সংরক্ষণ করা যায়নি।");
+            mainHandler.post(() -> { yasinDownloading = false; startYasinPlayback(destination); });
+        } catch (Exception e) {
+            temp.delete();
+            mainHandler.post(() -> { yasinDownloading = false; audioStatus("অডিও নামানো যায়নি। ইন্টারনেট সংযোগ ও Drive-এর লিংক অনুমতি পরীক্ষা করে আবার চাপুন।"); });
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
+    }
+
+    private void startYasinPlayback(File audioFile) {
+        try {
+            if (yasinPlayer != null) { yasinPlayer.release(); yasinPlayer = null; }
+            yasinPlayer = new MediaPlayer();
+            yasinPlayer.setDataSource(audioFile.getAbsolutePath());
+            yasinPlayer.setOnPreparedListener(player -> { player.start(); audioStatus("সূরা ইয়াসিনের তেলাওয়াত চলছে।"); });
+            yasinPlayer.setOnCompletionListener(player -> audioStatus("তেলাওয়াত শেষ হয়েছে। আবার শুনতে চাপুন।"));
+            yasinPlayer.setOnErrorListener((player, what, extra) -> { audioStatus("অডিও চালানো যায়নি। আবার চেষ্টা করুন।"); return true; });
+            yasinPlayer.prepareAsync();
+            audioStatus("অডিও চালু হচ্ছে…");
+        } catch (Exception e) {
+            audioStatus("অডিও চালু করা যায়নি।");
+        }
+    }
+
     private void showServicesPlaceholder() {
         showingWeb = false;
         root = new LinearLayout(this);
@@ -322,6 +406,7 @@ public class MainActivity extends Activity {
         progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(Color.rgb(190,150,55)));
         root.addView(progressBar,new LinearLayout.LayoutParams(-1,dp(3)));
         webView=new WebView(this);
+        webView.addJavascriptInterface(new AudioBridge(), "AndroidAudio");
         if (openQuranWhenLoaded) webView.setVisibility(View.INVISIBLE);
         WebSettings s=webView.getSettings();
         s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setLoadsImagesAutomatically(true);
@@ -415,6 +500,7 @@ public class MainActivity extends Activity {
         else super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        if(yasinPlayer!=null){ yasinPlayer.release(); yasinPlayer=null; }
         if(webView!=null){webView.destroy();webView=null;} super.onDestroy();
     }
 }
