@@ -213,6 +213,10 @@ public class MainActivity extends Activity {
             showLocalQuran();
             return;
         }
+        if (index == 3) {
+            showWeb("file:///android_asset/prayer_times.html");
+            return;
+        }
         if (index == 6) {
             showWeb("file:///android_asset/translation_recitation.html");
             return;
