@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="theme-color" content="#0b513b"><title>তিন তারিখের বার্ষিক ক্যালেন্ডার</title>
+<style>
+@font-face{font-family:Solaiman;src:url('SolaimanLipi.ttf')}*{box-sizing:border-box}body{margin:0;background:#f3f7f4;color:#173d2d;font-family:Solaiman,'Noto Sans Bengali',sans-serif}.top{background:linear-gradient(135deg,#073b2c,#14734e);color:white;padding:18px 14px 16px;text-align:center;border-radius:0 0 22px 22px}.top h1{font-size:23px;margin:0 0 5px}.top p{margin:0;color:#e7d6a5;font-size:13px}.nav{display:flex;justify-content:center;align-items:center;gap:18px;margin:15px 0}.nav button{border:0;border-radius:12px;background:#e1eee6;color:#14543b;font-size:20px;padding:5px 15px}.year{font-size:20px;font-weight:bold;min-width:120px;text-align:center}.legend{display:flex;justify-content:center;gap:13px;flex-wrap:wrap;font-size:12px;margin:0 10px 14px}.legend span{display:flex;align-items:center;gap:5px}.dot{width:9px;height:9px;border-radius:50%;display:inline-block}.months{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:0 9px 20px}.month{background:white;border:1px solid #e1ebe4;border-radius:13px;padding:8px 5px;box-shadow:0 2px 7px #163d2d0c;min-width:0}.mh{text-align:center;font-weight:bold;color:#0d6747;font-size:14px;margin-bottom:6px}.mh small{display:block;font-weight:normal;color:#8b6a2a;font-size:11px}.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}.wd{text-align:center;font-size:9px;color:#829187;padding:2px 0}.day{min-height:37px;border-radius:5px;text-align:center;padding:2px 0 1px;line-height:1.15;overflow:hidden}.day .en{font: bold 11px Arial,sans-serif;color:#214c37}.day .bn{font-size:10px;color:#178052}.day .ar{font-size:9px;color:#9a6b22;white-space:nowrap}.day.today{background:#dff2e5;outline:1px solid #31966b}.empty{min-height:37px}.foot{text-align:center;color:#819087;font-size:11px;padding:0 12px 20px}@media(min-width:700px){.months{grid-template-columns:repeat(3,minmax(0,1fr));padding-left:18px;padding-right:18px;gap:14px}.month{padding:11px}.day{min-height:44px}.day .en{font-size:13px}.day .bn{font-size:11px}.day .ar{font-size:10px}.wd{font-size:11px}}
+</style></head><body><header class="top"><h1>বার্ষিক ক্যালেন্ডার</h1><p>ইংরেজি • বাংলা • আরবি (হিজরি) তারিখ একসাথে</p></header>
+<div class="nav"><button id="prev" aria-label="আগের বছর">‹</button><div class="year" id="year"></div><button id="next" aria-label="পরের বছর">›</button></div>
+<div class="legend"><span><i class="dot" style="background:#214c37"></i> ইংরেজি</span><span><i class="dot" style="background:#178052"></i> বাংলা</span><span><i class="dot" style="background:#9a6b22"></i> আরবি / হিজরি</span></div>
+<main class="months" id="months"></main><div class="foot">প্রতিটি দিনের ঘরে তিনটি তারিখ একসাথে দেখানো হয়েছে।</div>
+<script>
+const bnMonths=['বৈশাখ','জ্যৈষ্ঠ','আষাঢ়','শ্রাবণ','ভাদ্র','আশ্বিন','কার্তিক','অগ্রহায়ণ','পৌষ','মাঘ','ফাল্গুন','চৈত্র'];
+const bnDigits=n=>String(n).replace(/[0-9]/g,d=>'০১২৩৪৫৬৭৮৯'[+d]);
+const bnWeek=['রবি','সোম','মঙ্গল','বুধ','বৃহঃ','শুক্র','শনি'];
+const hijriFmt=new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'numeric'});
+const enMonth=new Intl.DateTimeFormat('en',{month:'long'});
+const today=new Date();let shownYear=today.getFullYear();
+function banglaDate(d){
+ const gy=d.getFullYear();let start=new Date(gy,3,14);let by,base;
+ if(d>=start){by=gy-593;base=start;}else{by=gy-594;base=new Date(gy-1,3,14);}
+ let day=Math.floor((new Date(d.getFullYear(),d.getMonth(),d.getDate())-base)/86400000);
+ const leap=(by+594)%4===0;const lengths=[31,31,31,31,31,30,30,30,30,30,30,leap?31:30];
+ let m=0;while(m<11&&day>=lengths[m]){day-=lengths[m];m++;}
+ return {day:day+1,month:bnMonths[m],year:by};
+}
+function safeHijri(d){try{return hijriFmt.format(d)}catch(e){return '—'}}
+function render(){
+ document.getElementById('year').textContent=bnDigits(shownYear)+' / '+shownYear;
+ const host=document.getElementById('months');host.innerHTML='';
+ for(let m=0;m<12;m++){
+  const first=new Date(shownYear,m,1),count=new Date(shownYear,m+1,0).getDate();
+  const card=document.createElement('section');card.className='month';
+  const head=document.createElement('div');head.className='mh';head.textContent=enMonth.format(first)+' '+shownYear;
+  const sub=document.createElement('small');sub.textContent=bnMonths[banglaDate(first).month===bnMonths[0]?0:banglaDate(first).month?bnMonths.indexOf(banglaDate(first).month):0]+' মাসের অংশ';head.appendChild(sub);card.appendChild(head);
+  const grid=document.createElement('div');grid.className='days';
+  bnWeek.forEach(w=>{const x=document.createElement('div');x.className='wd';x.textContent=w;grid.appendChild(x)});
+  for(let z=0;z<first.getDay();z++){const e=document.createElement('div');e.className='empty';grid.appendChild(e)}
+  for(let n=1;n<=count;n++){
+   const d=new Date(shownYear,m,n),bd=banglaDate(d),cell=document.createElement('div');cell.className='day';
+   if(d.toDateString()===today.toDateString())cell.classList.add('today');
+   cell.innerHTML='<div class="en">'+n+'</div><div class="bn">'+bnDigits(bd.day)+'</div><div class="ar">'+safeHijri(d)+'</div>';
+   cell.title='ইংরেজি '+n+' '+enMonth.format(d)+' '+shownYear+' | বাংলা '+bd.day+' '+bd.month+' '+bd.year+' | হিজরি '+safeHijri(d);
+   grid.appendChild(cell);
+  }
+  card.appendChild(grid);host.appendChild(card);
+ }
+}
+document.getElementById('prev').onclick=()=>{shownYear--;render()};
+document.getElementById('next').onclick=()=>{shownYear++;render()};
+render();
+</script></body></html>
