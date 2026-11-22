@@ -730,6 +730,10 @@ public class MainActivity extends Activity {
             findNearbyMosques();
             return;
         }
+        if (index == 14) {
+            showWeb("file:///android_asset/islamic_names.html");
+            return;
+        }
         if (index == 15) {
             showWeb("file:///android_asset/calendar.html");
             return;
