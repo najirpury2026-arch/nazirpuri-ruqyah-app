@@ -42,7 +42,9 @@ public class MainActivity extends Activity {
     private boolean showingWeb = false;
     private boolean openQuranWhenLoaded = false;
     private MediaPlayer yasinPlayer;
+    private MediaPlayer rahmanPlayer;
     private volatile boolean yasinDownloading = false;
+    private volatile boolean rahmanDownloading = false;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final String[] titles = {"কুরআন","তাফসীর","হাদীস","নামাযের সময়","তিলাওয়াত","অডিও তেলাওয়াত","অনুবাদসহ তেলাওয়াত","রুকইয়া","কিতাব","কুরআন শিক্ষা","দু'আ","কিবলা","তাসবীহ্","মসজিদ খুঁজুন","ইসলামিক নাম","ক্যালেন্ডার","গুরুত্বপূর্ণ দিন","অন্যান্য","আমাদের সেবা","আমাদের ওয়েবসাইট"};
     private final String[] icons = {"📖","📜","📚","🕌","🎧","🔊","🎙️","🤲","📘","🌙","🤲","🧭","📿","🕌","👶","🗓️","🌙","☪️","🤝","🌐"};
@@ -314,12 +316,104 @@ public class MainActivity extends Activity {
             try { return yasinPlayer != null ? yasinPlayer.getDuration() : 0; }
             catch (Exception ignored) { return 0; }
         }
+        @JavascriptInterface
+        public void playRahman() {
+            mainHandler.post(() -> {
+                if (rahmanPlayer != null && rahmanPlayer.isPlaying()) {
+                    rahmanPlayer.pause();
+                    audioRahmanStatus("বিরতিতে আছে।");
+                    return;
+                }
+                File cached = new File(getFilesDir(), "surah-ar-rahman.mp3");
+                if (cached.exists() && cached.length() > 1000000) startRahmanPlayback(cached);
+                else if (!rahmanDownloading) {
+                    rahmanDownloading = true;
+                    audioRahmanStatus("প্রথমবার সূরা আর-রহমানের অডিও প্রস্তুত করা হচ্ছে…");
+                    new Thread(() -> downloadRahman(cached)).start();
+                }
+            });
+        }
+        @JavascriptInterface
+        public void pauseRahman() {
+            mainHandler.post(() -> {
+                if (rahmanPlayer != null && rahmanPlayer.isPlaying()) rahmanPlayer.pause();
+                audioRahmanStatus("বিরতিতে আছে।");
+            });
+        }
+        @JavascriptInterface
+        public void seekRahman(int positionMs) {
+            mainHandler.post(() -> {
+                try {
+                    if (rahmanPlayer != null) rahmanPlayer.seekTo(Math.max(0, Math.min(positionMs, rahmanPlayer.getDuration())));
+                } catch (Exception ignored) { }
+            });
+        }
+        @JavascriptInterface
+        public int getRahmanPosition() {
+            try { return rahmanPlayer != null ? rahmanPlayer.getCurrentPosition() : 0; }
+            catch (Exception ignored) { return 0; }
+        }
+        @JavascriptInterface
+        public int getRahmanDuration() {
+            try { return rahmanPlayer != null ? rahmanPlayer.getDuration() : 0; }
+            catch (Exception ignored) { return 0; }
+        }
     }
 
     private void audioStatus(String message) {
         if (webView != null) {
             String safe = JSONObject.quote(message);
             webView.evaluateJavascript("window.onYasinStatus && window.onYasinStatus(" + safe + ")", null);
+        }
+    }
+    private void audioRahmanStatus(String message) {
+        if (webView != null) {
+            String safe = JSONObject.quote(message);
+            webView.evaluateJavascript("window.onRahmanStatus && window.onRahmanStatus(" + safe + ")", null);
+        }
+    }
+
+    private void downloadRahman(File destination) {
+        File temp = new File(getCacheDir(), "surah-ar-rahman.download");
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL("https://drive.usercontent.google.com/download?id=1rFrvXq6RNwi1pFBqXfHuBpPSq-63-FZ2&export=download&confirm=t");
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setInstanceFollowRedirects(true);
+            connection.setConnectTimeout(20000);
+            connection.setReadTimeout(30000);
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
+            int code = connection.getResponseCode();
+            if (code < 200 || code >= 300) throw new Exception("ডাউনলোড সার্ভার সাড়া দেয়নি (" + code + ")");
+            try (InputStream in = connection.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
+                byte[] buffer = new byte[65536]; int n;
+                while ((n = in.read(buffer)) != -1) out.write(buffer, 0, n);
+            }
+            if (temp.length() < 1000000) throw new Exception("অডিও ফাইলটি সম্পূর্ণ ডাউনলোড হয়নি।");
+            if (destination.exists()) destination.delete();
+            if (!temp.renameTo(destination)) throw new Exception("অডিও সংরক্ষণ করা যায়নি।");
+            mainHandler.post(() -> { rahmanDownloading = false; startRahmanPlayback(destination); });
+        } catch (Exception e) {
+            temp.delete();
+            mainHandler.post(() -> { rahmanDownloading = false; audioRahmanStatus("সূরা আর-রহমানের অডিও নামানো যায়নি। Drive ফাইলের অনুমতি ‘যার কাছে লিংক আছে’ করে আবার চেষ্টা করুন।"); });
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
+    }
+
+    private void startRahmanPlayback(File audioFile) {
+        try {
+            if (yasinPlayer != null && yasinPlayer.isPlaying()) yasinPlayer.pause();
+            if (rahmanPlayer != null) { rahmanPlayer.release(); rahmanPlayer = null; }
+            rahmanPlayer = new MediaPlayer();
+            rahmanPlayer.setDataSource(audioFile.getAbsolutePath());
+            rahmanPlayer.setOnPreparedListener(player -> { player.start(); audioRahmanStatus("সূরা আর-রহমানের তেলাওয়াত চলছে।"); });
+            rahmanPlayer.setOnCompletionListener(player -> audioRahmanStatus("সূরা আর-রহমানের তেলাওয়াত শেষ হয়েছে। আবার শুনতে চাপুন।"));
+            rahmanPlayer.setOnErrorListener((player, what, extra) -> { audioRahmanStatus("অডিও চালানো যায়নি। আবার চেষ্টা করুন।"); return true; });
+            rahmanPlayer.prepareAsync();
+            audioRahmanStatus("অডিও চালু হচ্ছে…");
+        } catch (Exception e) {
+            audioRahmanStatus("অডিও চালু করা যায়নি।");
         }
     }
 
@@ -522,6 +616,7 @@ public class MainActivity extends Activity {
     }
     @Override protected void onDestroy(){
         if(yasinPlayer!=null){ yasinPlayer.release(); yasinPlayer=null; }
+        if(rahmanPlayer!=null){ rahmanPlayer.release(); rahmanPlayer=null; }
         if(webView!=null){webView.destroy();webView=null;} super.onDestroy();
     }
 }
