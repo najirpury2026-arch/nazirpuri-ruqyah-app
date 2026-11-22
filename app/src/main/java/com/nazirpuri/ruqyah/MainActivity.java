@@ -477,7 +477,7 @@ public class MainActivity extends Activity {
                 canvas.save(); canvas.rotate(i*5,cx,cy);
                 boolean major=i%6==0, cardinal=i%18==0;
                 paint.setColor(cardinal?Color.rgb(12,73,52):(major?Color.rgb(73,130,101):Color.rgb(174,193,180)));
-                paint.setStrokeWidth(cardinal?dp(2.5f):(major?dp(1.8f):dp(1)));
+                paint.setStrokeWidth(cardinal?dp(3):(major?dp(2):dp(1)));
                 canvas.drawLine(cx,cy-radius+dp(12),cx,cy-radius+(cardinal?dp(31):(major?dp(23):dp(17))),paint);
                 canvas.restore();
             }
