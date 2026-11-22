@@ -359,7 +359,103 @@ public class MainActivity extends Activity {
         webView.loadUrl("file:///android_asset/quran.html");
     }
 
+    private volatile boolean quranAudioDownloading = false;
+
     private final class QuranBridge {
+        private File quranAudioDir() {
+            File dir = new File(getFilesDir(), "quran_audio");
+            if (!dir.exists()) dir.mkdirs();
+            return dir;
+        }
+        private String safeAudioName(String name) {
+            return name != null && name.matches("[A-Za-z0-9_-]{1,90}\\.mp3") ? name : null;
+        }
+        @JavascriptInterface
+        public String getCachedAudioPath(String name) {
+            String safe = safeAudioName(name);
+            if (safe == null) return "";
+            File file = new File(quranAudioDir(), safe);
+            return file.isFile() && file.length() > 300 ? Uri.fromFile(file).toString() : "";
+        }
+        @JavascriptInterface
+        public void downloadAudio(String audioUrl, String name) {
+            final String safe = safeAudioName(name);
+            if (safe == null || audioUrl == null || !audioUrl.startsWith("https://everyayah.com/data/")) {
+                notifyQuranAudio("nqAudioDownloadError", name, "অডিও ঠিকানা গ্রহণযোগ্য নয়");
+                return;
+            }
+            synchronized (this) {
+                if (quranAudioDownloading) {
+                    notifyQuranAudio("nqAudioDownloadError", safe, "আগের অডিও ডাউনলোড শেষ হলে আবার চেষ্টা করুন");
+                    return;
+                }
+                quranAudioDownloading = true;
+            }
+            new Thread(() -> {
+                HttpURLConnection connection = null;
+                File dir = quranAudioDir();
+                File target = new File(dir, safe);
+                File temp = new File(dir, safe + ".part");
+                try {
+                    connection = (HttpURLConnection) new URL(audioUrl).openConnection();
+                    connection.setConnectTimeout(20000);
+                    connection.setReadTimeout(30000);
+                    connection.setInstanceFollowRedirects(true);
+                    connection.setRequestProperty("User-Agent", "NazirpuriRuqyahAndroid/1.0");
+                    int response = connection.getResponseCode();
+                    if (response != 200) throw new Exception("সার্ভার সাড়া দেয়নি (" + response + ")");
+                    long total = connection.getContentLengthLong();
+                    long received = 0;
+                    try (InputStream input = connection.getInputStream();
+                         FileOutputStream output = new FileOutputStream(temp)) {
+                        byte[] buffer = new byte[32768];
+                        int count;
+                        while ((count = input.read(buffer)) != -1) {
+                            output.write(buffer, 0, count);
+                            received += count;
+                            if (total > 0) {
+                                final String percent = String.valueOf((int)(received * 100 / total));
+                                mainHandler.post(() -> notifyQuranAudio("nqAudioDownloadProgress", safe, percent));
+                            }
+                        }
+                        output.getFD().sync();
+                    }
+                    if (temp.length() < 300) throw new Exception("অডিও ফাইল অসম্পূর্ণ");
+                    if (target.exists()) target.delete();
+                    if (!temp.renameTo(target)) throw new Exception("ফোনে অডিও সংরক্ষণ করা যায়নি");
+                    mainHandler.post(() -> notifyQuranAudio("nqAudioDownloaded", safe, ""));
+                } catch (Exception error) {
+                    temp.delete();
+                    String message = error.getMessage() == null ? "ডাউনলোড ব্যর্থ" : error.getMessage();
+                    mainHandler.post(() -> notifyQuranAudio("nqAudioDownloadError", safe, message));
+                } finally {
+                    if (connection != null) connection.disconnect();
+                    synchronized (QuranBridge.this) { quranAudioDownloading = false; }
+                }
+            }).start();
+        }
+        @JavascriptInterface
+        public boolean deleteCachedAudio(String name) {
+            String safe = safeAudioName(name);
+            if (safe == null) return false;
+            File file = new File(quranAudioDir(), safe);
+            return !file.exists() || file.delete();
+        }
+        @JavascriptInterface
+        public long getCachedAudioBytes() {
+            File[] files = quranAudioDir().listFiles();
+            long total = 0;
+            if (files != null) for (File file : files)
+                if (file.isFile() && file.getName().endsWith(".mp3")) total += file.length();
+            return total;
+        }
+        private void notifyQuranAudio(String callback, String name, String detail) {
+            if (webView == null) return;
+            String script = "window." + callback + " && window." + callback + "("
+                + JSONObject.quote(name == null ? "" : name) + ","
+                + JSONObject.quote(detail == null ? "" : detail) + ");";
+            webView.evaluateJavascript(script, null);
+        }
         @JavascriptInterface
         public void close() {
             mainHandler.post(() -> {
