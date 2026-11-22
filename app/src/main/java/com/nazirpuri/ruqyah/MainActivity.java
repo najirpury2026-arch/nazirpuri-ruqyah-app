@@ -44,6 +44,15 @@ public class MainActivity extends Activity {
     private MediaPlayer yasinPlayer;
     private MediaPlayer rahmanPlayer;
     private MediaPlayer mulkPlayer;
+
+    private android.hardware.SensorManager compassSensorManager;
+    private android.hardware.Sensor compassSensor;
+    private android.hardware.SensorEventListener compassListener;
+    private QiblaCompassView qiblaCompassView;
+    private TextView qiblaHeadingText, qiblaBearingText, qiblaLocationText;
+    private double qiblaBearing = Double.NaN;
+    private double userLatitude = Double.NaN, userLongitude = Double.NaN;
+    private static final int QIBLA_LOCATION_REQUEST = 741;
     private volatile boolean yasinDownloading = false;
     private volatile boolean rahmanDownloading = false;
     private volatile boolean mulkDownloading = false;
@@ -301,6 +310,182 @@ public class MainActivity extends Activity {
         scroll.addView(content);
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         setContentView(root);
+    }
+
+
+    // Live Qibla compass using the phone's rotation-vector sensor and current location.
+    private void showQiblaCompass() {
+        showingWeb = false;
+        if (webView != null) { webView.destroy(); webView = null; }
+        root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setGravity(Gravity.CENTER_HORIZONTAL);
+        root.setPadding(dp(18), dp(10), dp(18), dp(18));
+        root.setBackgroundColor(Color.rgb(244,248,245));
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setPadding(dp(4),dp(8),dp(4),dp(12));
+        TextView back = text("‹  বিভাগসমূহ",16,Color.rgb(12,73,52),true);
+        back.setOnClickListener(v -> { stopQiblaSensors(); showHome(); });
+        bar.addView(back);
+        root.addView(bar,new LinearLayout.LayoutParams(-1,-2));
+
+        TextView heading = text("কিবলা কম্পাস",22,Color.rgb(12,73,52),true);
+        heading.setGravity(Gravity.CENTER);
+        root.addView(heading);
+        TextView sub = text("কাবা শরিফের দিক নির্ণয় করুন",13,Color.rgb(91,116,101),false);
+        sub.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,-2); sp.topMargin=dp(5); root.addView(sub,sp);
+
+        qiblaCompassView = new QiblaCompassView();
+        LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(dp(300),dp(300));
+        cp.gravity=Gravity.CENTER;
+        cp.topMargin=dp(18); cp.bottomMargin=dp(14);
+        root.addView(qiblaCompassView,cp);
+
+        qiblaHeadingText = text("দিক: --°",18,Color.rgb(12,73,52),true);
+        qiblaHeadingText.setGravity(Gravity.CENTER);
+        root.addView(qiblaHeadingText);
+        qiblaBearingText = text("কিবলার দিক নির্ণয় হচ্ছে…",15,Color.rgb(30,92,63),true);
+        qiblaBearingText.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(-1,-2); bp.topMargin=dp(8); root.addView(qiblaBearingText,bp);
+        qiblaLocationText = text("আপনার অবস্থান নেওয়া হচ্ছে…",12,Color.rgb(100,120,107),false);
+        qiblaLocationText.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2); lp.topMargin=dp(7); root.addView(qiblaLocationText,lp);
+
+        TextView tip=text("ফোনটি সমতল রাখুন এবং ধাতব বস্তু/চুম্বক থেকে দূরে রাখুন। কম্পাস ঠিকভাবে কাজ না করলে ফোনটি ৮ আকৃতিতে কয়েকবার নাড়িয়ে ক্যালিব্রেট করুন।",12,Color.rgb(112,93,55),false);
+        tip.setGravity(Gravity.CENTER);
+        tip.setPadding(dp(12),dp(12),dp(12),dp(12));
+        GradientDrawable tipBg=new GradientDrawable(); tipBg.setColor(Color.rgb(255,248,225)); tipBg.setCornerRadius(dp(14)); tip.setBackground(tipBg);
+        LinearLayout.LayoutParams tp=new LinearLayout.LayoutParams(-1,-2); tp.topMargin=dp(16); root.addView(tip,tp);
+        setContentView(root);
+        startQiblaSensors();
+        obtainQiblaLocation();
+    }
+
+    private void startQiblaSensors() {
+        compassSensorManager=(android.hardware.SensorManager)getSystemService(SENSOR_SERVICE);
+        compassSensor=compassSensorManager==null?null:compassSensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ROTATION_VECTOR);
+        if(compassSensor==null) {
+            if(qiblaHeadingText!=null) qiblaHeadingText.setText("এই ফোনে কম্পাস সেন্সর পাওয়া যায়নি");
+            return;
+        }
+        compassListener=new android.hardware.SensorEventListener() {
+            public void onSensorChanged(android.hardware.SensorEvent event) {
+                float[] rotation=new float[9], orientation=new float[3];
+                android.hardware.SensorManager.getRotationMatrixFromVector(rotation,event.values);
+                android.hardware.SensorManager.getOrientation(rotation,orientation);
+                float azimuth=(float)Math.toDegrees(orientation[0]);
+                if(azimuth<0) azimuth+=360f;
+                if(qiblaCompassView!=null) qiblaCompassView.setDirection(azimuth,(float)qiblaBearing);
+                if(qiblaHeadingText!=null) qiblaHeadingText.setText("ফোনের দিক: "+Math.round(azimuth)+"°");
+            }
+            public void onAccuracyChanged(android.hardware.Sensor sensor,int accuracy) {}
+        };
+        compassSensorManager.registerListener(compassListener,compassSensor,android.hardware.SensorManager.SENSOR_DELAY_UI);
+    }
+
+    private void obtainQiblaLocation() {
+        if(android.os.Build.VERSION.SDK_INT>=23 && checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)!=android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,android.Manifest.permission.ACCESS_COARSE_LOCATION},QIBLA_LOCATION_REQUEST);
+            if(qiblaLocationText!=null) qiblaLocationText.setText("কিবলার দিক জানতে অবস্থানের অনুমতি দিন");
+            return;
+        }
+        try {
+            android.location.LocationManager lm=(android.location.LocationManager)getSystemService(LOCATION_SERVICE);
+            android.location.Location best=null;
+            for(String provider:lm.getProviders(true)) {
+                try {
+                    android.location.Location loc=lm.getLastKnownLocation(provider);
+                    if(loc!=null && (best==null || loc.getAccuracy()<best.getAccuracy())) best=loc;
+                } catch(SecurityException ignored) {}
+            }
+            if(best!=null) updateQiblaLocation(best);
+            android.location.Criteria criteria=new android.location.Criteria();
+            criteria.setAccuracy(android.location.Criteria.ACCURACY_FINE);
+            String provider=lm.getBestProvider(criteria,true);
+            if(provider!=null) lm.requestSingleUpdate(provider,new android.location.LocationListener() {
+                public void onLocationChanged(android.location.Location location){ updateQiblaLocation(location); }
+                public void onStatusChanged(String p,int status,android.os.Bundle extras){}
+                public void onProviderEnabled(String p){}
+                public void onProviderDisabled(String p){}
+            },mainHandler.getLooper());
+            else if(best==null && qiblaLocationText!=null) qiblaLocationText.setText("অবস্থান পাওয়া যায়নি—GPS চালু করে আবার চেষ্টা করুন");
+        } catch(Exception e) {
+            if(qiblaLocationText!=null) qiblaLocationText.setText("অবস্থান পাওয়া যায়নি—GPS চালু করুন");
+        }
+    }
+
+    @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode,permissions,grantResults);
+        if(requestCode==QIBLA_LOCATION_REQUEST) {
+            if(grantResults.length>0 && grantResults[0]==android.content.pm.PackageManager.PERMISSION_GRANTED) obtainQiblaLocation();
+            else if(qiblaLocationText!=null) qiblaLocationText.setText("অবস্থানের অনুমতি ছাড়া কিবলার দিক নির্ণয় করা যাবে না");
+        }
+    }
+
+    private void updateQiblaLocation(android.location.Location location) {
+        userLatitude=location.getLatitude(); userLongitude=location.getLongitude();
+        double lat1=Math.toRadians(userLatitude), lat2=Math.toRadians(21.4225);
+        double dLon=Math.toRadians(39.8262-userLongitude);
+        double y=Math.sin(dLon)*Math.cos(lat2);
+        double x=Math.cos(lat1)*Math.sin(lat2)-Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+        qiblaBearing=(Math.toDegrees(Math.atan2(y,x))+360.0)%360.0;
+        runOnUiThread(() -> {
+            if(qiblaBearingText!=null) qiblaBearingText.setText("কাবা শরিফের দিক: "+Math.round(qiblaBearing)+"° (উত্তর থেকে)");
+            if(qiblaLocationText!=null) qiblaLocationText.setText("আপনার অবস্থান পাওয়া গেছে • নির্ভুলতার জন্য GPS ব্যবহার করুন");
+            if(qiblaCompassView!=null) qiblaCompassView.invalidate();
+        });
+    }
+
+    private void stopQiblaSensors() {
+        if(compassSensorManager!=null && compassListener!=null) compassSensorManager.unregisterListener(compassListener);
+        compassListener=null; compassSensorManager=null; qiblaCompassView=null;
+    }
+
+    @Override protected void onPause() {
+        super.onPause();
+        if(compassSensorManager!=null && compassListener!=null) compassSensorManager.unregisterListener(compassListener);
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if(compassSensorManager!=null && compassSensor!=null && compassListener!=null)
+            compassSensorManager.registerListener(compassListener,compassSensor,android.hardware.SensorManager.SENSOR_DELAY_UI);
+    }
+
+    private class QiblaCompassView extends View {
+        private final android.graphics.Paint paint=new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private float azimuth=0, bearing=Float.NaN;
+        QiblaCompassView(){ super(MainActivity.this); setLayerType(View.LAYER_TYPE_SOFTWARE,null); }
+        void setDirection(float a,float b){ azimuth=a; bearing=b; invalidate(); }
+        @Override protected void onDraw(android.graphics.Canvas canvas) {
+            super.onDraw(canvas);
+            float cx=getWidth()/2f, cy=getHeight()/2f, radius=Math.min(cx,cy)-dp(13);
+            paint.setColor(Color.WHITE); paint.setStyle(android.graphics.Paint.Style.FILL); canvas.drawCircle(cx,cy,radius,paint);
+            paint.setColor(Color.rgb(19,112,77)); paint.setStyle(android.graphics.Paint.Style.STROKE); paint.setStrokeWidth(dp(3)); canvas.drawCircle(cx,cy,radius,paint);
+            canvas.save(); canvas.rotate(-azimuth,cx,cy);
+            for(int i=0;i<36;i++){
+                canvas.save(); canvas.rotate(i*10,cx,cy);
+                paint.setColor(i%9==0?Color.rgb(12,73,52):Color.rgb(155,177,162)); paint.setStrokeWidth(i%9==0?dp(2):dp(1));
+                canvas.drawLine(cx,cy-radius+dp(7),cx,cy-radius+(i%9==0?dp(25):dp(16)),paint);
+                canvas.restore();
+            }
+            paint.setStyle(android.graphics.Paint.Style.FILL); paint.setTypeface(Typeface.DEFAULT_BOLD); paint.setTextAlign(android.graphics.Paint.Align.CENTER); paint.setTextSize(dp(17)); paint.setColor(Color.rgb(12,73,52));
+            canvas.drawText("উ",cx,cy-radius+dp(48),paint); canvas.drawText("দ",cx+radius-dp(30),cy+dp(6),paint);
+            canvas.drawText("দঃ",cx,cy+radius-dp(20),paint); canvas.drawText("প",cx-radius+dp(30),cy+dp(6),paint);
+            if(!Float.isNaN(bearing)){
+                canvas.save(); canvas.rotate(bearing,cx,cy);
+                paint.setColor(Color.rgb(196,65,45)); paint.setStyle(android.graphics.Paint.Style.FILL);
+                android.graphics.Path arrow=new android.graphics.Path(); arrow.moveTo(cx,cy-radius+dp(38)); arrow.lineTo(cx-dp(13),cy+dp(17)); arrow.lineTo(cx,cy+dp(8)); arrow.lineTo(cx+dp(13),cy+dp(17)); arrow.close(); canvas.drawPath(arrow,paint);
+                canvas.restore();
+            }
+            canvas.restore();
+            paint.setColor(Color.rgb(12,73,52)); paint.setStyle(android.graphics.Paint.Style.FILL); canvas.drawCircle(cx,cy,dp(8),paint);
+            paint.setTextAlign(android.graphics.Paint.Align.CENTER); paint.setTextSize(dp(12)); paint.setTypeface(Typeface.DEFAULT_BOLD);
+            canvas.drawText("কিবলা",cx,cy+radius+dp(3),paint);
+        }
     }
 
     private void openSection(int index) {
