@@ -131,78 +131,139 @@ public class MainActivity extends Activity {
         showingWeb = false;
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.rgb(246,249,246));
+        root.setBackgroundColor(Color.rgb(244,248,245));
 
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+
+        // Premium emerald header with a warm gold accent.
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.VERTICAL);
         header.setGravity(Gravity.CENTER);
-        header.setPadding(dp(16),dp(10),dp(16),dp(22));
-        header.setBackgroundColor(Color.rgb(12,73,52));
+        header.setPadding(dp(20), dp(12), dp(20), dp(24));
+        GradientDrawable headerBg = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{Color.rgb(7,54,43), Color.rgb(13,91,65), Color.rgb(22,112,78)});
+        headerBg.setCornerRadii(new float[]{0,0,0,0,dp(28),dp(28),dp(28),dp(28)});
+        header.setBackground(headerBg);
+
         LinearLayout headerTop = new LinearLayout(this);
         headerTop.setGravity(Gravity.CENTER_VERTICAL);
-        headerTop.setOrientation(LinearLayout.HORIZONTAL);
-        TextView headerSpacer = text("",20,Color.WHITE,false);
-        headerTop.addView(headerSpacer,new LinearLayout.LayoutParams(0,dp(38),1));
-        TextView settings = text("⚙",26,Color.WHITE,true);
+        TextView brandMark = text("۞", 27, Color.rgb(244,211,130), true);
+        headerTop.addView(brandMark, new LinearLayout.LayoutParams(0,dp(42),1));
+        TextView settings = text("⚙", 24, Color.WHITE, true);
+        settings.setGravity(Gravity.CENTER);
         settings.setContentDescription("সেটিংস");
-        settings.setPadding(dp(10),dp(3),dp(3),dp(3));
+        GradientDrawable settingsBg = new GradientDrawable();
+        settingsBg.setColor(0x337FFFFFF);
+        settingsBg.setCornerRadius(dp(22));
+        settings.setBackground(settingsBg);
         settings.setOnClickListener(v -> showSettings());
-        headerTop.addView(settings,new LinearLayout.LayoutParams(dp(44),dp(42)));
-        header.addView(headerTop,new LinearLayout.LayoutParams(-1,dp(42)));
-        header.addView(text("নাজিরপুরী রুকইয়া ও দাওয়াখানা",22,Color.WHITE,true));
-        TextView sub = text("কুরআন • সুন্নাহ • ইলম • আমল",13,Color.rgb(232,216,165),false);
-        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-2,-2);
-        sp.topMargin=dp(7); header.addView(sub,sp); root.addView(header);
+        headerTop.addView(settings, new LinearLayout.LayoutParams(dp(44),dp(42)));
+        header.addView(headerTop, new LinearLayout.LayoutParams(-1,dp(44)));
 
-        TextView heading=text("আপনার পছন্দের বিভাগ নির্বাচন করুন",16,Color.rgb(35,65,49),true);
-        heading.setPadding(dp(10),dp(18),dp(10),dp(10)); root.addView(heading);
+        TextView brand = text("নাজিরপুরী রুকইয়া ও দাওয়াখানা", 22, Color.WHITE, true);
+        brand.setGravity(Gravity.CENTER);
+        header.addView(brand);
+        TextView tagline = text("কুরআন • সুন্নাহ • ইলম • আমল", 13, Color.rgb(246,224,174), false);
+        tagline.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams tagp = new LinearLayout.LayoutParams(-1,-2);
+        tagp.topMargin = dp(7);
+        header.addView(tagline, tagp);
 
-        ScrollView scroll=new ScrollView(this);
-        LinearLayout content=new LinearLayout(this);
-        content.setOrientation(LinearLayout.VERTICAL);
-        GridLayout grid=new GridLayout(this); grid.setColumnCount(3);
-        grid.setPadding(dp(10),dp(4),dp(10),dp(12));
-        for(int i=0;i<titles.length;i++){
-            final int index=i;
-            LinearLayout tile=new LinearLayout(this); tile.setOrientation(LinearLayout.VERTICAL);
-            tile.setGravity(Gravity.CENTER); tile.setPadding(dp(4),dp(11),dp(4),dp(11));
-            GradientDrawable bg=new GradientDrawable(); bg.setColor(Color.WHITE);
-            bg.setCornerRadius(dp(16)); bg.setStroke(dp(1),Color.rgb(221,231,221));
-            tile.setBackground(bg); tile.setElevation(dp(2));
-            tile.addView(text(icons[i],22,Color.rgb(12,73,52),false));
-            TextView label=text(titles[i],13,Color.rgb(31,63,45),true);
-            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);
-            lp.topMargin=dp(8); tile.addView(label,lp);
-            GridLayout.LayoutParams gp=new GridLayout.LayoutParams();
-            gp.width=0; gp.height=dp(104); gp.columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);
-            gp.setMargins(dp(5),dp(5),dp(5),dp(5)); grid.addView(tile,gp);
-            tile.setOnClickListener(v->openSection(index));
+        TextView welcome = text("আসসালামু আলাইকুম", 17, Color.WHITE, true);
+        welcome.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams welp = new LinearLayout.LayoutParams(-1,-2);
+        welp.topMargin = dp(17);
+        header.addView(welcome, welp);
+        TextView welcomeSub = text("দ্বীনি শিক্ষা, আমল ও প্রয়োজনীয় সেবা—এক জায়গায়", 12, Color.rgb(228,242,233), false);
+        welcomeSub.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams wsp = new LinearLayout.LayoutParams(-1,-2);
+        wsp.topMargin = dp(4);
+        header.addView(welcomeSub, wsp);
+        content.addView(header);
+
+        LinearLayout sectionTitle = new LinearLayout(this);
+        sectionTitle.setGravity(Gravity.CENTER_VERTICAL);
+        sectionTitle.setPadding(dp(16),dp(18),dp(16),dp(8));
+        TextView sectionHeading = text("দ্বীনি বিভাগসমূহ",18,Color.rgb(24,62,47),true);
+        sectionTitle.addView(sectionHeading,new LinearLayout.LayoutParams(0,-2,1));
+        TextView sectionHint = text("আপনার পছন্দেরটি বেছে নিন",11,Color.rgb(112,133,119),false);
+        sectionTitle.addView(sectionHint);
+        content.addView(sectionTitle);
+
+        GridLayout grid = new GridLayout(this);
+        grid.setColumnCount(3);
+        grid.setPadding(dp(9),dp(2),dp(9),dp(14));
+        int[] tileColors = {Color.rgb(235,246,239),Color.rgb(250,244,226),Color.rgb(237,242,250)};
+        for (int i=0; i<titles.length; i++) {
+            final int index = i;
+            LinearLayout tile = new LinearLayout(this);
+            tile.setOrientation(LinearLayout.VERTICAL);
+            tile.setGravity(Gravity.CENTER);
+            tile.setPadding(dp(3),dp(10),dp(3),dp(9));
+            GradientDrawable tileBg = new GradientDrawable();
+            tileBg.setColor(Color.WHITE);
+            tileBg.setCornerRadius(dp(17));
+            tileBg.setStroke(dp(1),Color.rgb(226,234,227));
+            tile.setBackground(tileBg);
+            tile.setElevation(dp(2));
+
+            TextView icon = text(icons[i],25,Color.rgb(14,83,59),false);
+            GradientDrawable iconBg = new GradientDrawable();
+            iconBg.setColor(tileColors[i%tileColors.length]);
+            iconBg.setCornerRadius(dp(15));
+            icon.setBackground(iconBg);
+            icon.setGravity(Gravity.CENTER);
+            tile.addView(icon,new LinearLayout.LayoutParams(dp(48),dp(45)));
+
+            TextView label = text(titles[i],12,Color.rgb(35,66,49),true);
+            label.setGravity(Gravity.CENTER);
+            label.setMaxLines(2);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1,dp(34));
+            lp.topMargin = dp(7);
+            tile.addView(label,lp);
+
+            GridLayout.LayoutParams gp = new GridLayout.LayoutParams();
+            gp.width=0; gp.height=dp(105);
+            gp.columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);
+            gp.setMargins(dp(4),dp(4),dp(4),dp(4));
+            grid.addView(tile,gp);
+            tile.setOnClickListener(v -> openSection(index));
+            tile.setClickable(true);
+            tile.setFocusable(true);
         }
         content.addView(grid);
 
-        LinearLayout footer=new LinearLayout(this);
+        LinearLayout footer = new LinearLayout(this);
         footer.setOrientation(LinearLayout.VERTICAL);
         footer.setGravity(Gravity.CENTER);
-        footer.setPadding(dp(14),dp(9),dp(14),dp(10));
-        footer.setBackgroundColor(Color.rgb(12,73,52));
-        TextView managed=text("পরিচালনায়",15,Color.rgb(232,216,165),true);
+        footer.setPadding(dp(16),dp(17),dp(16),dp(18));
+        GradientDrawable footerBg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Color.rgb(7,54,43),Color.rgb(14,88,63)});
+        footerBg.setCornerRadius(dp(22));
+        footer.setBackground(footerBg);
+        LinearLayout.LayoutParams footp = new LinearLayout.LayoutParams(-1,-2);
+        footp.setMargins(dp(13),dp(3),dp(13),dp(16));
+        TextView managed=text("পরিচালনায়",13,Color.rgb(246,218,151),true);
         footer.addView(managed);
         TextView name=text("মুফতী রুহুল আমীন নাজিরপুরী",18,Color.WHITE,true);
         LinearLayout.LayoutParams np=new LinearLayout.LayoutParams(-1,-2);
-        np.topMargin=dp(3); footer.addView(name,np);
-        TextView role=text("মুফতী, মুহাদ্দিস, লেখক এবং বিশিষ্ট রাক্বী ও মুদাব্বির",13,Color.WHITE,false);
+        np.topMargin=dp(5); footer.addView(name,np);
+        TextView role=text("মুফতী, মুহাদ্দিস, লেখক এবং বিশিষ্ট রাক্বী ও মুদাব্বির",12,Color.rgb(226,239,230),false);
         LinearLayout.LayoutParams rp=new LinearLayout.LayoutParams(-1,-2);
-        rp.topMargin=dp(2); footer.addView(role,rp);
-        TextView whatsapp=text("হোয়াটসঅ্যাপ নাম্বার 01614-776592",15,Color.rgb(255,224,130),true);
+        rp.topMargin=dp(4); footer.addView(role,rp);
+        TextView whatsapp=text("হোয়াটসঅ্যাপ: 01614-776592  •  যোগাযোগ করুন",13,Color.rgb(255,225,151),true);
         whatsapp.setPaintFlags(whatsapp.getPaintFlags() | android.graphics.Paint.UNDERLINE_TEXT_FLAG);
-        whatsapp.setOnClickListener(v->{
+        whatsapp.setOnClickListener(v -> {
             try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(WHATSAPP_URL))); }
             catch (Exception ignored) { }
         });
-        whatsapp.setContentDescription("হোয়াটসঅ্যাপে যোগাযোগ করুন");
         LinearLayout.LayoutParams wp=new LinearLayout.LayoutParams(-1,-2);
-        wp.topMargin=dp(5); footer.addView(whatsapp,wp);
-        content.addView(footer);
+        wp.topMargin=dp(9); footer.addView(whatsapp,wp);
+        content.addView(footer,footp);
+
         scroll.addView(content);
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         setContentView(root);
