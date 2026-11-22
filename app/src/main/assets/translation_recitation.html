@@ -5,6 +5,8 @@
 <section class="player" id="player" hidden><div class="player-title">সূরা ইয়াসিন — তেলাওয়াত</div><div class="status" id="status">অডিও প্রস্তুত হচ্ছে…</div><div class="seekrow"><span class="time" id="currentTime">০:০০</span><input id="seekBar" type="range" min="0" max="1000" value="0" step="1" aria-label="অডিও সামনে বা পেছনে নিন"><span class="time" id="totalTime">০:০০</span></div><div class="controls"><button type="button" id="back10">↶ ১০ সেকেন্ড</button><button type="button" class="mainplay" id="toggleBtn">❚❚ বিরতি</button><button type="button" id="forward10">১০ সেকেন্ড ↷</button></div></section>
 <div class="track" style="margin-top:13px"><div class="num">২</div><div class="info"><strong>সূরা আর-রহমান</strong><span>অডিও তেলাওয়াত</span></div><button type="button" id="playRahmanBtn">▶ শুনুন</button></div>
 <section class="player" id="rahmanPlayer" hidden><div class="player-title">সূরা আর-রহমান — তেলাওয়াত</div><div class="status" id="rahmanStatus">অডিও প্রস্তুত হচ্ছে…</div><div class="seekrow"><span class="time" id="rahmanCurrentTime">০:০০</span><input id="rahmanSeekBar" type="range" min="0" max="1000" value="0" step="1" aria-label="সূরা আর-রহমানের অডিও সামনে বা পেছনে নিন"><span class="time" id="rahmanTotalTime">০:০০</span></div><div class="controls"><button type="button" id="rahmanBack10">↶ ১০ সেকেন্ড</button><button type="button" class="mainplay" id="rahmanToggleBtn">❚❚ বিরতি</button><button type="button" id="rahmanForward10">১০ সেকেন্ড ↷</button></div></section>
+<div class="track" style="margin-top:13px"><div class="num">৩</div><div class="info"><strong>সূরা আল-মুলক</strong><span>অডিও তেলাওয়াত</span></div><button type="button" id="playMulkBtn">▶ শুনুন</button></div>
+<section class="player" id="mulkPlayer" hidden><div class="player-title">সূরা আল-মুলক — তেলাওয়াত</div><div class="status" id="mulkStatus">অডিও প্রস্তুত হচ্ছে…</div><div class="seekrow"><span class="time" id="mulkCurrentTime">০:০০</span><input id="mulkSeekBar" type="range" min="0" max="1000" value="0" step="1" aria-label="সূরা আল-মুলকের অডিও সামনে বা পেছনে নিন"><span class="time" id="mulkTotalTime">০:০০</span></div><div class="controls"><button type="button" id="mulkBack10">↶ ১০ সেকেন্ড</button><button type="button" class="mainplay" id="mulkToggleBtn">❚❚ বিরতি</button><button type="button" id="mulkForward10">১০ সেকেন্ড ↷</button></div></section>
 </main><script>
 (function(){
 function bn(n){return String(n).replace(/\\d/g,d=>'০১২৩৪৫৬৭৮৯'[Number(d)]);}
@@ -31,6 +33,6 @@ document.getElementById(rahman?'rahmanBack10':'back10').addEventListener('click'
 document.getElementById(rahman?'rahmanForward10':'forward10').addEventListener('click',function(){refresh();if(AndroidAudio)AndroidAudio['seek'+cap](AndroidAudio['get'+cap+'Position']()+10000);});
 setInterval(refresh,500);
 }
-setup('Yasin');setup('Rahman');
+setup('Yasin');setup('Rahman');setup('Mulk');
 })();
 </script></body></html>
