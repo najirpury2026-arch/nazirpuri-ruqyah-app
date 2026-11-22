@@ -460,30 +460,55 @@ public class MainActivity extends Activity {
         private float azimuth=0, bearing=Float.NaN;
         QiblaCompassView(){ super(MainActivity.this); setLayerType(View.LAYER_TYPE_SOFTWARE,null); }
         void setDirection(float a,float b){ azimuth=a; bearing=b; invalidate(); }
+        private void circle(android.graphics.Canvas canvas,float cx,float cy,float r,int color,android.graphics.Paint.Style style,float stroke) {
+            paint.setColor(color); paint.setStyle(style); paint.setStrokeWidth(stroke); canvas.drawCircle(cx,cy,r,paint);
+        }
         @Override protected void onDraw(android.graphics.Canvas canvas) {
             super.onDraw(canvas);
-            float cx=getWidth()/2f, cy=getHeight()/2f, radius=Math.min(cx,cy)-dp(13);
-            paint.setColor(Color.WHITE); paint.setStyle(android.graphics.Paint.Style.FILL); canvas.drawCircle(cx,cy,radius,paint);
-            paint.setColor(Color.rgb(19,112,77)); paint.setStyle(android.graphics.Paint.Style.STROKE); paint.setStrokeWidth(dp(3)); canvas.drawCircle(cx,cy,radius,paint);
+            float cx=getWidth()/2f, cy=getHeight()/2f, radius=Math.min(cx,cy)-dp(12);
+            // Layered premium dial with a soft outer rim and inner guide rings.
+            circle(canvas,cx,cy,radius+dp(5),Color.rgb(221,232,224),android.graphics.Paint.Style.FILL,0);
+            circle(canvas,cx,cy,radius,Color.rgb(255,255,255),android.graphics.Paint.Style.FILL,0);
+            circle(canvas,cx,cy,radius,Color.rgb(17,105,73),android.graphics.Paint.Style.STROKE,dp(3));
+            circle(canvas,cx,cy,radius-dp(8),Color.rgb(222,235,226),android.graphics.Paint.Style.STROKE,dp(1));
             canvas.save(); canvas.rotate(-azimuth,cx,cy);
-            for(int i=0;i<36;i++){
-                canvas.save(); canvas.rotate(i*10,cx,cy);
-                paint.setColor(i%9==0?Color.rgb(12,73,52):Color.rgb(155,177,162)); paint.setStrokeWidth(i%9==0?dp(2):dp(1));
-                canvas.drawLine(cx,cy-radius+dp(7),cx,cy-radius+(i%9==0?dp(25):dp(16)),paint);
+            // Fine degree marks and stronger marks at each 30-degree point.
+            for(int i=0;i<72;i++){
+                canvas.save(); canvas.rotate(i*5,cx,cy);
+                boolean major=i%6==0, cardinal=i%18==0;
+                paint.setColor(cardinal?Color.rgb(12,73,52):(major?Color.rgb(73,130,101):Color.rgb(174,193,180)));
+                paint.setStrokeWidth(cardinal?dp(2.5f):(major?dp(1.8f):dp(1)));
+                canvas.drawLine(cx,cy-radius+dp(12),cx,cy-radius+(cardinal?dp(31):(major?dp(23):dp(17))),paint);
                 canvas.restore();
             }
-            paint.setStyle(android.graphics.Paint.Style.FILL); paint.setTypeface(Typeface.DEFAULT_BOLD); paint.setTextAlign(android.graphics.Paint.Align.CENTER); paint.setTextSize(dp(17)); paint.setColor(Color.rgb(12,73,52));
-            canvas.drawText("উ",cx,cy-radius+dp(48),paint); canvas.drawText("দ",cx+radius-dp(30),cy+dp(6),paint);
-            canvas.drawText("দঃ",cx,cy+radius-dp(20),paint); canvas.drawText("প",cx-radius+dp(30),cy+dp(6),paint);
+            // Cardinal directions are written in full, not abbreviated.
+            paint.setStyle(android.graphics.Paint.Style.FILL);
+            paint.setTypeface(Typeface.DEFAULT_BOLD);
+            paint.setTextAlign(android.graphics.Paint.Align.CENTER);
+            paint.setTextSize(dp(15));
+            paint.setColor(Color.rgb(12,73,52));
+            canvas.drawText("উত্তর",cx,cy-radius+dp(54),paint);
+            canvas.drawText("পূর্ব",cx+radius-dp(39),cy+dp(6),paint);
+            canvas.drawText("দক্ষিণ",cx,cy+radius-dp(28),paint);
+            canvas.drawText("পশ্চিম",cx-radius+dp(39),cy+dp(6),paint);
+            // Qibla pointer: red arrow aims toward the bearing relative to phone heading.
             if(!Float.isNaN(bearing)){
                 canvas.save(); canvas.rotate(bearing,cx,cy);
-                paint.setColor(Color.rgb(196,65,45)); paint.setStyle(android.graphics.Paint.Style.FILL);
-                android.graphics.Path arrow=new android.graphics.Path(); arrow.moveTo(cx,cy-radius+dp(38)); arrow.lineTo(cx-dp(13),cy+dp(17)); arrow.lineTo(cx,cy+dp(8)); arrow.lineTo(cx+dp(13),cy+dp(17)); arrow.close(); canvas.drawPath(arrow,paint);
+                paint.setColor(Color.rgb(190,55,43)); paint.setStyle(android.graphics.Paint.Style.FILL);
+                android.graphics.Path arrow=new android.graphics.Path();
+                arrow.moveTo(cx,cy-radius+dp(42));
+                arrow.lineTo(cx-dp(14),cy+dp(18));
+                arrow.lineTo(cx,cy+dp(9));
+                arrow.lineTo(cx+dp(14),cy+dp(18));
+                arrow.close(); canvas.drawPath(arrow,paint);
                 canvas.restore();
             }
             canvas.restore();
-            paint.setColor(Color.rgb(12,73,52)); paint.setStyle(android.graphics.Paint.Style.FILL); canvas.drawCircle(cx,cy,dp(8),paint);
-            paint.setTextAlign(android.graphics.Paint.Align.CENTER); paint.setTextSize(dp(12)); paint.setTypeface(Typeface.DEFAULT_BOLD);
+            // Center hub and a small gold accent.
+            circle(canvas,cx,cy,dp(12),Color.rgb(222,174,76),android.graphics.Paint.Style.FILL,0);
+            circle(canvas,cx,cy,dp(7),Color.rgb(12,73,52),android.graphics.Paint.Style.FILL,0);
+            paint.setColor(Color.rgb(12,73,52)); paint.setTextAlign(android.graphics.Paint.Align.CENTER);
+            paint.setTextSize(dp(12)); paint.setTypeface(Typeface.DEFAULT_BOLD);
             canvas.drawText("কিবলা",cx,cy+radius+dp(3),paint);
         }
     }
