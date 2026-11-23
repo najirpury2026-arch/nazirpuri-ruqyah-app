@@ -871,6 +871,15 @@ public class MainActivity extends Activity {
                     int response = connection.getResponseCode();
                     if (response != 200) throw new Exception("সার্ভার সাড়া দেয়নি (" + response + ")");
                     long total = connection.getContentLengthLong();
+            String encoding = connection.getHeaderField("Content-Encoding");
+            if (encoding != null && !encoding.trim().isEmpty() && !"identity".equalsIgnoreCase(encoding.trim())) total = -1L;
+            String contentRange = connection.getHeaderField("Content-Range");
+            if (contentRange != null) {
+                java.util.regex.Matcher range = java.util.regex.Pattern.compile("/(\\d+)\\s*$").matcher(contentRange.trim());
+                if (range.find()) {
+                    try { total = Long.parseLong(range.group(1)); } catch (NumberFormatException ignored) { total = -1L; }
+                }
+            }
                     long received = 0;
                     try (InputStream input = connection.getInputStream();
                          FileOutputStream output = new FileOutputStream(temp)) {
@@ -1492,6 +1501,7 @@ public class MainActivity extends Activity {
                     }
                     if (target.exists()) target.delete();
                     if (!temp.renameTo(target)) throw new Exception("ফাইল সংরক্ষণ করা যায়নি");
+                    notifyBookProgress(name, target.length(), target.length());
                     notifyBook(name, true, "ডাউনলোড সম্পূর্ণ হয়েছে। কিতাব খুলছে…");
                     // Open the verified, fully saved PDF immediately after download.
                     // This avoids relying on a WebView re-render/tap while its download
@@ -1577,6 +1587,7 @@ public class MainActivity extends Activity {
                         }
                         out.flush();
                     }
+                    if (total > 0 && done != total) notifyBookProgress(name, done, -1L);
                     if (!isPdfFile(temp)) throw new Exception("ডাউনলোড করা ফাইলটি বৈধ PDF নয়");
                     return null;
                 }
@@ -1710,6 +1721,7 @@ public class MainActivity extends Activity {
                 connection.setRequestMethod(method);
                 connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/125.0 Mobile Safari/537.36");
                 connection.setRequestProperty("Accept", "application/pdf,application/octet-stream,text/html,*/*");
+                connection.setRequestProperty("Accept-Encoding", "identity");
                 if (referer != null) connection.setRequestProperty("Referer", referer);
                 java.net.URI uri = current.toURI();
                 java.util.Map<String, java.util.List<String>> cookieHeaders = cookieJar.get(uri, java.util.Collections.<String, java.util.List<String>>emptyMap());
