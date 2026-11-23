@@ -234,13 +234,45 @@ public class PdfReaderActivity extends Activity {
 
     /** Draw only the visible PDF pages; no per-page Android views are created. */
     private final class PdfPagesView extends View {
+        private float lastTouchY;
+        private boolean draggingPages = false;
         private final android.graphics.Paint pagePaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG | android.graphics.Paint.FILTER_BITMAP_FLAG);
         private final android.graphics.Paint shadowPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
 
         PdfPagesView() {
             super(PdfReaderActivity.this);
             setWillNotDraw(false);
+            setClickable(true);
             setBackgroundColor(Color.rgb(224,228,225));
+        }
+
+        // Handle vertical drags directly on the PDF surface. This bypasses
+        // device-specific ScrollView gesture interception problems.
+        @Override public boolean onTouchEvent(android.view.MotionEvent event) {
+            switch (event.getActionMasked()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    lastTouchY = event.getY();
+                    draggingPages = true;
+                    getParent().requestDisallowInterceptTouchEvent(true);
+                    return true;
+                case android.view.MotionEvent.ACTION_MOVE:
+                    if (!draggingPages) return false;
+                    float currentY = event.getY();
+                    int delta = Math.round(lastTouchY - currentY);
+                    lastTouchY = currentY;
+                    if (scroll != null && delta != 0) {
+                        scroll.scrollBy(0, delta);
+                        updateVisiblePages();
+                        if (fastScrollHandle != null) fastScrollHandle.invalidate();
+                    }
+                    return true;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    draggingPages = false;
+                    getParent().requestDisallowInterceptTouchEvent(false);
+                    return true;
+            }
+            return true;
         }
 
         @Override protected void onDraw(android.graphics.Canvas canvas) {
