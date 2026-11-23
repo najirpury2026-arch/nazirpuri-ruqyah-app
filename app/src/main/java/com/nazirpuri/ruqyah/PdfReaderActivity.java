@@ -40,7 +40,7 @@ public class PdfReaderActivity extends Activity {
     private final Set<Integer> pending = new HashSet<>();
     private final LinkedHashMap<Integer, Bitmap> cache = new LinkedHashMap<>(4, .75f, true);
     private volatile boolean closing = false;
-    private int pageHeight, pageWidth, pageGap, pageCount;
+    private int pageHeight, pageWidth, pageGap, pageCount, contentHeight;
     private int generation = 0;
     private boolean fastScrolling = false;
     private FastScrollHandle fastScrollHandle;
@@ -115,7 +115,7 @@ public class PdfReaderActivity extends Activity {
         // One virtualized drawing surface replaces hundreds of ImageViews.
         // Only pages near the viewport are rendered and drawn.
         pagesView = new PdfPagesView();
-        int contentHeight = dp(12) + pageCount * pageHeight + Math.max(0, pageCount - 1) * pageGap;
+        contentHeight = dp(12) + pageCount * pageHeight + Math.max(0, pageCount - 1) * pageGap;
         scroll.addView(pagesView, new ScrollView.LayoutParams(-1, contentHeight));
         frame.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
 
@@ -244,6 +244,16 @@ public class PdfReaderActivity extends Activity {
             setWillNotDraw(false);
             setClickable(true);
             setBackgroundColor(Color.rgb(224,228,225));
+        }
+
+        // ScrollView measures its child with an UNSPECIFIED height. A plain
+        // custom View defaults to a zero/screen-sized suggested height there,
+        // ignoring the intended long document size. Report the full PDF height
+        // explicitly so the ScrollView has a real scroll range.
+        @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            int desiredWidth = pageWidth + dp(16);
+            int measuredWidth = resolveSize(desiredWidth, widthMeasureSpec);
+            setMeasuredDimension(measuredWidth, Math.max(1, contentHeight));
         }
 
         // Handle vertical drags directly on the PDF surface. This bypasses
