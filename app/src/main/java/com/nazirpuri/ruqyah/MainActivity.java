@@ -1608,17 +1608,20 @@ public class MainActivity extends Activity {
 
         private void downloadGoogleDrivePdf(String id, File temp, String name) throws Exception {
             String encoded = Uri.encode(id);
+            // Google Drive's public-download endpoint has changed over time.
+            // Try the current usercontent URL (both confirmation spellings), then
+            // the legacy uc endpoint. Each attempt gets a fresh cookie jar.
             String[] urls = {
-                "https://drive.usercontent.google.com/download?id=" + encoded + "&export=download&confirm=t",
+                "https://drive.usercontent.google.com/download?export=download&id=" + encoded + "&confirm=yes",
+                "https://drive.usercontent.google.com/download?export=download&id=" + encoded + "&confirm=t",
+                "https://drive.google.com/uc?export=download&id=" + encoded + "&confirm=yes",
                 "https://drive.google.com/uc?export=download&id=" + encoded + "&confirm=t",
                 "https://drive.google.com/uc?export=download&id=" + encoded
             };
             Exception last = null;
-            // Drive sends short-lived confirmation cookies during redirects. Keep one
-            // cookie jar for the whole handshake instead of losing cookies on redirects.
-            java.net.CookieManager cookieJar = new java.net.CookieManager(null, java.net.CookiePolicy.ACCEPT_ALL);
             for (String address : urls) {
                 HttpURLConnection c = null;
+                java.net.CookieManager cookieJar = new java.net.CookieManager(null, java.net.CookiePolicy.ACCEPT_ALL);
                 try {
                     c = openDriveConnection(address, cookieJar, "GET", null, address);
                     int code = c.getResponseCode();
