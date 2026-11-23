@@ -37,12 +37,13 @@ public class PdfReaderActivity extends Activity {
     private final Handler mainHandler = new Handler();
     private Runnable visibleUpdate;
     private ScrollView scroll;
-    private PdfPagesView pagesView;
+    private LinearLayout pagesContainer;
+    private ImageView[] pageViews;
     private TextView pageNumber;
     private final Set<Integer> pending = new HashSet<>();
     private final LinkedHashMap<Integer, Bitmap> cache = new LinkedHashMap<>(4, .75f, true);
     private volatile boolean closing = false;
-    private int pageHeight, pageWidth, pageGap, pageCount, contentHeight;
+    private int pageHeight, pageWidth, pageGap, pageCount;
     private volatile int generation = 0;
     private boolean fastScrolling = false;
     private FastScrollHandle fastScrollHandle;
@@ -114,11 +115,25 @@ public class PdfReaderActivity extends Activity {
         scroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
         scroll.setSmoothScrollingEnabled(true);
         scroll.setBackgroundColor(Color.rgb(224,228,225));
-        // One virtualized drawing surface replaces hundreds of ImageViews.
-        // Only pages near the viewport are rendered and drawn.
-        pagesView = new PdfPagesView();
-        contentHeight = dp(12) + pageCount * pageHeight + Math.max(0, pageCount - 1) * pageGap;
-        scroll.addView(pagesView, new ScrollView.LayoutParams(-1, contentHeight));
+        // Use ordinary page ImageViews inside a vertical container. This avoids
+        // asking Android to draw a single custom View hundreds of thousands of
+        // pixels tall, which can fail on some hardware-accelerated devices.
+        pagesContainer = new LinearLayout(this);
+        pagesContainer.setOrientation(LinearLayout.VERTICAL);
+        pagesContainer.setBackgroundColor(Color.rgb(224,228,225));
+        pageViews = new ImageView[pageCount];
+        for (int i = 0; i < pageCount; i++) {
+            ImageView pageImage = new ImageView(this);
+            pageImage.setBackgroundColor(Color.WHITE);
+            pageImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            pageImage.setAdjustViewBounds(false);
+            pageImage.setContentDescription("PDF পৃষ্ঠা " + (i + 1));
+            LinearLayout.LayoutParams pageParams = new LinearLayout.LayoutParams(-1, pageHeight);
+            pageParams.setMargins(dp(8), dp(4), dp(8), dp(5));
+            pagesContainer.addView(pageImage, pageParams);
+            pageViews[i] = pageImage;
+        }
+        scroll.addView(pagesContainer, new ScrollView.LayoutParams(-1, -2));
         frame.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
 
         pageNumber = new TextView(this);
@@ -162,12 +177,8 @@ public class PdfReaderActivity extends Activity {
     private void updateVisiblePages() {
         if (closing || scroll == null) return;
 
-        // A long PDF can enqueue renders for pages that have already moved off-screen.
-        // Drop queued stale work whenever scrolling settles, then render the current
-        // viewport first. A render already in progress is invalidated by generation.
-        generation++;
-        if (renderHandler != null) renderHandler.removeCallbacksAndMessages(null);
-        synchronized (cache) { pending.clear(); }
+        // Keep rendering requests already in progress. Cancelling them at every
+        // scroll update could leave a page without a completed bitmap.
 
         int y = scroll.getScrollY();
         int stride = pageHeight + pageGap;
@@ -194,7 +205,10 @@ public class PdfReaderActivity extends Activity {
     private void requestPage(final int index) {
         synchronized (cache) {
             Bitmap ready = cache.get(index);
-            if (ready != null && !ready.isRecycled()) return;
+            if (ready != null && !ready.isRecycled()) {
+                if (pageViews != null && index < pageViews.length) pageViews[index].setImageBitmap(ready);
+                return;
+            }
             if (pending.contains(index)) return;
             pending.add(index);
         }
@@ -236,74 +250,25 @@ public class PdfReaderActivity extends Activity {
                     return;
                 }
                 if (result == null) {
-                    if (pagesView != null) pagesView.postInvalidateOnAnimation();
                     mainHandler.postDelayed(() -> requestPage(index), 350);
                     return;
                 }
                 synchronized (cache) {
                     cache.put(index, result);
-                    while (cache.size() > 6) {
+                    while (cache.size() > 8) {
                         Integer eldest = cache.keySet().iterator().next();
                         Bitmap old = cache.remove(eldest);
+                        if (pageViews != null && eldest < pageViews.length) {
+                            pageViews[eldest].setImageDrawable(null);
+                        }
                         if (!old.isRecycled()) old.recycle();
                     }
                 }
-                if (pagesView != null) pagesView.postInvalidateOnAnimation();
+                if (pageViews != null && index < pageViews.length) {
+                    pageViews[index].setImageBitmap(result);
+                }
             });
         });
-    }
-
-    /** Draw only the visible PDF pages; no per-page Android views are created. */
-    private final class PdfPagesView extends View {
-        private float lastTouchY;
-        private boolean draggingPages = false;
-        private final android.graphics.Paint pagePaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG | android.graphics.Paint.FILTER_BITMAP_FLAG);
-        private final android.graphics.Paint shadowPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-
-        PdfPagesView() {
-            super(PdfReaderActivity.this);
-            setWillNotDraw(false);
-            setClickable(true);
-            setBackgroundColor(Color.rgb(224,228,225));
-        }
-
-        // ScrollView measures its child with an UNSPECIFIED height. A plain
-        // custom View defaults to a zero/screen-sized suggested height there,
-        // ignoring the intended long document size. Report the full PDF height
-        // explicitly so the ScrollView has a real scroll range.
-        @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-            int desiredWidth = pageWidth + dp(16);
-            int measuredWidth = resolveSize(desiredWidth, widthMeasureSpec);
-            setMeasuredDimension(measuredWidth, Math.max(1, contentHeight));
-        }
-
-        // Let ScrollView handle touch gestures and fling natively for smooth scrolling.
-
-        @Override protected void onDraw(android.graphics.Canvas canvas) {
-            super.onDraw(canvas);
-            if (closing || pageCount < 1) return;
-            android.graphics.Rect clip = canvas.getClipBounds();
-            int stride = pageHeight + pageGap;
-            int first = Math.max(0, clip.top / Math.max(1, stride));
-            int last = Math.min(pageCount - 1, Math.max(first, clip.bottom / Math.max(1, stride)));
-            float left = dp(8);
-            float right = getWidth() - dp(8);
-            for (int i = first; i <= last; i++) {
-                float top = dp(6) + i * stride;
-                android.graphics.RectF dst = new android.graphics.RectF(left, top, right, top + pageHeight);
-                shadowPaint.setColor(Color.WHITE);
-                canvas.drawRect(dst, shadowPaint);
-                boolean drawn = false;
-                synchronized (cache) {
-                    Bitmap bitmap = cache.get(i);
-                    if (bitmap != null && !bitmap.isRecycled()) {
-                        canvas.drawBitmap(bitmap, null, dst, pagePaint);
-                        drawn = true;
-                    }
-                }
-                if (!drawn) requestPage(i);
-            }
-        }
     }
 
     private final class FastScrollHandle extends View {
