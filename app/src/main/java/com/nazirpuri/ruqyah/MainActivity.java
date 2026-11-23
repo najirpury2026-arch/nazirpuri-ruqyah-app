@@ -707,6 +707,7 @@ public class MainActivity extends Activity {
     }
 
     private void openSection(int index) {
+        if (index == 8) { showWeb("file:///android_asset/kitab.html"); return; }
         if (index == 0) {
             showLocalQuran();
             return;
@@ -1337,6 +1338,7 @@ public class MainActivity extends Activity {
         webView=new WebView(this);
         webView.addJavascriptInterface(new AudioBridge(), "AndroidAudio");
         webView.addJavascriptInterface(new DuaTtsBridge(), "AndroidDuaTts");
+        webView.addJavascriptInterface(new KitabBridge(), "AndroidKitab");
         if (openQuranWhenLoaded) webView.setVisibility(View.INVISIBLE);
         WebSettings s=webView.getSettings();
         s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setLoadsImagesAutomatically(true);
@@ -1441,4 +1443,88 @@ public class MainActivity extends Activity {
         if(duaTextToSpeech!=null){duaTextToSpeech.stop();duaTextToSpeech.shutdown();duaTextToSpeech=null;}
         if(webView!=null){webView.destroy();webView=null;} super.onDestroy();
     }
+
+    // Kitab PDF download manager: keeps downloaded books in private app storage for offline use.
+    private final class KitabBridge {
+        private File kitabDir() {
+            File dir = new File(getFilesDir(), "kitab_books");
+            if (!dir.exists()) dir.mkdirs();
+            return dir;
+        }
+        private String safeBookName(String name) {
+            return name != null && name.matches("[A-Za-z0-9_-]{1,90}") ? name : null;
+        }
+        @JavascriptInterface
+        public boolean isDownloaded(String name) {
+            String safe = safeBookName(name);
+            if (safe == null) return false;
+            File f = new File(kitabDir(), safe + ".pdf");
+            return f.isFile() && f.length() > 1000;
+        }
+        @JavascriptInterface
+        public void downloadBook(String address, String name) {
+            final String safe = safeBookName(name);
+            if (safe == null || address == null || !address.startsWith("https://")) {
+                kitabCallback(name, false, "ডাউনলোডের ঠিকানা সঠিক নয়"); return;
+            }
+            new Thread(() -> {
+                HttpURLConnection c = null;
+                File temp = new File(kitabDir(), safe + ".part");
+                File target = new File(kitabDir(), safe + ".pdf");
+                try {
+                    c = (HttpURLConnection) new URL(address).openConnection();
+                    c.setConnectTimeout(20000); c.setReadTimeout(45000);
+                    c.setInstanceFollowRedirects(true);
+                    c.setRequestProperty("User-Agent", "NazirpuriRuqyahAndroid/1.0");
+                    int code = c.getResponseCode();
+                    if (code != 200) throw new Exception("সার্ভার সাড়া দেয়নি (" + code + ")");
+                    try (InputStream in = c.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
+                        byte[] buf = new byte[16384]; int n; long total = 0;
+                        while ((n = in.read(buf)) != -1) {
+                            total += n;
+                            if (total > 100L * 1024L * 1024L) throw new Exception("ফাইলটি ১০০ MB-এর বেশি");
+                            out.write(buf, 0, n);
+                        }
+                        out.flush();
+                    }
+                    if (temp.length() < 1000) throw new Exception("PDF ফাইলটি অসম্পূর্ণ");
+                    if (!temp.renameTo(target)) throw new Exception("ফাইল সংরক্ষণ করা যায়নি");
+                    kitabCallback(safe, true, "কিতাব ডাউনলোড ও সেভ হয়েছে। এখন অফলাইনেও পড়তে পারবেন।");
+                } catch (Exception e) {
+                    temp.delete();
+                    kitabCallback(safe, false, "ডাউনলোড হয়নি: " + (e.getMessage() == null ? "ত্রুটি" : e.getMessage()));
+                } finally { if (c != null) c.disconnect(); }
+            }).start();
+        }
+        @JavascriptInterface
+        public void openBook(String name) {
+            String safe = safeBookName(name);
+            if (safe == null) return;
+            File f = new File(kitabDir(), safe + ".pdf");
+            if (!f.isFile()) { kitabCallback(safe, false, "সেভ করা কিতাব পাওয়া যায়নি"); return; }
+            mainHandler.post(() -> {
+                try {
+                    Uri uri = androidx.core.content.FileProvider.getUriForFile(
+                        MainActivity.this, getPackageName() + ".files", f);
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setDataAndType(uri, "application/pdf");
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(Intent.createChooser(intent, "কিতাব পড়ুন"));
+                } catch (Exception e) {
+                    android.widget.Toast.makeText(MainActivity.this,
+                        "PDF পড়ার অ্যাপ ইনস্টল/সক্রিয় করুন", android.widget.Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+    }
+    private void kitabCallback(String name, boolean ok, String message) {
+        mainHandler.post(() -> {
+            if (webView == null) return;
+            String js = "window.onKitabDownload && window.onKitabDownload(" +
+                JSONObject.quote(name == null ? "" : name) + "," + ok + "," +
+                JSONObject.quote(message == null ? "" : message) + ");";
+            webView.evaluateJavascript(js, null);
+        });
+    }
+
 }
