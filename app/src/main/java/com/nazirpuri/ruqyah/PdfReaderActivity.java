@@ -34,7 +34,7 @@ public class PdfReaderActivity extends Activity {
     private ParcelFileDescriptor descriptor;
     private HandlerThread renderThread;
     private Handler renderHandler;
-    private ScrollView scroll;
+    private ReliableScrollView scroll;
     private PdfPagesView pagesView;
     private TextView pageNumber;
     private final Set<Integer> pending = new HashSet<>();
@@ -102,7 +102,7 @@ public class PdfReaderActivity extends Activity {
         root.addView(header, new LinearLayout.LayoutParams(-1, dp(52)));
 
         FrameLayout frame = new FrameLayout(this);
-        scroll = new ScrollView(this);
+        scroll = new ReliableScrollView(this);
         scroll.setFillViewport(true);
         scroll.setVerticalScrollBarEnabled(true);
         scroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
@@ -127,11 +127,6 @@ public class PdfReaderActivity extends Activity {
         badge.bottomMargin = dp(12);
         frame.addView(pageNumber, badge);
 
-        // Draggable fast-scroll handle on the right edge.
-        FastScrollHandle fastScroll = new FastScrollHandle();
-        FrameLayout.LayoutParams fastLp = new FrameLayout.LayoutParams(dp(24), -1, Gravity.RIGHT | Gravity.CENTER_VERTICAL);
-        fastLp.rightMargin = dp(2);
-        frame.addView(fastScroll, fastLp);
 
         root.addView(frame, new LinearLayout.LayoutParams(-1, 0, 1));
 
@@ -226,6 +221,37 @@ public class PdfReaderActivity extends Activity {
                 if (pagesView != null) pagesView.invalidate();
             });
         });
+    }
+
+    /** Ensures vertical drags on the PDF surface are intercepted by the ScrollView. */
+    private final class ReliableScrollView extends ScrollView {
+        private float downX, downY;
+        private final int touchSlop;
+        ReliableScrollView() {
+            super(PdfReaderActivity.this);
+            touchSlop = android.view.ViewConfiguration.get(PdfReaderActivity.this).getScaledTouchSlop();
+            setFillViewport(true);
+            setVerticalScrollBarEnabled(true);
+            setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+            setSmoothScrollingEnabled(true);
+            setNestedScrollingEnabled(false);
+        }
+        @Override public boolean onInterceptTouchEvent(android.view.MotionEvent event) {
+            switch (event.getActionMasked()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    downX = event.getX();
+                    downY = event.getY();
+                    break;
+                case android.view.MotionEvent.ACTION_MOVE:
+                    float dx = Math.abs(event.getX() - downX);
+                    float dy = Math.abs(event.getY() - downY);
+                    if (dy > touchSlop && dy > dx) {
+                        return true;
+                    }
+                    break;
+            }
+            return super.onInterceptTouchEvent(event);
+        }
     }
 
     /** Draw only the visible PDF pages; no per-page Android views are created. */
