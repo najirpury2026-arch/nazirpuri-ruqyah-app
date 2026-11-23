@@ -29,7 +29,10 @@ footer{text-align:center;color:#849087;font-size:12px;padding:12px}
 <script>
 /* তাফসীরের কিতাবের তথ্য */
 const books=[
-{title:"তাফসীরে মাআ'রেফুল কুরআন",file:"tafsire-maariful-quran",author:"",subject:"তাফসীর",cover:"",url:"https://drive.google.com/uc?export=download&id=1rLsX6NT_5iXAT3aLZraK7Mzx224FHo6q",popular:true,latest:true}
+{number:1,title:"তাফসীরে মাআ'রেফুল কুরআন",file:"tafsire-maariful-quran",author:"",subject:"তাফসীর",cover:"",url:"https://drive.google.com/uc?export=download&id=1rLsX6NT_5iXAT3aLZraK7Mzx224FHo6q",popular:true,latest:true},
+{number:2,title:"তাফসীরে তাওযীহুল কুরআন ১ম খণ্ড",file:"tafsire-tawzihul-quran-1",author:"",subject:"তাফসীর",cover:"",url:"https://drive.google.com/uc?export=download&id=1PB5fvYhcUIOyuqNvEO-o7leeP3-EsOc0",latest:true},
+{number:3,title:"তাফসীরে তাওযীহুল কুরআন ২য় খণ্ড",file:"tafsire-tawzihul-quran-2",author:"",subject:"তাফসীর",cover:"",url:"https://drive.google.com/uc?export=download&id=1ZWrM2UszjKtvRLDm2EzuO5kEZScBWBoT",latest:true},
+{number:4,title:"তাফসীরে তাওযীহুল কুরআন ৩য় খণ্ড",file:"tafsire-tawzihul-quran-3",author:"",subject:"তাফসীর",cover:"",url:"https://drive.google.com/uc?export=download&id=1aGNbLOInGs7Q-wUAwmtaB2FSIQku-UhC",latest:true}
 ];
 let tab="all";const downloadedBooks=new Set();const $=id=>document.getElementById(id);
 const safe=s=>String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -41,7 +44,7 @@ let rows=books.filter(b=>(!q||(b.title+" "+b.author+" "+b.subject).toLowerCase()
 if(tab==="offline")rows=rows.filter(b=>isDownloaded(b.file||slug(b.title)));
 $("list").innerHTML=rows.map(b=>{const name=b.file||slug(b.title),done=isDownloaded(name),p=window.__tafsirProgress&&window.__tafsirProgress[name];let progress="";
 if(p&&!done){const total=p.total>0?p.total:0,downloaded=p.downloaded||0,pct=total>0?Math.min(100,Math.floor(downloaded*100/total)):0;progress='<div class="book-progress"><div class="book-progress-track"><div class="book-progress-fill" style="width:'+pct+'%"></div></div><div class="book-progress-info"><span>ডাউনলোড: <strong>'+formatMB(downloaded)+'</strong> / মোট: <strong>'+(total?formatMB(total):'হিসাব হচ্ছে')+'</strong></span><span class="percent">'+(total?pct+'%':'চলছে')+'</span><span>বাকি: <strong>'+(total?formatMB(Math.max(0,total-downloaded)):'জানা যাচ্ছে…')+'</strong></span></div></div>'}
-return '<article class="book"><div class="cover coverblank">'+(b.cover?'<img class="cover" src="'+safe(b.cover)+'" alt="">':'📖')+'</div><div class="meta"><div class="title">'+safe(b.title)+'</div><div class="author">'+safe(b.author||b.subject||"")+(done?'<div style="color:#376b57;font-size:13px">অফলাইনে পড়ার জন্য সংরক্ষিত</div>':'')+'</div>'+progress+'</div><button class="action '+(done?'done':p?'downloading':'')+'" '+(p?'disabled':'')+' aria-label="'+(done?'অফলাইনে পড়ুন':p?'ডাউনলোড হচ্ছে':'ডাউনলোড করুন')+'" onclick="bookAction(\''+safe(name)+'\',\''+safe(b.url)+'\')">'+(done?'<span class="download-seal">✓</span>':p?'<span class="download-spinner"></span>':'↓')+'</button></article>'}).join("");
+return '<article class="book"><div class="cover coverblank">'+(b.cover?'<img class="cover" src="'+safe(b.cover)+'" alt="">':'📖')+'</div><div class="meta"><div class="title">'+safe(String(b.number)+". "+b.title)+'</div><div class="author">'+safe(b.author||b.subject||"")+(done?'<div style="color:#376b57;font-size:13px">অফলাইনে পড়ার জন্য সংরক্ষিত</div>':'')+'</div>'+progress+'</div><button class="action '+(done?'done':p?'downloading':'')+'" '+(p?'disabled':'')+' aria-label="'+(done?'অফলাইনে পড়ুন':p?'ডাউনলোড হচ্ছে':'ডাউনলোড করুন')+'" onclick="bookAction(\''+safe(name)+'\',\''+safe(b.url)+'\')">'+(done?'<span class="download-seal">✓</span>':p?'<span class="download-spinner"></span>':'↓')+'</button></article>'}).join("");
 $("empty").style.display=rows.length?"none":"block";$("status").textContent=rows.length?rows.length+"টি তাফসীর দেখানো হচ্ছে":(tab==="offline"?"এখনো কোনো তাফসীর অফলাইনে সংরক্ষণ করা হয়নি":"কোনো কিতাব পাওয়া যায়নি")}
 function formatMB(bytes){return (Math.max(0,bytes)/(1024*1024)).toFixed(2)+" MB"}
 function bookAction(name,url){
