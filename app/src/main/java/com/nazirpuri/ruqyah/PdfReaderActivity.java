@@ -131,6 +131,13 @@ public class PdfReaderActivity extends Activity {
         badge.rightMargin = dp(12);
         badge.bottomMargin = dp(12);
         frame.addView(pageNumber, badge);
+
+        // Draggable fast-scroll handle on the right edge.
+        FastScrollHandle fastScroll = new FastScrollHandle();
+        FrameLayout.LayoutParams fastLp = new FrameLayout.LayoutParams(dp(38), -1, Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+        fastLp.rightMargin = dp(2);
+        frame.addView(fastScroll, fastLp);
+
         root.addView(frame, new LinearLayout.LayoutParams(-1, 0, 1));
 
         TextView hint = new TextView(this);
@@ -222,6 +229,73 @@ public class PdfReaderActivity extends Activity {
                 pageViews.get(index).setImageBitmap(result);
             });
         });
+    }
+
+    private final class FastScrollHandle extends View {
+        private final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private float thumbTop;
+        private float thumbHeight;
+        private boolean dragging = false;
+
+        FastScrollHandle() {
+            super(PdfReaderActivity.this);
+            setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+            setContentDescription("দ্রুত পৃষ্ঠা পরিবর্তন করতে ধরে ওপর-নিচে টানুন");
+        }
+
+        @Override protected void onDraw(android.graphics.Canvas canvas) {
+            super.onDraw(canvas);
+            if (scroll == null) return;
+            float w = getWidth(), h = getHeight();
+            float centerX = w - dp(13);
+            float trackTop = dp(12), trackBottom = h - dp(12);
+            float trackHeight = Math.max(1, trackBottom - trackTop);
+            int contentHeight = scroll.getChildAt(0) == null ? 0 : scroll.getChildAt(0).getHeight();
+            int viewport = scroll.getHeight();
+            float ratio = contentHeight <= 0 ? 1f : Math.min(1f, viewport / (float) contentHeight);
+            thumbHeight = Math.max(dp(48), trackHeight * ratio);
+            thumbHeight = Math.min(trackHeight, thumbHeight);
+            float maxScroll = Math.max(0, contentHeight - viewport);
+            float fraction = maxScroll == 0 ? 0 : scroll.getScrollY() / (float) maxScroll;
+            thumbTop = trackTop + (trackHeight - thumbHeight) * fraction;
+
+            paint.setColor(0x66809086);
+            paint.setStrokeWidth(dp(3));
+            paint.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+            canvas.drawLine(centerX, trackTop, centerX, trackBottom, paint);
+
+            paint.setColor(dragging ? Color.rgb(190,145,48) : Color.rgb(12,73,52));
+            canvas.drawRoundRect(centerX - dp(8), thumbTop, centerX + dp(8), thumbTop + thumbHeight,
+                dp(9), dp(9), paint);
+            paint.setColor(Color.WHITE);
+            paint.setTextSize(dp(16));
+            paint.setTextAlign(android.graphics.Paint.Align.CENTER);
+            canvas.drawText("↕", centerX, thumbTop + thumbHeight / 2f + dp(6), paint);
+        }
+
+        @Override public boolean onTouchEvent(android.view.MotionEvent event) {
+            if (scroll == null) return false;
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                case android.view.MotionEvent.ACTION_MOVE:
+                    dragging = true;
+                    float trackTop = dp(12), trackBottom = getHeight() - dp(12);
+                    float contentHeight = scroll.getChildAt(0) == null ? 0 : scroll.getChildAt(0).getHeight();
+                    float maxScroll = Math.max(0, contentHeight - scroll.getHeight());
+                    float usable = Math.max(1, trackBottom - trackTop - thumbHeight);
+                    float targetTop = Math.max(trackTop, Math.min(trackBottom - thumbHeight, event.getY() - thumbHeight / 2f));
+                    float fraction = (targetTop - trackTop) / usable;
+                    scroll.scrollTo(0, Math.round(maxScroll * fraction));
+                    invalidate();
+                    return true;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    dragging = false;
+                    invalidate();
+                    return true;
+            }
+            return true;
+        }
     }
 
     private String bn(int n) {
