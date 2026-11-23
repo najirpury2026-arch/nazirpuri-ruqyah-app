@@ -20,6 +20,14 @@ def appVersionCode = 1000 + ciBuildNumber
 def appVersionName = "1.2.${ciBuildNumber}"
 
 android {
+    // The Base64 font is only a build-time source; package the decoded TTF once.
+    sourceSets {
+        main {
+            assets {
+                exclude 'SolaimanLipi.ttf.b64'
+            }
+        }
+    }
     namespace 'com.nazirpuri.ruqyah'
     compileSdk 35
     signingConfigs {
