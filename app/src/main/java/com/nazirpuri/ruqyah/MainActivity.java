@@ -1519,8 +1519,7 @@ public class MainActivity extends Activity {
             }
             mainHandler.post(() -> {
                 try {
-                    Uri uri = androidx.core.content.FileProvider.getUriForFile(
-                        MainActivity.this, getPackageName() + ".files", f);
+                    Uri uri = Uri.parse("content://" + getPackageName() + ".files/kitab_books/" + Uri.encode(f.getName()));
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.setDataAndType(uri, "application/pdf");
                     intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
