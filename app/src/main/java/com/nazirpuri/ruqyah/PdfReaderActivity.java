@@ -2,6 +2,7 @@ package com.nazirpuri.ruqyah;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.graphics.Color;
 import android.graphics.pdf.PdfRenderer;
 import android.os.Bundle;
