@@ -76,8 +76,40 @@ public class PdfReaderActivity extends Activity {
             renderHandler = new Handler(renderThread.getLooper());
             buildReader(file.getName());
         } catch (Exception e) {
-            Toast.makeText(this, "কিতাবটি খোলা যাচ্ছে না। ফাইলটি আবার ডাউনলোড করে দেখুন।", Toast.LENGTH_LONG).show();
-            finish();
+            // Some valid PDFs cannot be decoded by Android's built-in PdfRenderer
+            // (for example, encrypted or unusually encoded files). Fall back to an
+            // installed PDF reader using the app's read-only content provider.
+            try {
+                if (renderer != null) { renderer.close(); renderer = null; }
+            } catch (Exception ignored) { }
+            try {
+                if (descriptor != null) { descriptor.close(); descriptor = null; }
+            } catch (Exception ignored) { }
+            try {
+                String path = getIntent().getStringExtra("pdf_path");
+                File file = path == null ? null : new File(path).getCanonicalFile();
+                File books = new File(getFilesDir(), "kitab_books").getCanonicalFile();
+                if (file == null || !file.isFile() || !books.equals(file.getParentFile())) {
+                    throw new IOException("Invalid local PDF");
+                }
+                Uri contentUri = new Uri.Builder()
+                    .scheme("content")
+                    .authority(getPackageName() + ".files")
+                    .appendPath("kitab_books")
+                    .appendPath(file.getName())
+                    .build();
+                android.content.Intent viewIntent = new android.content.Intent(android.content.Intent.ACTION_VIEW);
+                viewIntent.setDataAndType(contentUri, "application/pdf");
+                viewIntent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                viewIntent.setClipData(android.content.ClipData.newUri(getContentResolver(), file.getName(), contentUri));
+                startActivity(android.content.Intent.createChooser(viewIntent, "PDF পড়ার অ্যাপ বেছে নিন"));
+                finish();
+            } catch (Exception fallbackError) {
+                Toast.makeText(this,
+                    "এই PDF-টি অ্যাপের ভেতরের রিডারে খোলা যায়নি। ফোনে PDF Reader ইনস্টল আছে কি না দেখুন।",
+                    Toast.LENGTH_LONG).show();
+                finish();
+            }
         }
     }
 
