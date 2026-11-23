@@ -1587,9 +1587,9 @@ public class MainActivity extends Activity {
         private void downloadGoogleDrivePdf(String id, File temp, String name) throws Exception {
             String encoded = Uri.encode(id);
             String[] urls = {
-                "https://drive.google.com/uc?export=download&id=" + encoded,
-                "https://drive.google.com/uc?export=download&confirm=t&id=" + encoded,
-                "https://drive.usercontent.google.com/download?id=" + encoded + "&export=download&confirm=t"
+                "https://drive.usercontent.google.com/download?id=" + encoded + "&export=download&confirm=t",
+                "https://drive.google.com/uc?export=download&id=" + encoded + "&confirm=t",
+                "https://drive.google.com/uc?export=download&id=" + encoded
             };
             Exception last = null;
             for (String address : urls) {
@@ -1598,66 +1598,94 @@ public class MainActivity extends Activity {
                     c = (HttpURLConnection) new URL(address).openConnection();
                     c.setInstanceFollowRedirects(true);
                     c.setConnectTimeout(30000);
-                    c.setReadTimeout(120000);
+                    c.setReadTimeout(180000);
                     c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/125.0 Mobile Safari/537.36");
-                    c.setRequestProperty("Accept", "application/pdf,application/octet-stream,text/html,*/*");
+                    c.setRequestProperty("Accept", "application/pdf,application/octet-stream,*/*");
                     int code = c.getResponseCode();
                     if (code < 200 || code >= 300) throw new Exception("Drive সার্ভার সাড়া দেয়নি (" + code + ")");
-                    String cookies = "";
-                    java.util.List<String> setCookies = c.getHeaderFields().get("Set-Cookie");
-                    if (setCookies != null) {
-                        StringBuilder cb = new StringBuilder();
-                        for (String cookie : setCookies) if (cookie != null && cookie.contains("=")) {
-                            if (cb.length() > 0) cb.append("; ");
-                            cb.append(cookie.split(";", 2)[0]);
+                    StringBuilder cookieHeader = new StringBuilder();
+                    java.util.Map<String, java.util.List<String>> headers = c.getHeaderFields();
+                    if (headers != null) for (java.util.Map.Entry<String, java.util.List<String>> entry : headers.entrySet()) {
+                        if (entry.getKey() != null && entry.getKey().equalsIgnoreCase("Set-Cookie") && entry.getValue() != null) {
+                            for (String cookie : entry.getValue()) if (cookie != null && cookie.contains("=")) {
+                                if (cookieHeader.length() > 0) cookieHeader.append("; ");
+                                cookieHeader.append(cookie.split(";", 2)[0]);
+                            }
                         }
-                        cookies = cb.toString();
                     }
                     byte[] body = readDriveResponse(c, temp, name);
                     if (body == null) return;
                     String html = new String(body, java.nio.charset.StandardCharsets.UTF_8);
-                    java.util.regex.Matcher form = java.util.regex.Pattern.compile("(?is)<form[^>]*action=['\\\"]([^'\\\"]+)['\\\"][^>]*>(.*?)</form>").matcher(html);
+                    java.util.regex.Matcher form = java.util.regex.Pattern.compile("(?is)<form\\b([^>]*)>(.*?)</form>").matcher(html);
+                    String action = null, method = "GET", fields = "";
                     if (form.find()) {
-                        String action = form.group(1).replace("&amp;", "&");
-                        if (action.startsWith("/")) action = "https://drive.google.com" + action;
-                        else if (!action.startsWith("http")) action = "https://drive.google.com/" + action;
-                        StringBuilder query = new StringBuilder();
+                        String attrs = form.group(1);
+                        action = htmlAttribute(attrs, "action");
+                        String m = htmlAttribute(attrs, "method");
+                        if (m != null) method = m.trim().toUpperCase(java.util.Locale.US);
+                        StringBuilder data = new StringBuilder();
                         java.util.regex.Matcher inputTag = java.util.regex.Pattern.compile("(?is)<input\\b[^>]*>").matcher(form.group(2));
                         while (inputTag.find()) {
                             String tag = inputTag.group();
                             String fieldName = htmlAttribute(tag, "name");
                             String fieldValue = htmlAttribute(tag, "value");
                             if (fieldName != null && fieldValue != null) {
-                                if (query.length() > 0) query.append("&");
-                                query.append(java.net.URLEncoder.encode(fieldName, "UTF-8"));
-                                query.append("=");
-                                query.append(java.net.URLEncoder.encode(fieldValue, "UTF-8"));
+                                if (data.length() > 0) data.append("&");
+                                data.append(java.net.URLEncoder.encode(fieldName, "UTF-8"));
+                                data.append("=").append(java.net.URLEncoder.encode(fieldValue, "UTF-8"));
                             }
                         }
-                        if (query.length() > 0) {
-                            String confirmed = action + (action.contains("?") ? "&" : "?") + query;
-                            HttpURLConnection c2 = null;
-                            try {
-                                c2 = (HttpURLConnection) new URL(confirmed).openConnection();
-                                c2.setInstanceFollowRedirects(true);
-                                c2.setConnectTimeout(30000);
-                                c2.setReadTimeout(120000);
-                                c2.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/125.0 Mobile Safari/537.36");
-                                c2.setRequestProperty("Referer", address);
-                                if (!cookies.isEmpty()) c2.setRequestProperty("Cookie", cookies);
-                                int code2 = c2.getResponseCode();
-                                if (code2 >= 200 && code2 < 300) {
-                                    byte[] confirmedBody = readDriveResponse(c2, temp, name);
-                                    if (confirmedBody == null) return;
-                                }
-                            } finally { if (c2 != null) c2.disconnect(); }
+                        fields = data.toString();
+                    } else {
+                        java.util.regex.Matcher link = java.util.regex.Pattern.compile("(?is)<a\\b[^>]*id=['\\\"]uc-download-link['\\\"][^>]*>").matcher(html);
+                        if (link.find()) action = htmlAttribute(link.group(), "href");
+                        if (action == null) {
+                            java.util.regex.Matcher confirm = java.util.regex.Pattern.compile("(?i)confirm=([a-zA-Z0-9_-]+)").matcher(html);
+                            if (confirm.find()) fields = "confirm=" + java.net.URLEncoder.encode(confirm.group(1), "UTF-8") + "&id=" + encoded;
                         }
                     }
-                    last = new Exception("Drive PDF দেয়নি। ফাইলটি Anyone with the link (Viewer) করা আছে কি না পরীক্ষা করুন।");
+                    if (action != null) {
+                        action = action.replace("&amp;", "&");
+                        if (action.startsWith("/")) action = "https://drive.google.com" + action;
+                        else if (!action.startsWith("http")) action = "https://drive.google.com/" + action;
+                    } else if (!fields.isEmpty()) {
+                        action = "https://drive.google.com/uc?export=download";
+                    }
+                    if (action != null) {
+                        HttpURLConnection c2 = null;
+                        try {
+                            if ("POST".equals(method)) {
+                                c2 = (HttpURLConnection) new URL(action).openConnection();
+                                c2.setRequestMethod("POST");
+                                c2.setDoOutput(true);
+                                c2.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                            } else {
+                                String separator = action.contains("?") ? "&" : "?";
+                                c2 = (HttpURLConnection) new URL(action + (fields.isEmpty() ? "" : separator + fields)).openConnection();
+                            }
+                            c2.setInstanceFollowRedirects(true);
+                            c2.setConnectTimeout(30000);
+                            c2.setReadTimeout(180000);
+                            c2.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/125.0 Mobile Safari/537.36");
+                            c2.setRequestProperty("Referer", address);
+                            if (cookieHeader.length() > 0) c2.setRequestProperty("Cookie", cookieHeader.toString());
+                            if ("POST".equals(method) && !fields.isEmpty()) {
+                                try (java.io.OutputStream output = c2.getOutputStream()) {
+                                    output.write(fields.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                                }
+                            }
+                            int code2 = c2.getResponseCode();
+                            if (code2 >= 200 && code2 < 300) {
+                                byte[] confirmedBody = readDriveResponse(c2, temp, name);
+                                if (confirmedBody == null) return;
+                            }
+                        } finally { if (c2 != null) c2.disconnect(); }
+                    }
+                    last = new Exception("Google Drive PDF পাঠায়নি; লিংকটি সবার জন্য দেখার অনুমতি আছে কি না যাচাই করুন।");
                 } catch (Exception e) { last = e; }
                 finally { if (c != null) c.disconnect(); }
             }
-            throw last == null ? new Exception("Drive থেকে PDF পাওয়া যায়নি") : last;
+            throw last == null ? new Exception("Google Drive থেকে PDF পাওয়া যায়নি") : last;
         }
 
         private String htmlAttribute(String tag, String attribute) {
