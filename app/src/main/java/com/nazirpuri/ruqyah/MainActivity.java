@@ -1485,29 +1485,8 @@ public class MainActivity extends Activity {
                     if (!dir.exists() && !dir.mkdirs()) throw new Exception("ফোল্ডার তৈরি করা যায়নি");
                     Uri source = Uri.parse(address);
                     String id = source.getQueryParameter("id");
-                    String downloadAddress = id == null ? address :
-                        "https://drive.usercontent.google.com/download?id=" + id + "&export=download&confirm=t";
-                    URL url = new URL(downloadAddress);
-                    connection = (HttpURLConnection) url.openConnection();
-                    connection.setInstanceFollowRedirects(true);
-                    connection.setConnectTimeout(20000);
-                    connection.setReadTimeout(60000);
-                    connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
-                    int code = connection.getResponseCode();
-                    if (code < 200 || code >= 300) throw new Exception("সার্ভার সাড়া দেয়নি (" + code + ")");
-                    final long totalBytes = connection.getContentLengthLong();
-                    notifyBookProgress(name, 0L, totalBytes);
-                    try (InputStream in = connection.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
-                        byte[] buffer = new byte[65536]; int n; long downloadedBytes = 0L; long lastUpdate = 0L;
-                        while ((n = in.read(buffer)) != -1) {
-                            out.write(buffer, 0, n); downloadedBytes += n;
-                            long now = android.os.SystemClock.elapsedRealtime();
-                            if (now - lastUpdate >= 250L || (totalBytes > 0 && downloadedBytes >= totalBytes)) {
-                                notifyBookProgress(name, downloadedBytes, totalBytes); lastUpdate = now;
-                            }
-                        }
-                        notifyBookProgress(name, downloadedBytes, totalBytes);
-                    }
+                    if (id == null || id.trim().isEmpty()) throw new Exception("Drive ফাইলের ID পাওয়া যায়নি");
+                    downloadGoogleDrivePdf(id, temp, name);
                     if (temp.length() < 1000) throw new Exception("ফাইলটি সম্পূর্ণ ডাউনলোড হয়নি");
                     try (InputStream check = new java.io.FileInputStream(temp)) {
                         byte[] magic = new byte[5];
@@ -1559,7 +1538,89 @@ public class MainActivity extends Activity {
             mainHandler.post(() -> {
                 android.widget.Toast.makeText(MainActivity.this, message, android.widget.Toast.LENGTH_LONG).show();
                 if (webView != null) {
-                    String key = org.json.JSONObject.quote(name == null ? "" : name);
+                    String key = org.json.JSONObject.quote(name == nu        // Google Drive can return an HTML confirmation page rather than the PDF.
+        private void downloadGoogleDrivePdf(String id, File temp, String name) throws Exception {
+            String[] addresses = {
+                "https://drive.google.com/uc?export=download&id=" + Uri.encode(id),
+                "https://drive.usercontent.google.com/download?id=" + Uri.encode(id) + "&export=download&confirm=t"
+            };
+            Exception last = null;
+            for (String address : addresses) {
+                HttpURLConnection c = null;
+                try {
+                    c = (HttpURLConnection) new URL(address).openConnection();
+                    c.setInstanceFollowRedirects(true);
+                    c.setConnectTimeout(25000);
+                    c.setReadTimeout(90000);
+                    c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
+                    c.setRequestProperty("Accept", "application/pdf,application/octet-stream,*/*");
+                    int code = c.getResponseCode();
+                    if (code < 200 || code >= 300) throw new Exception("Drive সার্ভার সাড়া দেয়নি (" + code + ")");
+                    String cookies = "";
+                    java.util.List<String> setCookies = c.getHeaderFields().get("Set-Cookie");
+                    if (setCookies != null) {
+                        StringBuilder cb = new StringBuilder();
+                        for (String cookie : setCookies) if (cookie != null && cookie.contains("=")) {
+                            if (cb.length() > 0) cb.append("; ");
+                            cb.append(cookie.split(";", 2)[0]);
+                        }
+                        cookies = cb.toString();
+                    }
+                    java.io.BufferedInputStream in = new java.io.BufferedInputStream(c.getInputStream());
+                    in.mark(8);
+                    byte[] magic = new byte[5]; int got = in.read(magic); in.reset();
+                    boolean pdf = got == 5 && magic[0] == '%' && magic[1] == 'P' && magic[2] == 'D' && magic[3] == 'F' && magic[4] == '-';
+                    if (pdf) {
+                        try (java.io.InputStream input = in; FileOutputStream out = new FileOutputStream(temp)) {
+                            byte[] buffer = new byte[65536]; int n; long total = c.getContentLengthLong(), done = 0;
+                            notifyBookProgress(name, 0L, total);
+                            while ((n = input.read(buffer)) != -1) { out.write(buffer, 0, n); done += n; notifyBookProgress(name, done, total); }
+                        }
+                        if (isPdfFile(temp)) return;
+                    } else {
+                        String html;
+                        try (java.io.InputStream input = in; java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+                            byte[] buffer = new byte[8192]; int n;
+                            while ((n = input.read(buffer)) != -1) out.write(buffer, 0, n);
+                            html = new String(out.toByteArray(), java.nio.charset.StandardCharsets.UTF_8);
+                        }
+                        java.util.regex.Matcher token = java.util.regex.Pattern.compile("(?:confirm=|name=[\\\"']confirm[\\\"']\\s+value=[\\\"'])([0-9A-Za-z_-]+)").matcher(html);
+                        if (token.find()) {
+                            HttpURLConnection c2 = null;
+                            try {
+                                String confirmed = "https://drive.google.com/uc?export=download&id=" + Uri.encode(id) + "&confirm=" + Uri.encode(token.group(1));
+                                c2 = (HttpURLConnection) new URL(confirmed).openConnection();
+                                c2.setInstanceFollowRedirects(true); c2.setConnectTimeout(25000); c2.setReadTimeout(90000);
+                                c2.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
+                                if (!cookies.isEmpty()) c2.setRequestProperty("Cookie", cookies);
+                                int code2 = c2.getResponseCode();
+                                if (code2 >= 200 && code2 < 300) {
+                                    try (java.io.InputStream input = c2.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
+                                        byte[] buffer = new byte[65536]; int n; long total = c2.getContentLengthLong(), done = 0;
+                                        notifyBookProgress(name, 0L, total);
+                                        while ((n = input.read(buffer)) != -1) { out.write(buffer, 0, n); done += n; notifyBookProgress(name, done, total); }
+                                    }
+                                    if (isPdfFile(temp)) return;
+                                }
+                            } finally { if (c2 != null) c2.disconnect(); }
+                        }
+                    }
+                    last = new Exception("Drive PDF দেয়নি; ফাইলের শেয়ার অনুমতি পরীক্ষা করুন");
+                } catch (Exception e) { last = e; }
+                finally { if (c != null) c.disconnect(); }
+            }
+            throw last == null ? new Exception("Drive থেকে PDF পাওয়া যায়নি") : last;
+        }
+
+        private boolean isPdfFile(File file) {
+            if (file == null || !file.isFile() || file.length() < 1000) return false;
+            try (InputStream input = new java.io.FileInputStream(file)) {
+                byte[] magic = new byte[5];
+                return input.read(magic) == 5 && magic[0] == '%' && magic[1] == 'P' && magic[2] == 'D' && magic[3] == 'F' && magic[4] == '-';
+            } catch (Exception ignored) { return false; }
+        }
+
+ll ? "" : name);
                     String msg = org.json.JSONObject.quote(message);
                     webView.evaluateJavascript("if(window.onBookDownload)window.onBookDownload(" + key + "," + success + "," + msg + ")", null);
                 }
