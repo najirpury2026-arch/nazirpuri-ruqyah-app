@@ -1545,22 +1545,24 @@ public class MainActivity extends Activity {
             });
         }
 
-        // Drive may return a confirmation HTML page for large PDFs; follow its token and cookies.
+        // Handle Google Drive's confirmation form and cookies before accepting a PDF.
         private void downloadGoogleDrivePdf(String id, File temp, String name) throws Exception {
-            String[] addresses = {
-                "https://drive.google.com/uc?export=download&id=" + Uri.encode(id),
-                "https://drive.usercontent.google.com/download?id=" + Uri.encode(id) + "&export=download&confirm=t"
+            String encoded = Uri.encode(id);
+            String[] urls = {
+                "https://drive.google.com/uc?export=download&id=" + encoded,
+                "https://drive.google.com/uc?export=download&confirm=t&id=" + encoded,
+                "https://drive.usercontent.google.com/download?id=" + encoded + "&export=download&confirm=t"
             };
             Exception last = null;
-            for (String address : addresses) {
+            for (String address : urls) {
                 HttpURLConnection c = null;
                 try {
                     c = (HttpURLConnection) new URL(address).openConnection();
                     c.setInstanceFollowRedirects(true);
-                    c.setConnectTimeout(25000);
-                    c.setReadTimeout(90000);
-                    c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
-                    c.setRequestProperty("Accept", "application/pdf,application/octet-stream,*/*");
+                    c.setConnectTimeout(30000);
+                    c.setReadTimeout(120000);
+                    c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/125.0 Mobile Safari/537.36");
+                    c.setRequestProperty("Accept", "application/pdf,application/octet-stream,text/html,*/*");
                     int code = c.getResponseCode();
                     if (code < 200 || code >= 300) throw new Exception("Drive সার্ভার সাড়া দেয়নি (" + code + ")");
                     String cookies = "";
@@ -1573,50 +1575,86 @@ public class MainActivity extends Activity {
                         }
                         cookies = cb.toString();
                     }
-                    java.io.BufferedInputStream in = new java.io.BufferedInputStream(c.getInputStream());
-                    in.mark(8);
-                    byte[] magic = new byte[5]; int got = in.read(magic); in.reset();
-                    boolean pdf = got == 5 && magic[0] == '%' && magic[1] == 'P' && magic[2] == 'D' && magic[3] == 'F' && magic[4] == '-';
-                    if (pdf) {
-                        try (java.io.InputStream input = in; FileOutputStream out = new FileOutputStream(temp)) {
-                            byte[] buffer = new byte[65536]; int n; long total = c.getContentLengthLong(), done = 0;
-                            notifyBookProgress(name, 0L, total);
-                            while ((n = input.read(buffer)) != -1) { out.write(buffer, 0, n); done += n; notifyBookProgress(name, done, total); }
+                    byte[] body;
+                    try (java.io.InputStream input = c.getInputStream(); java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+                        byte[] buffer = new byte[16384]; int n;
+                        while ((n = input.read(buffer)) != -1) out.write(buffer, 0, n);
+                        body = out.toByteArray();
+                    }
+                    if (isPdfBytes(body)) {
+                        writePdfBytes(body, temp, name, c.getContentLengthLong());
+                        return;
+                    }
+                    String html = new String(body, java.nio.charset.StandardCharsets.UTF_8);
+                    java.util.regex.Matcher form = java.util.regex.Pattern.compile("(?is)<form[^>]*action=['\\\"]([^'\\\"]+)['\\\"][^>]*>(.*?)</form>").matcher(html);
+                    if (form.find()) {
+                        String action = form.group(1).replace("&amp;", "&");
+                        if (action.startsWith("/")) action = "https://drive.google.com" + action;
+                        else if (!action.startsWith("http")) action = "https://drive.google.com/" + action;
+                        StringBuilder query = new StringBuilder();
+                        java.util.regex.Matcher inputTag = java.util.regex.Pattern.compile("(?is)<input\\b[^>]*>").matcher(form.group(2));
+                        while (inputTag.find()) {
+                            String tag = inputTag.group();
+                            String fieldName = htmlAttribute(tag, "name");
+                            String fieldValue = htmlAttribute(tag, "value");
+                            if (fieldName != null && fieldValue != null) {
+                                if (query.length() > 0) query.append("&");
+                                query.append(java.net.URLEncoder.encode(fieldName, "UTF-8"));
+                                query.append("=");
+                                query.append(java.net.URLEncoder.encode(fieldValue, "UTF-8"));
+                            }
                         }
-                        if (isPdfFile(temp)) return;
-                    } else {
-                        String html;
-                        try (java.io.InputStream input = in; java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
-                            byte[] buffer = new byte[8192]; int n;
-                            while ((n = input.read(buffer)) != -1) out.write(buffer, 0, n);
-                            html = new String(out.toByteArray(), java.nio.charset.StandardCharsets.UTF_8);
-                        }
-                        java.util.regex.Matcher token = java.util.regex.Pattern.compile("confirm=([0-9A-Za-z_-]+)").matcher(html);
-                        if (token.find()) {
+                        if (query.length() > 0) {
+                            String confirmed = action + (action.contains("?") ? "&" : "?") + query;
                             HttpURLConnection c2 = null;
                             try {
-                                String confirmed = "https://drive.google.com/uc?export=download&id=" + Uri.encode(id) + "&confirm=" + Uri.encode(token.group(1));
                                 c2 = (HttpURLConnection) new URL(confirmed).openConnection();
-                                c2.setInstanceFollowRedirects(true); c2.setConnectTimeout(25000); c2.setReadTimeout(90000);
-                                c2.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
+                                c2.setInstanceFollowRedirects(true);
+                                c2.setConnectTimeout(30000);
+                                c2.setReadTimeout(120000);
+                                c2.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/125.0 Mobile Safari/537.36");
+                                c2.setRequestProperty("Referer", address);
                                 if (!cookies.isEmpty()) c2.setRequestProperty("Cookie", cookies);
                                 int code2 = c2.getResponseCode();
                                 if (code2 >= 200 && code2 < 300) {
-                                    try (java.io.InputStream input = c2.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
-                                        byte[] buffer = new byte[65536]; int n; long total = c2.getContentLengthLong(), done = 0;
-                                        notifyBookProgress(name, 0L, total);
-                                        while ((n = input.read(buffer)) != -1) { out.write(buffer, 0, n); done += n; notifyBookProgress(name, done, total); }
+                                    byte[] confirmedBody;
+                                    try (java.io.InputStream input = c2.getInputStream(); java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+                                        byte[] buffer = new byte[16384]; int n;
+                                        while ((n = input.read(buffer)) != -1) out.write(buffer, 0, n);
+                                        confirmedBody = out.toByteArray();
                                     }
-                                    if (isPdfFile(temp)) return;
+                                    if (isPdfBytes(confirmedBody)) {
+                                        writePdfBytes(confirmedBody, temp, name, c2.getContentLengthLong());
+                                        return;
+                                    }
                                 }
                             } finally { if (c2 != null) c2.disconnect(); }
                         }
                     }
-                    last = new Exception("Drive PDF দেয়নি; ফাইলের শেয়ার অনুমতি পরীক্ষা করুন");
+                    last = new Exception("Drive PDF দেয়নি। ফাইলটি Anyone with the link (Viewer) করা আছে কি না পরীক্ষা করুন।");
                 } catch (Exception e) { last = e; }
                 finally { if (c != null) c.disconnect(); }
             }
             throw last == null ? new Exception("Drive থেকে PDF পাওয়া যায়নি") : last;
+        }
+
+        private String htmlAttribute(String tag, String attribute) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?is)\\\\b" + attribute + "\\\\s*=\\\\s*(['\\\"])(.*?)\\\\1").matcher(tag);
+            return m.find() ? m.group(2).replace("&amp;", "&") : null;
+        }
+
+        private boolean isPdfBytes(byte[] bytes) {
+            return bytes != null && bytes.length > 5 && bytes[0] == '%' && bytes[1] == 'P' &&
+                bytes[2] == 'D' && bytes[3] == 'F' && bytes[4] == '-';
+        }
+
+        private void writePdfBytes(byte[] bytes, File temp, String name, long total) throws Exception {
+            try (FileOutputStream out = new FileOutputStream(temp)) {
+                notifyBookProgress(name, 0L, total > 0 ? total : bytes.length);
+                out.write(bytes);
+                notifyBookProgress(name, bytes.length, total > 0 ? total : bytes.length);
+            }
+            if (!isPdfFile(temp)) throw new Exception("ডাউনলোড করা ফাইলটি বৈধ PDF নয়");
         }
 
         private boolean isPdfFile(File file) {
