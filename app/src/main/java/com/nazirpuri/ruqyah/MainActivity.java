@@ -1487,11 +1487,8 @@ public class MainActivity extends Activity {
                     if (id == null || id.trim().isEmpty()) throw new Exception("Drive ফাইলের ID পাওয়া যায়নি");
                     downloadGoogleDrivePdf(id, temp, name);
                     if (temp.length() < 1000) throw new Exception("ফাইলটি সম্পূর্ণ ডাউনলোড হয়নি");
-                    try (InputStream check = new java.io.FileInputStream(temp)) {
-                        byte[] magic = new byte[5];
-                        if (check.read(magic) != 5 || magic[0] != '%' || magic[1] != 'P' || magic[2] != 'D' || magic[3] != 'F' || magic[4] != '-') {
-                            throw new Exception("Drive থেকে PDF ফাইল পাওয়া যায়নি। লিংকের অনুমতি পরীক্ষা করুন।");
-                        }
+                    if (!isPdfFile(temp)) {
+                        throw new Exception("Drive থেকে বৈধ PDF ফাইল পাওয়া যায়নি (PDF header প্রথম 1024 বাইটেও নেই)");
                     }
                     if (target.exists()) target.delete();
                     if (!temp.renameTo(target)) throw new Exception("ফাইল সংরক্ষণ করা যায়নি");
@@ -1550,18 +1547,21 @@ public class MainActivity extends Activity {
         private byte[] readDriveResponse(HttpURLConnection connection, File temp, String name) throws Exception {
             long total = connection.getContentLengthLong();
             try (java.io.InputStream input = new java.io.BufferedInputStream(connection.getInputStream())) {
-                byte[] header = new byte[5];
+                // PDF specifications permit the %PDF- marker within the first 1024 bytes.
+                // Some Drive octet-stream responses contain a short preamble before the header.
+                byte[] header = new byte[1024];
                 int got = 0;
-                while (got < 5) {
-                    int n = input.read(header, got, 5 - got);
+                while (got < header.length) {
+                    int n = input.read(header, got, header.length - got);
                     if (n == -1) break;
                     got += n;
+                    if (got >= 5 && indexOfPdfHeader(header, got) >= 0) break;
                 }
-                if (got == 5 && isPdfBytes(header)) {
+                if (indexOfPdfHeader(header, got) >= 0) {
                     long done = 0;
                     try (FileOutputStream out = new FileOutputStream(temp)) {
-                        out.write(header);
-                        done = header.length;
+                        out.write(header, 0, got);
+                        done = got;
                         notifyBookProgress(name, done, total);
                         byte[] buffer = new byte[65536];
                         int n;
@@ -1742,9 +1742,18 @@ public class MainActivity extends Activity {
             return m.find() ? m.group(2).replace("&amp;", "&") : null;
         }
 
+        private int indexOfPdfHeader(byte[] bytes, int length) {
+            if (bytes == null) return -1;
+            int limit = Math.min(length, bytes.length) - 5;
+            for (int i = 0; i <= limit; i++) {
+                if (bytes[i] == '%' && bytes[i + 1] == 'P' && bytes[i + 2] == 'D' &&
+                    bytes[i + 3] == 'F' && bytes[i + 4] == '-') return i;
+            }
+            return -1;
+        }
+
         private boolean isPdfBytes(byte[] bytes) {
-            return bytes != null && bytes.length > 5 && bytes[0] == '%' && bytes[1] == 'P' &&
-                bytes[2] == 'D' && bytes[3] == 'F' && bytes[4] == '-';
+            return bytes != null && indexOfPdfHeader(bytes, bytes.length) >= 0;
         }
 
         private void writePdfBytes(byte[] bytes, File temp, String name, long total) throws Exception {
@@ -1759,8 +1768,9 @@ public class MainActivity extends Activity {
         private boolean isPdfFile(File file) {
             if (file == null || !file.isFile() || file.length() < 1000) return false;
             try (InputStream input = new java.io.FileInputStream(file)) {
-                byte[] magic = new byte[5];
-                return input.read(magic) == 5 && magic[0] == '%' && magic[1] == 'P' && magic[2] == 'D' && magic[3] == 'F' && magic[4] == '-';
+                byte[] prefix = new byte[1024];
+                int count = input.read(prefix);
+                return count > 0 && indexOfPdfHeader(prefix, count) >= 0;
             } catch (Exception ignored) { return false; }
         }
     }
