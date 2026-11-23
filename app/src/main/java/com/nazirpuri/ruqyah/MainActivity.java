@@ -1592,30 +1592,18 @@ public class MainActivity extends Activity {
                 "https://drive.google.com/uc?export=download&id=" + encoded
             };
             Exception last = null;
+            // Drive sends short-lived confirmation cookies during redirects. Keep one
+            // cookie jar for the whole handshake instead of losing cookies on redirects.
+            java.net.CookieManager cookieJar = new java.net.CookieManager(null, java.net.CookiePolicy.ACCEPT_ALL);
             for (String address : urls) {
                 HttpURLConnection c = null;
                 try {
-                    c = (HttpURLConnection) new URL(address).openConnection();
-                    c.setInstanceFollowRedirects(true);
-                    c.setConnectTimeout(30000);
-                    c.setReadTimeout(180000);
-                    c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/125.0 Mobile Safari/537.36");
-                    c.setRequestProperty("Accept", "application/pdf,application/octet-stream,*/*");
+                    c = openDriveConnection(address, cookieJar, "GET", null, address);
                     int code = c.getResponseCode();
                     if (code < 200 || code >= 300) {
                         String errorType = c.getContentType();
                         String errorText = readDriveError(c);
                         throw new Exception("Drive HTTP " + code + " (" + errorType + "): " + errorText);
-                    }
-                    StringBuilder cookieHeader = new StringBuilder();
-                    java.util.Map<String, java.util.List<String>> headers = c.getHeaderFields();
-                    if (headers != null) for (java.util.Map.Entry<String, java.util.List<String>> entry : headers.entrySet()) {
-                        if (entry.getKey() != null && entry.getKey().equalsIgnoreCase("Set-Cookie") && entry.getValue() != null) {
-                            for (String cookie : entry.getValue()) if (cookie != null && cookie.contains("=")) {
-                                if (cookieHeader.length() > 0) cookieHeader.append("; ");
-                                cookieHeader.append(cookie.split(";", 2)[0]);
-                            }
-                        }
                     }
                     byte[] body = readDriveResponse(c, temp, name);
                     if (body == null) return;
@@ -1658,26 +1646,11 @@ public class MainActivity extends Activity {
                     if (action != null) {
                         HttpURLConnection c2 = null;
                         try {
-                            if ("POST".equals(method)) {
-                                c2 = (HttpURLConnection) new URL(action).openConnection();
-                                c2.setRequestMethod("POST");
-                                c2.setDoOutput(true);
-                                c2.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                            } else {
+                            if (!"POST".equals(method) && !fields.isEmpty()) {
                                 String separator = action.contains("?") ? "&" : "?";
-                                c2 = (HttpURLConnection) new URL(action + (fields.isEmpty() ? "" : separator + fields)).openConnection();
+                                action = action + separator + fields;
                             }
-                            c2.setInstanceFollowRedirects(true);
-                            c2.setConnectTimeout(30000);
-                            c2.setReadTimeout(180000);
-                            c2.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/125.0 Mobile Safari/537.36");
-                            c2.setRequestProperty("Referer", address);
-                            if (cookieHeader.length() > 0) c2.setRequestProperty("Cookie", cookieHeader.toString());
-                            if ("POST".equals(method) && !fields.isEmpty()) {
-                                try (java.io.OutputStream output = c2.getOutputStream()) {
-                                    output.write(fields.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                                }
-                            }
+                            c2 = openDriveConnection(action, cookieJar, method, fields, address);
                             int code2 = c2.getResponseCode();
                             if (code2 >= 200 && code2 < 300) {
                                 byte[] confirmedBody = readDriveResponse(c2, temp, name);
@@ -1694,6 +1667,52 @@ public class MainActivity extends Activity {
                 finally { if (c != null) c.disconnect(); }
             }
             throw last == null ? new Exception("Google Drive থেকে PDF পাওয়া যায়নি") : last;
+        }
+
+        // Follow redirects manually so Google Drive confirmation cookies survive
+        // every hop (HttpURLConnection's automatic redirects can drop this state).
+        private HttpURLConnection openDriveConnection(String address, java.net.CookieManager cookieJar,
+                String requestMethod, String formFields, String referer) throws Exception {
+            URL current = new URL(address);
+            String method = requestMethod == null ? "GET" : requestMethod;
+            String body = formFields == null ? "" : formFields;
+            for (int hop = 0; hop < 10; hop++) {
+                HttpURLConnection connection = (HttpURLConnection) current.openConnection();
+                connection.setInstanceFollowRedirects(false);
+                connection.setConnectTimeout(30000);
+                connection.setReadTimeout(180000);
+                connection.setRequestMethod(method);
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/125.0 Mobile Safari/537.36");
+                connection.setRequestProperty("Accept", "application/pdf,application/octet-stream,text/html,*/*");
+                if (referer != null) connection.setRequestProperty("Referer", referer);
+                java.net.URI uri = current.toURI();
+                java.util.Map<String, java.util.List<String>> cookieHeaders = cookieJar.get(uri, java.util.Collections.<String, java.util.List<String>>emptyMap());
+                for (java.util.Map.Entry<String, java.util.List<String>> entry : cookieHeaders.entrySet()) {
+                    for (String value : entry.getValue()) connection.addRequestProperty(entry.getKey(), value);
+                }
+                if ("POST".equals(method)) {
+                    connection.setDoOutput(true);
+                    connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                    byte[] payload = body.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                    connection.setFixedLengthStreamingMode(payload.length);
+                    try (java.io.OutputStream output = connection.getOutputStream()) { output.write(payload); }
+                }
+                int status = connection.getResponseCode();
+                cookieJar.put(uri, connection.getHeaderFields());
+                if (status == 301 || status == 302 || status == 303 || status == 307 || status == 308) {
+                    String location = connection.getHeaderField("Location");
+                    connection.disconnect();
+                    if (location == null || location.trim().isEmpty()) throw new Exception("Drive redirect-এ গন্তব্য URL দেয়নি");
+                    current = new URL(current, location);
+                    if (status == 303 || ((status == 301 || status == 302) && "POST".equals(method))) {
+                        method = "GET";
+                        body = "";
+                    }
+                    continue;
+                }
+                return connection;
+            }
+            throw new Exception("Google Drive অতিরিক্ত redirect পাঠিয়েছে");
         }
 
         private String readDriveError(HttpURLConnection connection) {
