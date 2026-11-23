@@ -166,16 +166,9 @@ public class PdfReaderActivity extends Activity {
         Set<Integer> wanted = new LinkedHashSet<>();
         for (int i = Math.max(0, first - 1); i <= Math.min(pageCount - 1, last + 1); i++) wanted.add(i);
 
-        synchronized (cache) {
-            java.util.Iterator<Map.Entry<Integer, Bitmap>> it = cache.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry<Integer, Bitmap> entry = it.next();
-                if (!wanted.contains(entry.getKey())) {
-                    if (!entry.getValue().isRecycled()) entry.getValue().recycle();
-                    it.remove();
-                }
-            }
-        }
+        // Keep recently viewed pages in the LRU cache. Evicting every page
+        // outside this tiny window on each scroll can leave the viewport white
+        // when scrolling stops and the draw pass requests a page again.
         for (int index : wanted) requestPage(index);
     }
 
@@ -221,13 +214,13 @@ public class PdfReaderActivity extends Activity {
                 }
                 synchronized (cache) {
                     cache.put(index, result);
-                    while (cache.size() > 6) {
+                    while (cache.size() > 10) {
                         Integer eldest = cache.keySet().iterator().next();
                         Bitmap old = cache.remove(eldest);
                         if (!old.isRecycled()) old.recycle();
                     }
                 }
-                if (pagesView != null) pagesView.invalidate();
+                if (pagesView != null) pagesView.postInvalidateOnAnimation();
             });
         });
     }
