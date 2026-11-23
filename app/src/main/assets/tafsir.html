@@ -56,22 +56,28 @@ function render(){const q=$("q").value.trim().toLowerCase(),a=$("author").value,
 let rows=books.filter(b=>(!q||(b.title+" "+b.author+" "+b.subject).toLowerCase().includes(q))&&(!a||b.author===a)&&(!s||b.subject===s)&&(tab!=="popular"||b.popular)&&(tab!=="latest"||b.latest));
 if(tab==="offline")rows=rows.filter(b=>isDownloaded(b.file||slug(b.title)));
 $("list").innerHTML=rows.map(b=>{const name=b.file||slug(b.title),done=isDownloaded(name),p=window.__tafsirProgress&&window.__tafsirProgress[name];let progress="";
-if(p&&!done){const total=p.total>0?p.total:0,downloaded=p.downloaded||0,pct=total>0?Math.min(99,Math.floor(downloaded*100/total)):0;progress='<div class="book-progress"><div class="book-progress-track"><div class="book-progress-fill" style="width:'+pct+'%"></div></div><div class="book-progress-info"><span>ডাউনলোড: <strong>'+formatMB(downloaded)+'</strong> / মোট: <strong>'+(total?formatMB(total):'হিসাব হচ্ছে')+'</strong></span><span class="percent">'+(total?pct+'%':'চলছে')+'</span><span>বাকি: <strong>'+(total?formatMB(Math.max(0,total-downloaded)):'জানা যাচ্ছে…')+'</strong></span></div></div>'}
+if(p&&!done){const total=p.total>0?p.total:0,downloaded=p.downloaded||0,pct=total>0?Math.min(99,Math.floor(downloaded*100/total)):0,remaining=total?Math.max(0,total-downloaded):0,rate=p.speedBps||0,eta=total&&rate>0?formatDuration(remaining/rate):'হিসাব হচ্ছে';progress='<div class="book-progress"><div class="book-progress-track"><div class="book-progress-fill" style="width:'+pct+'%"></div></div><div class="book-progress-info"><span>ডাউনলোড: <strong>'+formatMB(downloaded)+'</strong> / মোট: <strong>'+(total?formatMB(total):'যাচাই হচ্ছে')+'</strong></span><span class="percent">'+(total?pct+'%':'চলছে')+'</span><span>বাকি: <strong>'+(total?formatMB(remaining):'জানা যাচ্ছে…')+'</strong></span><span>গতি: <strong>'+(rate?formatMB(rate)+'/সে':'হিসাব হচ্ছে')+'</strong></span><span>সময়: <strong>'+(eta)+'</strong></span></div></div>'}
 return '<article class="book" role="button" tabindex="0" aria-label="তাফসীর খুলুন: '+safe(b.title)+'" data-book-name="'+safe(name)+'" data-book-url="'+safe(b.url)+'"><div class="cover coverblank">'+(b.cover?'<img class="cover" src="'+safe(b.cover)+'" alt="">':'📖')+'</div><div class="meta"><div class="title">'+safe(String(b.number)+". "+b.title)+'</div><div class="author">'+safe(b.author||b.subject||"")+(done?'<div style="color:#376b57;font-size:13px">অফলাইনে পড়ার জন্য সংরক্ষিত</div>':'')+'</div>'+progress+'</div><button type="button" class="action '+(done?'done':p?'downloading':'')+'" '+(p?'disabled':'')+' aria-label="'+(done?'অফলাইনে পড়ুন':p?'ডাউনলোড হচ্ছে':'ডাউনলোড করুন')+'">'+(done?'<span class="download-seal">✓</span>':p?'<span class="download-spinner"></span>':'↓')+'</button></article>'}).join("");$("empty").style.display=rows.length?"none":"block";$("status").textContent=rows.length?rows.length+"টি তাফসীর দেখানো হচ্ছে":(tab==="offline"?"এখনো কোনো তাফসীর অফলাইনে সংরক্ষণ করা হয়নি":"কোনো কিতাব পাওয়া যায়নি")}
 function formatMB(bytes){bytes=Math.max(0,Number(bytes)||0);return (bytes/(1024*1024)).toFixed(2)+" MB ("+(bytes/1024).toFixed(1)+" KB)"}
+function formatDuration(seconds){if(!isFinite(seconds)||seconds<0)return "হিসাব হচ্ছে";seconds=Math.ceil(seconds);if(seconds<60)return seconds+" সেকেন্ড";const m=Math.floor(seconds/60),s=seconds%60;if(m<60)return m+" মিনিট "+s+" সেকেন্ড";const h=Math.floor(m/60),r=m%60;return h+" ঘণ্টা "+r+" মিনিট"}
 function bookAction(name,url){
 if(window.AndroidKitab){
  // Open saved books before checking the global download lock. A stale lock must not block offline reading.
  if(isDownloaded(name)){AndroidKitab.openOfflineBook(name);return}
  if(window.__tafsirDownloading)return;
  if(!url){alert("এই কিতাবের PDF লিংক এখনো যুক্ত করা হয়নি।");return}
- window.__tafsirDownloading=true;window.__tafsirProgress=window.__tafsirProgress||{};window.__tafsirProgress[name]={downloaded:0,total:0};
+ window.__tafsirDownloading=true;window.__tafsirProgress=window.__tafsirProgress||{};window.__tafsirProgress[name]={downloaded:0,total:0,speedBps:0,lastBytes:0,lastAt:Date.now()};
  render();AndroidKitab.downloadBook(name,url);return
 }
 if(url)window.open(url,"_blank","noopener")
 }
 window.onBookProgress=function(name,downloaded,total){
- window.__tafsirProgress=window.__tafsirProgress||{};window.__tafsirProgress[name]={downloaded:downloaded,total:total};render()
+ window.__tafsirProgress=window.__tafsirProgress||{};
+ const previous=window.__tafsirProgress[name]||{lastBytes:0,lastAt:Date.now(),speedBps:0};
+ const now=Date.now(),elapsed=(now-(previous.lastAt||now))/1000,delta=downloaded-(previous.lastBytes||0);
+ const speed=elapsed>=0.5&&delta>=0?delta/Math.max(elapsed,0.5):(previous.speedBps||0);
+ window.__tafsirProgress[name]={downloaded:downloaded,total:total,speedBps:speed,lastBytes:downloaded,lastAt:now};
+ render()
 };
 window.onBookDownload=function(name,success,message){
  if(success)downloadedBooks.add(name);
