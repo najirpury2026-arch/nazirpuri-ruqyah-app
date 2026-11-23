@@ -1538,7 +1538,14 @@ public class MainActivity extends Activity {
             mainHandler.post(() -> {
                 android.widget.Toast.makeText(MainActivity.this, message, android.widget.Toast.LENGTH_LONG).show();
                 if (webView != null) {
-                    String key = org.json.JSONObject.quote(name == nu        // Google Drive can return an HTML confirmation page rather than the PDF.
+                    String key = org.json.JSONObject.quote(name == null ? "" : name);
+                    String msg = org.json.JSONObject.quote(message);
+                    webView.evaluateJavascript("if(window.onBookDownload)window.onBookDownload(" + key + "," + success + "," + msg + ")", null);
+                }
+            });
+        }
+
+        // Drive may return a confirmation HTML page for large PDFs; follow its token and cookies.
         private void downloadGoogleDrivePdf(String id, File temp, String name) throws Exception {
             String[] addresses = {
                 "https://drive.google.com/uc?export=download&id=" + Uri.encode(id),
@@ -1584,7 +1591,7 @@ public class MainActivity extends Activity {
                             while ((n = input.read(buffer)) != -1) out.write(buffer, 0, n);
                             html = new String(out.toByteArray(), java.nio.charset.StandardCharsets.UTF_8);
                         }
-                        java.util.regex.Matcher token = java.util.regex.Pattern.compile("(?:confirm=|name=[\\\"']confirm[\\\"']\\s+value=[\\\"'])([0-9A-Za-z_-]+)").matcher(html);
+                        java.util.regex.Matcher token = java.util.regex.Pattern.compile("confirm=([0-9A-Za-z_-]+)").matcher(html);
                         if (token.find()) {
                             HttpURLConnection c2 = null;
                             try {
@@ -1618,13 +1625,6 @@ public class MainActivity extends Activity {
                 byte[] magic = new byte[5];
                 return input.read(magic) == 5 && magic[0] == '%' && magic[1] == 'P' && magic[2] == 'D' && magic[3] == 'F' && magic[4] == '-';
             } catch (Exception ignored) { return false; }
-        }
-
-ll ? "" : name);
-                    String msg = org.json.JSONObject.quote(message);
-                    webView.evaluateJavascript("if(window.onBookDownload)window.onBookDownload(" + key + "," + success + "," + msg + ")", null);
-                }
-            });
         }
     }
 
