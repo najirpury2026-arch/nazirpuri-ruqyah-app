@@ -1602,7 +1602,11 @@ public class MainActivity extends Activity {
                     c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/125.0 Mobile Safari/537.36");
                     c.setRequestProperty("Accept", "application/pdf,application/octet-stream,*/*");
                     int code = c.getResponseCode();
-                    if (code < 200 || code >= 300) throw new Exception("Drive সার্ভার সাড়া দেয়নি (" + code + ")");
+                    if (code < 200 || code >= 300) {
+                        String errorType = c.getContentType();
+                        String errorText = readDriveError(c);
+                        throw new Exception("Drive HTTP " + code + " (" + errorType + "): " + errorText);
+                    }
                     StringBuilder cookieHeader = new StringBuilder();
                     java.util.Map<String, java.util.List<String>> headers = c.getHeaderFields();
                     if (headers != null) for (java.util.Map.Entry<String, java.util.List<String>> entry : headers.entrySet()) {
@@ -1681,11 +1685,37 @@ public class MainActivity extends Activity {
                             }
                         } finally { if (c2 != null) c2.disconnect(); }
                     }
-                    last = new Exception("Google Drive PDF পাঠায়নি; লিংকটি সবার জন্য দেখার অনুমতি আছে কি না যাচাই করুন।");
+                    String contentType = c.getContentType();
+                    String finalUrl = c.getURL() == null ? address : c.getURL().toString();
+                    String detail = summarizeDriveHtml(html);
+                    last = new Exception("Drive PDF দেয়নি; HTTP " + code + ", " + contentType +
+                        ", URL=" + finalUrl + (detail.isEmpty() ? "" : ", উত্তর: " + detail));
                 } catch (Exception e) { last = e; }
                 finally { if (c != null) c.disconnect(); }
             }
             throw last == null ? new Exception("Google Drive থেকে PDF পাওয়া যায়নি") : last;
+        }
+
+        private String readDriveError(HttpURLConnection connection) {
+            try {
+                InputStream error = connection.getErrorStream();
+                if (error == null) return "সার্ভার ত্রুটির বিবরণ দেয়নি";
+                try (InputStream in = error; java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+                    byte[] buffer = new byte[2048];
+                    int n;
+                    while ((n = in.read(buffer)) != -1 && out.size() < 8192) out.write(buffer, 0, n);
+                    return summarizeDriveHtml(new String(out.toByteArray(), java.nio.charset.StandardCharsets.UTF_8));
+                }
+            } catch (Exception ignored) { return "ত্রুটির বিবরণ পড়া যায়নি"; }
+        }
+
+        private String summarizeDriveHtml(String source) {
+            if (source == null) return "";
+            String value = source.replaceAll("(?is)<script.*?</script>|<style.*?</style>", " ")
+                .replaceAll("(?is)<[^>]+>", " ").replace("&nbsp;", " ")
+                .replace("&amp;", "&").replaceAll("\\s+", " ").trim();
+            if (value.length() > 240) value = value.substring(0, 240);
+            return value;
         }
 
         private String htmlAttribute(String tag, String attribute) {
