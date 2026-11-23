@@ -43,7 +43,7 @@ public class PdfReaderActivity extends Activity {
     private final Set<Integer> pending = new HashSet<>();
     private final LinkedHashMap<Integer, Bitmap> cache = new LinkedHashMap<>(4, .75f, true);
     private volatile boolean closing = false;
-    private int pageHeight, pageWidth, pageGap, pageCount, contentHeight;
+    private int pageHeight, pageWidth, pageGap, pageCount;
     private volatile int generation = 0;
     private boolean fastScrolling = false;
     private FastScrollHandle fastScrollHandle;
@@ -250,7 +250,6 @@ public class PdfReaderActivity extends Activity {
                     return;
                 }
                 if (result == null) {
-                    if (pagesView != null) pagesView.postInvalidateOnAnimation();
                     mainHandler.postDelayed(() -> requestPage(index), 350);
                     return;
                 }
