@@ -13,8 +13,6 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
-import android.util.Base64;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -38,7 +36,6 @@ public class MainActivity extends Activity {
     private static final String WHATSAPP_URL = "https://wa.me/8801614776592";
     private WebView webView;
     private Typeface banglaTypeface;
-    private String fontBase64 = "";
     private ProgressBar progressBar;
     private LinearLayout root;
     private boolean showingWeb = false;
@@ -71,15 +68,9 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(Color.rgb(12,73,52));
         getWindow().setNavigationBarColor(Color.rgb(8,49,36));
-        try {
-            banglaTypeface = Typeface.createFromAsset(getAssets(), "SolaimanLipi.ttf");
-            InputStream in = getAssets().open("SolaimanLipi.ttf");
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            byte[] buffer = new byte[8192]; int count;
-            while ((count = in.read(buffer)) != -1) out.write(buffer, 0, count);
-            in.close();
-            fontBase64 = Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
-        } catch (Exception ignored) { }
+        // Load the native font once; WebView pages reference the bundled asset directly.
+        try { banglaTypeface = Typeface.createFromAsset(getAssets(), "SolaimanLipi.ttf"); }
+        catch (Exception ignored) { }
         showHome();
         checkForAppUpdate();
     }
@@ -155,6 +146,7 @@ public class MainActivity extends Activity {
 
     private void showHome() {
         showingWeb = false;
+        releaseWebView();
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.rgb(244,248,245));
@@ -1324,7 +1316,22 @@ public class MainActivity extends Activity {
             .show();
     }
 
+    private void releaseWebView() {
+        WebView old = webView;
+        webView = null;
+        if (old != null) {
+            try {
+                old.stopLoading();
+                old.setWebChromeClient(null);
+                old.setWebViewClient(null);
+                old.removeAllViews();
+                old.destroy();
+            } catch (Exception ignored) { }
+        }
+    }
+
     private void showWeb(String url) {
+        releaseWebView();
         showingWeb=true; root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.WHITE);
         LinearLayout bar=new LinearLayout(this); bar.setGravity(Gravity.CENTER_VERTICAL);
@@ -1353,11 +1360,9 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient(){
             @Override public void onPageFinished(WebView view, String pageUrl){
                 super.onPageFinished(view, pageUrl);
-                if (!fontBase64.isEmpty()) {
-                    String css = "@font-face{font-family:SolaimanLipi;src:url(data:font/ttf;base64," + fontBase64 + ") format('truetype');font-weight:100 900;}html,body,body *:not(i):not([class*='icon']){font-family:SolaimanLipi,sans-serif !important;}";
-                    String js = "(function(){var st=document.getElementById('nazirpuri-solaiman-font');if(!st){st=document.createElement('style');st.id='nazirpuri-solaiman-font';document.head.appendChild(st);}st.textContent='" + css + "';})();";
-                    view.evaluateJavascript(js, null);
-                }
+                String css = "@font-face{font-family:SolaimanLipi;src:url('file:///android_asset/SolaimanLipi.ttf') format('truetype');font-weight:100 900;}html,body,body *:not(i):not([class*='icon']){font-family:SolaimanLipi,'Noto Sans Bengali',sans-serif !important;}";
+                String js = "(function(){var st=document.getElementById('nazirpuri-solaiman-font');if(!st){st=document.createElement('style');st.id='nazirpuri-solaiman-font';document.head.appendChild(st);}st.textContent=" + JSONObject.quote(css) + ";})();";
+                view.evaluateJavascript(js, null);
                 if (openQuranWhenLoaded) {
                     openQuranWhenLoaded = false;
                     // Keep the Blogger homepage hidden; reveal only after the Quran reader opens.
