@@ -2,36 +2,46 @@ package com.nazirpuri.ruqyah;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.pdf.PdfRenderer;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
-/** Ad-free continuous vertical PDF reader. Only visible pages are rendered and cached. */
+/**
+ * Lightweight continuous PDF reader.
+ * Uses ordinary ImageViews and renders only nearby pages on a single worker thread.
+ * Never creates a giant bitmap for the complete document.
+ */
 public class PdfReaderActivity extends Activity {
     private PdfRenderer renderer;
     private ParcelFileDescriptor descriptor;
+    private HandlerThread renderThread;
+    private Handler renderHandler;
     private ScrollView scroll;
-    private PdfPagesView pagesView;
+    private LinearLayout pageColumn;
     private TextView pageNumber;
-    private int pageHeight;
-    private int pageGap;
+    private final java.util.ArrayList<ImageView> pageViews = new java.util.ArrayList<>();
+    private final Set<Integer> pending = new HashSet<>();
+    private final LinkedHashMap<Integer, Bitmap> cache = new LinkedHashMap<>(4, .75f, true);
+    private volatile boolean closing = false;
+    private int pageHeight, pageWidth, pageGap, pageCount;
+    private int generation = 0;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -39,28 +49,40 @@ public class PdfReaderActivity extends Activity {
         getWindow().setNavigationBarColor(Color.rgb(8,49,36));
         try {
             String path = getIntent().getStringExtra("pdf_path");
-            if (path == null) throw new IOException("Missing PDF");
+            if (path == null) throw new IOException("Missing PDF path");
             File file = new File(path).getCanonicalFile();
             File books = new File(getFilesDir(), "kitab_books").getCanonicalFile();
             if (!books.equals(file.getParentFile()) || !file.isFile() || file.length() < 1000)
-                throw new IOException("Invalid PDF");
+                throw new IOException("Invalid PDF file");
             descriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY);
             renderer = new PdfRenderer(descriptor);
+            pageCount = renderer.getPageCount();
+            if (pageCount < 1) throw new IOException("Empty PDF");
+            PdfRenderer.Page first = renderer.openPage(0);
+            float ratio = first.getHeight() / (float) first.getWidth();
+            first.close();
+
+            pageWidth = Math.max(1, getResources().getDisplayMetrics().widthPixels - dp(16));
+            pageHeight = Math.max(1, Math.round(pageWidth * ratio));
+            pageGap = dp(9);
+            renderThread = new HandlerThread("PdfPageRenderer");
+            renderThread.start();
+            renderHandler = new Handler(renderThread.getLooper());
             buildReader(file.getName());
         } catch (Exception e) {
-            Toast.makeText(this, "কিতাবটি খোলা যাচ্ছে না। আবার ডাউনলোড করে দেখুন।", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "কিতাবটি খোলা যাচ্ছে না। ফাইলটি আবার ডাউনলোড করে দেখুন।", Toast.LENGTH_LONG).show();
             finish();
         }
     }
 
-    private void buildReader(String fileName) throws IOException {
+    private void buildReader(String fileName) {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.rgb(235,239,236));
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setPadding(dp(12), dp(5), dp(12), dp(5));
+        header.setPadding(dp(12), dp(4), dp(12), dp(4));
         header.setBackgroundColor(Color.rgb(12,73,52));
         TextView back = new TextView(this);
         back.setText("‹");
@@ -71,36 +93,40 @@ public class PdfReaderActivity extends Activity {
         back.setOnClickListener(v -> finish());
         TextView title = new TextView(this);
         title.setText(fileName.replace(".pdf", ""));
-        title.setTextSize(16);
+        title.setTextSize(15);
         title.setTextColor(Color.WHITE);
         title.setMaxLines(1);
         title.setEllipsize(android.text.TextUtils.TruncateAt.END);
         header.addView(title, new LinearLayout.LayoutParams(0, -1, 1));
         root.addView(header, new LinearLayout.LayoutParams(-1, dp(52)));
 
-        int viewWidth = getResources().getDisplayMetrics().widthPixels;
-        int contentWidth = Math.max(1, viewWidth - dp(16));
-        PdfRenderer.Page first = renderer.openPage(0);
-        float ratio = first.getHeight() / (float) first.getWidth();
-        first.close();
-        pageHeight = Math.max(1, (int)(contentWidth * ratio));
-        pageGap = dp(10);
-
         FrameLayout frame = new FrameLayout(this);
         scroll = new ScrollView(this);
         scroll.setFillViewport(true);
-        scroll.setClipToPadding(false);
-        pagesView = new PdfPagesView(contentWidth);
-        scroll.addView(pagesView, new ScrollView.LayoutParams(contentWidth, pageHeight * renderer.getPageCount() + pageGap * (renderer.getPageCount() - 1)));
+        scroll.setBackgroundColor(Color.rgb(224,228,225));
+        pageColumn = new LinearLayout(this);
+        pageColumn.setOrientation(LinearLayout.VERTICAL);
+        pageColumn.setPadding(dp(8), dp(6), dp(8), dp(6));
+        for (int i = 0; i < pageCount; i++) {
+            ImageView image = new ImageView(this);
+            image.setBackgroundColor(Color.WHITE);
+            image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            image.setAdjustViewBounds(false);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, pageHeight);
+            if (i > 0) lp.topMargin = pageGap;
+            pageColumn.addView(image, lp);
+            pageViews.add(image);
+        }
+        scroll.addView(pageColumn, new ScrollView.LayoutParams(-1, -2));
         frame.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
 
         pageNumber = new TextView(this);
-        pageNumber.setText("১ / " + bn(renderer.getPageCount()));
+        pageNumber.setText("১ / " + bn(pageCount));
         pageNumber.setTextColor(Color.WHITE);
         pageNumber.setTextSize(12);
         pageNumber.setGravity(Gravity.CENTER);
-        pageNumber.setPadding(dp(10), dp(7), dp(10), dp(7));
-        pageNumber.setBackgroundColor(0xCC174D38);
+        pageNumber.setPadding(dp(11), dp(7), dp(11), dp(7));
+        pageNumber.setBackgroundColor(0xDD174D38);
         FrameLayout.LayoutParams badge = new FrameLayout.LayoutParams(-2, -2, Gravity.RIGHT | Gravity.BOTTOM);
         badge.rightMargin = dp(12);
         badge.bottomMargin = dp(12);
@@ -108,7 +134,7 @@ public class PdfReaderActivity extends Activity {
         root.addView(frame, new LinearLayout.LayoutParams(-1, 0, 1));
 
         TextView hint = new TextView(this);
-        hint.setText("উপরে-নিচে টান দিয়ে সম্পূর্ণ কিতাব পড়ুন  •  বিজ্ঞাপনমুক্ত");
+        hint.setText("উপরে-নিচে টান দিয়ে পড়ুন  •  বিজ্ঞাপনমুক্ত অফলাইন রিডার");
         hint.setTextColor(Color.rgb(76,101,86));
         hint.setTextSize(11);
         hint.setGravity(Gravity.CENTER);
@@ -116,99 +142,115 @@ public class PdfReaderActivity extends Activity {
         root.addView(hint, new LinearLayout.LayoutParams(-1, dp(30)));
         setContentView(root);
 
-        scroll.setOnScrollChangeListener((View v, int x, int y, int oldX, int oldY) -> {
-            int current = Math.min(renderer.getPageCount(), Math.max(1, y / (pageHeight + pageGap) + 1));
-            pageNumber.setText(bn(current) + " / " + bn(renderer.getPageCount()));
-            pagesView.invalidate();
-        });
+        scroll.setOnScrollChangeListener((View v, int x, int y, int oldX, int oldY) -> updateVisiblePages());
+        scroll.post(() -> updateVisiblePages());
     }
 
-    private String bn(int number) {
-        return String.valueOf(number).replace('0','০').replace('1','১').replace('2','২')
-            .replace('3','৩').replace('4','৪').replace('5','৫').replace('6','৬')
-            .replace('7','৭').replace('8','৮').replace('9','৯');
-    }
+    private void updateVisiblePages() {
+        if (closing || scroll == null) return;
+        int y = scroll.getScrollY();
+        int stride = pageHeight + pageGap;
+        int first = Math.max(0, y / stride);
+        int last = Math.min(pageCount - 1, (y + scroll.getHeight()) / stride);
+        int current = Math.min(pageCount, first + 1);
+        pageNumber.setText(bn(current) + " / " + bn(pageCount));
 
-    private int dp(int value) {
-        return (int)(value * getResources().getDisplayMetrics().density + 0.5f);
-    }
+        Set<Integer> wanted = new HashSet<>();
+        for (int i = Math.max(0, first - 1); i <= Math.min(pageCount - 1, last + 1); i++) wanted.add(i);
 
-    private final class PdfPagesView extends View {
-        private final int contentWidth;
-        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-        private final LinkedHashMap<Integer, Bitmap> cache = new LinkedHashMap<Integer, Bitmap>(4, .75f, true) {
-            @Override protected boolean removeEldestEntry(Map.Entry<Integer, Bitmap> eldest) {
-                if (size() > 3) {
-                    eldest.getValue().recycle();
-                    return true;
-                }
-                return false;
-            }
-        };
-
-        PdfPagesView(int width) {
-            super(PdfReaderActivity.this);
-            contentWidth = width;
-            // Keep this very tall view on the normal drawing pipeline. A software layer
-            // tries to cache the entire 612-page surface as one bitmap and can render blank.
-            setBackgroundColor(Color.rgb(220,225,221));
-        }
-
-        @Override protected void onDraw(Canvas canvas) {
-            super.onDraw(canvas);
-            Rect clip = canvas.getClipBounds();
-            int first = Math.max(0, clip.top / (pageHeight + pageGap));
-            int last = Math.min(renderer.getPageCount() - 1, clip.bottom / (pageHeight + pageGap));
-            for (int index = first; index <= last; index++) {
-                int top = index * (pageHeight + pageGap);
-                Bitmap bitmap = getPageBitmap(index);
-                if (bitmap != null) {
-                    RectF target = new RectF(0, top, contentWidth, top + pageHeight);
-                    Paint paper = new Paint();
-                    paper.setColor(Color.WHITE);
-                    canvas.drawRect(target, paper);
-                    canvas.drawBitmap(bitmap, null, target, paint);
+        synchronized (cache) {
+            java.util.Iterator<Map.Entry<Integer, Bitmap>> it = cache.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<Integer, Bitmap> entry = it.next();
+                if (!wanted.contains(entry.getKey())) {
+                    ImageView iv = pageViews.get(entry.getKey());
+                    if (iv.getDrawable() != null) iv.setImageDrawable(null);
+                    if (!entry.getValue().isRecycled()) entry.getValue().recycle();
+                    it.remove();
                 }
             }
         }
+        for (int index : wanted) requestPage(index);
+    }
 
-        private Bitmap getPageBitmap(int index) {
-            Bitmap existing = cache.get(index);
-            if (existing != null && !existing.isRecycled()) return existing;
+    private void requestPage(final int index) {
+        synchronized (cache) {
+            Bitmap ready = cache.get(index);
+            if (ready != null && !ready.isRecycled()) {
+                if (pageViews.get(index).getDrawable() == null) pageViews.get(index).setImageBitmap(ready);
+                return;
+            }
+            if (pending.contains(index)) return;
+            pending.add(index);
+        }
+        final int requestGeneration = generation;
+        renderHandler.post(() -> {
+            Bitmap bitmap = null;
             PdfRenderer.Page page = null;
             try {
+                if (closing || renderer == null) return;
                 page = renderer.openPage(index);
-                Bitmap bitmap = Bitmap.createBitmap(contentWidth, pageHeight, Bitmap.Config.ARGB_8888);
+                int width = Math.min(pageWidth, 1200);
+                int height = Math.max(1, Math.round(width * page.getHeight() / (float) page.getWidth()));
+                bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                 bitmap.eraseColor(Color.WHITE);
                 page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
-                cache.put(index, bitmap);
-                return bitmap;
-            } catch (Exception e) {
-                return null;
+            } catch (Exception ignored) {
+                if (bitmap != null && !bitmap.isRecycled()) bitmap.recycle();
+                bitmap = null;
             } finally {
                 if (page != null) page.close();
             }
-        }
-
-        @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-            int desiredHeight = pageHeight * renderer.getPageCount() + pageGap * (renderer.getPageCount() - 1);
-            setMeasuredDimension(resolveSize(contentWidth, widthMeasureSpec), desiredHeight);
-        }
-
-        void releaseBitmaps() {
-            for (Bitmap bitmap : cache.values()) if (!bitmap.isRecycled()) bitmap.recycle();
-            cache.clear();
-        }
+            final Bitmap result = bitmap;
+            runOnUiThread(() -> {
+                synchronized (cache) { pending.remove(index); }
+                if (result == null) return;
+                if (closing || requestGeneration != generation || isFinishing() || isDestroyed()) {
+                    result.recycle();
+                    return;
+                }
+                synchronized (cache) {
+                    cache.put(index, result);
+                    while (cache.size() > 4) {
+                        Integer eldest = cache.keySet().iterator().next();
+                        Bitmap old = cache.remove(eldest);
+                        ImageView oldView = pageViews.get(eldest);
+                        if (oldView.getDrawable() != null) oldView.setImageDrawable(null);
+                        if (!old.isRecycled()) old.recycle();
+                    }
+                }
+                pageViews.get(index).setImageBitmap(result);
+            });
+        });
     }
+
+    private String bn(int n) {
+        return String.valueOf(n).replace('0','০').replace('1','১').replace('2','২').replace('3','৩')
+            .replace('4','৪').replace('5','৫').replace('6','৬').replace('7','৭').replace('8','৮').replace('9','৯');
+    }
+    private int dp(int n) { return (int)(n * getResources().getDisplayMetrics().density + 0.5f); }
 
     @Override public void onBackPressed() { finish(); }
 
     @Override protected void onDestroy() {
-        if (pagesView != null) pagesView.releaseBitmaps();
-        if (renderer != null) { renderer.close(); renderer = null; }
-        if (descriptor != null) {
-            try { descriptor.close(); } catch (IOException ignored) { }
-            descriptor = null;
+        closing = true;
+        generation++;
+        if (renderHandler != null) {
+            renderHandler.removeCallbacksAndMessages(null);
+            renderHandler.post(() -> {
+                if (renderer != null) {
+                    try { renderer.close(); } catch (Exception ignored) { }
+                    renderer = null;
+                }
+                renderThread.quitSafely();
+            });
+        } else {
+            if (renderer != null) { try { renderer.close(); } catch (Exception ignored) { } renderer = null; }
+            if (descriptor != null) { try { descriptor.close(); } catch (IOException ignored) { } descriptor = null; }
+        }
+        synchronized (cache) {
+            for (Bitmap b : cache.values()) if (!b.isRecycled()) b.recycle();
+            cache.clear();
         }
         super.onDestroy();
     }
