@@ -1444,22 +1444,101 @@ public class MainActivity extends Activity {
         if(webView!=null){webView.destroy();webView=null;} super.onDestroy();
     }
 
-    // Open the selected book directly in Google Drive; no in-app PDF reader or local PDF copy.
+    // Download books once into private app storage; keep them available offline.
     private final class KitabBridge {
+        private File bookFile(String name) {
+            String safe = name == null ? "" : name.replaceAll("[^a-zA-Z0-9_-]", "");
+            return new File(new File(getFilesDir(), "kitab_books"), safe + ".pdf");
+        }
+
         @JavascriptInterface
-        public void openBook(String address) {
-            if (address == null || !address.startsWith("https://drive.google.com/")) {
-                mainHandler.post(() -> android.widget.Toast.makeText(MainActivity.this,
-                    "Google Drive লিংক সঠিক নয়", android.widget.Toast.LENGTH_LONG).show());
+        public boolean isBookDownloaded(String name) {
+            File f = bookFile(name);
+            return f.isFile() && f.length() > 1000;
+        }
+
+        @JavascriptInterface
+        public void downloadBook(String name, String address) {
+            if (name == null || name.trim().isEmpty() || address == null ||
+                !address.startsWith("https://drive.google.com/")) {
+                notifyBook(name, false, "কিতাবের ডাউনলোড লিংক সঠিক নয়");
+                return;
+            }
+            File target = bookFile(name);
+            if (target.isFile() && target.length() > 1000) {
+                openOfflineBook(name);
+                return;
+            }
+            new Thread(() -> {
+                File dir = target.getParentFile();
+                File temp = new File(dir, target.getName() + ".part");
+                HttpURLConnection connection = null;
+                try {
+                    if (!dir.exists() && !dir.mkdirs()) throw new Exception("ফোল্ডার তৈরি করা যায়নি");
+                    Uri source = Uri.parse(address);
+                    String id = source.getQueryParameter("id");
+                    String downloadAddress = id == null ? address :
+                        "https://drive.usercontent.google.com/download?id=" + id + "&export=download&confirm=t";
+                    URL url = new URL(downloadAddress);
+                    connection = (HttpURLConnection) url.openConnection();
+                    connection.setInstanceFollowRedirects(true);
+                    connection.setConnectTimeout(20000);
+                    connection.setReadTimeout(60000);
+                    connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
+                    int code = connection.getResponseCode();
+                    if (code < 200 || code >= 300) throw new Exception("সার্ভার সাড়া দেয়নি (" + code + ")");
+                    try (InputStream in = connection.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
+                        byte[] buffer = new byte[65536]; int n;
+                        while ((n = in.read(buffer)) != -1) out.write(buffer, 0, n);
+                    }
+                    if (temp.length() < 1000) throw new Exception("ফাইলটি সম্পূর্ণ ডাউনলোড হয়নি");
+                    try (InputStream check = new java.io.FileInputStream(temp)) {
+                        byte[] magic = new byte[5];
+                        if (check.read(magic) != 5 || magic[0] != '%' || magic[1] != 'P' || magic[2] != 'D' || magic[3] != 'F' || magic[4] != '-') {
+                            throw new Exception("Drive থেকে PDF ফাইল পাওয়া যায়নি। লিংকের অনুমতি পরীক্ষা করুন।");
+                        }
+                    }
+                    if (target.exists()) target.delete();
+                    if (!temp.renameTo(target)) throw new Exception("ফাইল সংরক্ষণ করা যায়নি");
+                    notifyBook(name, true, "ডাউনলোড সম্পূর্ণ হয়েছে। এখন অফলাইনে পড়তে পারবেন।");
+                } catch (Exception e) {
+                    temp.delete();
+                    notifyBook(name, false, "ডাউনলোড হয়নি: " + e.getMessage());
+                } finally {
+                    if (connection != null) connection.disconnect();
+                }
+            }).start();
+        }
+
+        @JavascriptInterface
+        public void openOfflineBook(String name) {
+            File f = bookFile(name);
+            if (!f.isFile() || f.length() < 1000) {
+                notifyBook(name, false, "অফলাইনে পড়ার জন্য আগে কিতাবটি ডাউনলোড করুন");
                 return;
             }
             mainHandler.post(() -> {
                 try {
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(address));
+                    Uri uri = androidx.core.content.FileProvider.getUriForFile(
+                        MainActivity.this, getPackageName() + ".files", f);
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setDataAndType(uri, "application/pdf");
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     startActivity(intent);
                 } catch (Exception e) {
                     android.widget.Toast.makeText(MainActivity.this,
-                        "Google Drive খোলা যাচ্ছে না", android.widget.Toast.LENGTH_LONG).show();
+                        "PDF পড়ার অ্যাপ পাওয়া যায়নি। একটি PDF Reader ইনস্টল করুন।", android.widget.Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+
+        private void notifyBook(String name, boolean success, String message) {
+            mainHandler.post(() -> {
+                android.widget.Toast.makeText(MainActivity.this, message, android.widget.Toast.LENGTH_LONG).show();
+                if (webView != null) {
+                    String key = org.json.JSONObject.quote(name == null ? "" : name);
+                    String msg = org.json.JSONObject.quote(message);
+                    webView.evaluateJavascript("if(window.onBookDownload)window.onBookDownload(" + key + "," + success + "," + msg + ")", null);
                 }
             });
         }
