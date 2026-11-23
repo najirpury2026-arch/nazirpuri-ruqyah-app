@@ -149,7 +149,8 @@ public class PdfReaderActivity extends Activity {
         PdfPagesView(int width) {
             super(PdfReaderActivity.this);
             contentWidth = width;
-            setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+            // Keep this very tall view on the normal drawing pipeline. A software layer
+            // tries to cache the entire 612-page surface as one bitmap and can render blank.
             setBackgroundColor(Color.rgb(220,225,221));
         }
 
