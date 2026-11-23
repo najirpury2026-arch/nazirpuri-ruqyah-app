@@ -1492,7 +1492,11 @@ public class MainActivity extends Activity {
                     }
                     if (target.exists()) target.delete();
                     if (!temp.renameTo(target)) throw new Exception("ফাইল সংরক্ষণ করা যায়নি");
-                    notifyBook(name, true, "ডাউনলোড সম্পূর্ণ হয়েছে। এখন অফলাইনে পড়তে পারবেন।");
+                    notifyBook(name, true, "ডাউনলোড সম্পূর্ণ হয়েছে। কিতাব খুলছে…");
+                    // Open the verified, fully saved PDF immediately after download.
+                    // This avoids relying on a WebView re-render/tap while its download
+                    // progress callbacks are still settling.
+                    openOfflineBook(name);
                 } catch (Exception e) {
                     temp.delete();
                     notifyBook(name, false, "ডাউনলোড হয়নি: " + e.getMessage());
