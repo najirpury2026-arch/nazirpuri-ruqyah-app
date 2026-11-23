@@ -886,15 +886,6 @@ public class MainActivity extends Activity {
                     catch (NumberFormatException ignored) { total = -1L; }
                 }
             }
-            String encoding = connection.getHeaderField("Content-Encoding");
-            if (encoding != null && !encoding.trim().isEmpty() && !"identity".equalsIgnoreCase(encoding.trim())) total = -1L;
-            String contentRange = connection.getHeaderField("Content-Range");
-            if (contentRange != null) {
-                java.util.regex.Matcher range = java.util.regex.Pattern.compile("/(\\d+)\\s*$").matcher(contentRange.trim());
-                if (range.find()) {
-                    try { total = Long.parseLong(range.group(1)); } catch (NumberFormatException ignored) { total = -1L; }
-                }
-            }
                     long received = 0;
                     try (InputStream input = connection.getInputStream();
                          FileOutputStream output = new FileOutputStream(temp)) {
