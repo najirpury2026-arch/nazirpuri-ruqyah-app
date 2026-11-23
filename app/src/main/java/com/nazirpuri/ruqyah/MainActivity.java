@@ -1639,7 +1639,7 @@ public class MainActivity extends Activity {
         }
 
         private String htmlAttribute(String tag, String attribute) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?is)\\\\b" + attribute + "\\\\s*=\\\\s*(['\\\"])(.*?)\\\\1").matcher(tag);
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?is)\\b" + attribute + "\\s*=\\s*(['\"])(.*?)\\1").matcher(tag);
             return m.find() ? m.group(2).replace("&amp;", "&") : null;
         }
 
