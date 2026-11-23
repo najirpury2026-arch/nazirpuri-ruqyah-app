@@ -1593,7 +1593,13 @@ public class MainActivity extends Activity {
                         }
                         out.flush();
                     }
-                    if (total > 0 && done != total) notifyBookProgress(name, done, -1L);
+                    // Never report success when the server declared a file size but
+                    // the stream ended early (or delivered extra bytes). This prevents
+                    // a truncated PDF from being marked complete at e.g. 3%.
+                    if (total > 0 && done != total) {
+                        notifyBookProgress(name, done, total);
+                        throw new Exception("ডাউনলোড অসম্পূর্ণ: " + done + " / " + total + " বাইট এসেছে। ইন্টারনেট স্থিতিশীল হলে আবার চেষ্টা করুন।");
+                    }
                     if (!isPdfFile(temp)) throw new Exception("ডাউনলোড করা ফাইলটি বৈধ PDF নয়");
                     return null;
                 }
