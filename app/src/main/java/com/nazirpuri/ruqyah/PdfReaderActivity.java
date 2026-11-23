@@ -42,6 +42,7 @@ public class PdfReaderActivity extends Activity {
     private volatile boolean closing = false;
     private int pageHeight, pageWidth, pageGap, pageCount;
     private int generation = 0;
+    private boolean fastScrolling = false;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -149,7 +150,10 @@ public class PdfReaderActivity extends Activity {
         root.addView(hint, new LinearLayout.LayoutParams(-1, dp(30)));
         setContentView(root);
 
-        scroll.setOnScrollChangeListener((View v, int x, int y, int oldX, int oldY) -> updateVisiblePages());
+        scroll.setOnScrollChangeListener((View v, int x, int y, int oldX, int oldY) -> {
+            if (fastScrolling) updatePageNumber();
+            else updateVisiblePages();
+        });
         scroll.post(() -> updateVisiblePages());
     }
 
@@ -159,8 +163,7 @@ public class PdfReaderActivity extends Activity {
         int stride = pageHeight + pageGap;
         int first = Math.max(0, y / stride);
         int last = Math.min(pageCount - 1, (y + scroll.getHeight()) / stride);
-        int current = Math.min(pageCount, first + 1);
-        pageNumber.setText(bn(current) + " / " + bn(pageCount));
+        updatePageNumber();
 
         Set<Integer> wanted = new HashSet<>();
         for (int i = Math.max(0, first - 1); i <= Math.min(pageCount - 1, last + 1); i++) wanted.add(i);
@@ -178,6 +181,13 @@ public class PdfReaderActivity extends Activity {
             }
         }
         for (int index : wanted) requestPage(index);
+    }
+
+    private void updatePageNumber() {
+        if (scroll == null || pageNumber == null) return;
+        int stride = pageHeight + pageGap;
+        int current = Math.min(pageCount, Math.max(1, scroll.getScrollY() / stride + 1));
+        pageNumber.setText(bn(current) + " / " + bn(pageCount));
     }
 
     private void requestPage(final int index) {
@@ -277,6 +287,8 @@ public class PdfReaderActivity extends Activity {
             if (scroll == null) return false;
             switch (event.getAction()) {
                 case android.view.MotionEvent.ACTION_DOWN:
+                    fastScrolling = true;
+                    dragging = true;
                 case android.view.MotionEvent.ACTION_MOVE:
                     dragging = true;
                     float trackTop = dp(12), trackBottom = getHeight() - dp(12);
@@ -286,11 +298,18 @@ public class PdfReaderActivity extends Activity {
                     float targetTop = Math.max(trackTop, Math.min(trackBottom - thumbHeight, event.getY() - thumbHeight / 2f));
                     float fraction = (targetTop - trackTop) / usable;
                     scroll.scrollTo(0, Math.round(maxScroll * fraction));
+                    updatePageNumber();
                     invalidate();
                     return true;
                 case android.view.MotionEvent.ACTION_UP:
                 case android.view.MotionEvent.ACTION_CANCEL:
+                    fastScrolling = false;
                     dragging = false;
+                    // Drop obsolete queued page renders and render only the pages now in view.
+                    generation++;
+                    if (renderHandler != null) renderHandler.removeCallbacksAndMessages(null);
+                    synchronized (cache) { pending.clear(); }
+                    updateVisiblePages();
                     invalidate();
                     return true;
             }
