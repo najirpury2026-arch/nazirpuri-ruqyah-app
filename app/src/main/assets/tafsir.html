@@ -81,7 +81,7 @@ if(p&&!done){const total=p.total>0?p.total:0,downloaded=p.downloaded||0,pct=tota
 const cover='<div class="book-cover"><div class="cover-kicker">কুরআনুল কারীমের তাফসীর</div><div class="cover-title">'+safe(b.title)+'</div></div>';
 return '<article class="book" role="button" tabindex="0" aria-label="তাফসীর খুলুন: '+safe(b.title)+'" data-book-name="'+safe(name)+'" data-book-url="'+safe(b.url)+'">'+cover+'<div class="meta"><div class="title">'+safe(String(b.number)+". "+b.title)+'</div><div class="author">'+safe(b.author||b.subject||"")+(done?'<div style="color:#376b57;font-size:11px">অফলাইনে সংরক্ষিত</div>':'')+'</div>'+progress+'</div><button type="button" class="action '+(done?'done':p?'downloading':'')+'" '+(p?'disabled':'')+' aria-label="'+(done?'অফলাইনে পড়ুন':p?'ডাউনলোড হচ্ছে':'ডাউনলোড করুন')+'">'+(done?'<span class="download-seal">✓</span>':p?'<span class="download-spinner"></span>':'↓')+'</button></article>'}).join("");
 $("empty").style.display=rows.length?"none":"block";$("status").textContent=rows.length?rows.length+"টি তাফসীর দেখানো হচ্ছে":(tab==="offline"?"এখনো কোনো তাফসীর অফলাইনে সংরক্ষণ করা হয়নি":"কোনো কিতাব পাওয়া যায়নি")}
-function formatMB(bytes){bytes=Math.max(0,Number(bytes)||0);return (bytes/(1024*1024)).toFixed(2)+" MB ("+(bytes/1024).toFixed(1)+" KB)"}
+function formatMB(bytes){bytes=Math.max(0,Number(bytes)||0);return (bytes/(1024*1024)).toFixed(2)+" MB"}
 function formatDuration(seconds){if(!isFinite(seconds)||seconds<0)return "হিসাব হচ্ছে";seconds=Math.ceil(seconds);if(seconds<60)return seconds+" সেকেন্ড";const m=Math.floor(seconds/60),s=seconds%60;if(m<60)return m+" মিনিট "+s+" সেকেন্ড";const h=Math.floor(m/60),r=m%60;return h+" ঘণ্টা "+r+" মিনিট"}
 function bookAction(name,url){
 if(window.AndroidKitab){
@@ -96,10 +96,19 @@ if(url)window.open(url,"_blank","noopener")
 }
 window.onBookProgress=function(name,downloaded,total){
  window.__tafsirProgress=window.__tafsirProgress||{};
- const previous=window.__tafsirProgress[name]||{lastBytes:0,lastAt:Date.now(),speedBps:0};
- const now=Date.now(),elapsed=(now-(previous.lastAt||now))/1000,delta=downloaded-(previous.lastBytes||0);
- const speed=elapsed>=0.5&&delta>=0?delta/Math.max(elapsed,0.5):(previous.speedBps||0);
- window.__tafsirProgress[name]={downloaded:downloaded,total:total,speedBps:speed,lastBytes:downloaded,lastAt:now};
+ downloaded=Math.max(0,Number(downloaded)||0);
+ total=Number(total)>downloaded?Number(total):0;
+ const previous=window.__tafsirProgress[name]||{sampleBytes:downloaded,sampleAt:Date.now(),speedBps:0};
+ const now=Date.now(),elapsed=(now-(previous.sampleAt||now))/1000;
+ let speed=Number(previous.speedBps)||0;
+ // Estimate speed from at least a one-second window; do not reset the sample
+ // on every tiny network callback, which caused wildly jumping ETA values.
+ if(elapsed>=1){
+   const delta=downloaded-(Number(previous.sampleBytes)||0);
+   if(delta>=0){const measured=delta/elapsed;speed=speed?speed*0.7+measured*0.3:measured;}
+   previous.sampleBytes=downloaded;previous.sampleAt=now;
+ }
+ window.__tafsirProgress[name]={downloaded:downloaded,total:total,speedBps:speed,sampleBytes:previous.sampleBytes,sampleAt:previous.sampleAt};
  render()
 };
 window.onBookDownload=function(name,success,message){
