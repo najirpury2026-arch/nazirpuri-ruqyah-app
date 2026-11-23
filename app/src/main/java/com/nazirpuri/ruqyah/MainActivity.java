@@ -1489,9 +1489,18 @@ public class MainActivity extends Activity {
                     connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
                     int code = connection.getResponseCode();
                     if (code < 200 || code >= 300) throw new Exception("সার্ভার সাড়া দেয়নি (" + code + ")");
+                    final long totalBytes = connection.getContentLengthLong();
+                    notifyBookProgress(name, 0L, totalBytes);
                     try (InputStream in = connection.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
-                        byte[] buffer = new byte[65536]; int n;
-                        while ((n = in.read(buffer)) != -1) out.write(buffer, 0, n);
+                        byte[] buffer = new byte[65536]; int n; long downloadedBytes = 0L; long lastUpdate = 0L;
+                        while ((n = in.read(buffer)) != -1) {
+                            out.write(buffer, 0, n); downloadedBytes += n;
+                            long now = android.os.SystemClock.elapsedRealtime();
+                            if (now - lastUpdate >= 250L || (totalBytes > 0 && downloadedBytes >= totalBytes)) {
+                                notifyBookProgress(name, downloadedBytes, totalBytes); lastUpdate = now;
+                            }
+                        }
+                        notifyBookProgress(name, downloadedBytes, totalBytes);
                     }
                     if (temp.length() < 1000) throw new Exception("ফাইলটি সম্পূর্ণ ডাউনলোড হয়নি");
                     try (InputStream check = new java.io.FileInputStream(temp)) {
@@ -1527,6 +1536,15 @@ public class MainActivity extends Activity {
                 } catch (Exception e) {
                     android.widget.Toast.makeText(MainActivity.this,
                         "কিতাবটি খোলা যাচ্ছে না। আবার চেষ্টা করুন।", android.widget.Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+
+        private void notifyBookProgress(String name, long downloaded, long total) {
+            mainHandler.post(() -> {
+                if (webView != null) {
+                    String key = org.json.JSONObject.quote(name == null ? "" : name);
+                    webView.evaluateJavascript("if(window.onBookProgress)window.onBookProgress(" + key + "," + downloaded + "," + total + ")", null);
                 }
             });
         }
