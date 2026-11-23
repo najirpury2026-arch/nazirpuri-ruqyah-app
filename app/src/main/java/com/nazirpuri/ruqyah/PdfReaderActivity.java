@@ -41,10 +41,11 @@ public class PdfReaderActivity extends Activity {
     private ImageView[] pageViews;
     private TextView pageNumber;
     private final Set<Integer> pending = new HashSet<>();
-    private final LinkedHashMap<Integer, Bitmap> cache = new LinkedHashMap<>(4, .75f, true);
+    private final LinkedHashMap<Integer, Bitmap> cache = new LinkedHashMap<>(16, .75f, true);
     private volatile boolean closing = false;
     private int pageHeight, pageWidth, pageGap, pageCount;
     private volatile int generation = 0;
+    private volatile int visibleFirst = 0, visibleLast = 0;
     private boolean fastScrolling = false;
     private FastScrollHandle fastScrollHandle;
 
@@ -168,7 +169,7 @@ public class PdfReaderActivity extends Activity {
             // Debounce viewport requests so pages already scrolled past do not clog the render queue.
             if (visibleUpdate != null) mainHandler.removeCallbacks(visibleUpdate);
             visibleUpdate = this::updateVisiblePages;
-            mainHandler.postDelayed(visibleUpdate, 120);
+            mainHandler.postDelayed(visibleUpdate, 40);
             if (fastScrollHandle != null) fastScrollHandle.invalidate();
         });
         scroll.post(() -> updateVisiblePages());
@@ -186,13 +187,14 @@ public class PdfReaderActivity extends Activity {
         int last = Math.min(pageCount - 1, (y + scroll.getHeight()) / stride);
         updatePageNumber();
 
-        Set<Integer> wanted = new LinkedHashSet<>();
-        for (int i = Math.max(0, first - 1); i <= Math.min(pageCount - 1, last + 1); i++) wanted.add(i);
+        visibleFirst = first;
+        visibleLast = last;
 
-        // Keep recently viewed pages in the LRU cache. Evicting every page
-        // outside this tiny window on each scroll can leave the viewport white
-        // when scrolling stops and the draw pass requests a page again.
-        for (int index : wanted) requestPage(index);
+        // Render pages actually on screen first. Nearby pages are prefetched
+        // only after visible pages have been queued.
+        for (int i = first; i <= last; i++) requestPage(i);
+        if (first > 0) requestPage(first - 1);
+        if (last + 1 < pageCount) requestPage(last + 1);
     }
 
     private void updatePageNumber() {
@@ -214,6 +216,14 @@ public class PdfReaderActivity extends Activity {
         }
         final int requestGeneration = generation;
         renderHandler.post(() -> {
+            // Drop obsolete queued prefetches after a fast fling. This keeps
+            // the worker focused on the pages currently visible to the reader.
+            synchronized (cache) {
+                if (closing || index < visibleFirst - 1 || index > visibleLast + 1) {
+                    pending.remove(index);
+                    return;
+                }
+            }
             Bitmap bitmap = null;
             for (int attempt = 0; attempt < 3 && bitmap == null && !closing; attempt++) {
                 PdfRenderer.Page page = null;
@@ -255,7 +265,7 @@ public class PdfReaderActivity extends Activity {
                 }
                 synchronized (cache) {
                     cache.put(index, result);
-                    while (cache.size() > 8) {
+                    while (cache.size() > 14) {
                         Integer eldest = cache.keySet().iterator().next();
                         Bitmap old = cache.remove(eldest);
                         if (pageViews != null && eldest < pageViews.length) {
