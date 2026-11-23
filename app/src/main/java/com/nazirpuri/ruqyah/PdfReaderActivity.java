@@ -19,6 +19,7 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -66,7 +67,7 @@ public class PdfReaderActivity extends Activity {
             pageWidth = Math.max(1, getResources().getDisplayMetrics().widthPixels - dp(16));
             pageHeight = Math.max(1, Math.round(pageWidth * ratio));
             pageGap = dp(9);
-            renderThread = new HandlerThread("PdfPageRenderer");
+            renderThread = new HandlerThread("PdfPageRenderer", android.os.Process.THREAD_PRIORITY_DISPLAY);
             renderThread.start();
             renderHandler = new Handler(renderThread.getLooper());
             buildReader(file.getName());
@@ -165,7 +166,7 @@ public class PdfReaderActivity extends Activity {
         int last = Math.min(pageCount - 1, (y + scroll.getHeight()) / stride);
         updatePageNumber();
 
-        Set<Integer> wanted = new HashSet<>();
+        Set<Integer> wanted = new LinkedHashSet<>();
         for (int i = Math.max(0, first - 1); i <= Math.min(pageCount - 1, last + 1); i++) wanted.add(i);
 
         synchronized (cache) {
@@ -207,7 +208,7 @@ public class PdfReaderActivity extends Activity {
             try {
                 if (closing || renderer == null) return;
                 page = renderer.openPage(index);
-                int width = Math.min(pageWidth, 1200);
+                int width = Math.min(pageWidth, 1000);
                 int height = Math.max(1, Math.round(width * page.getHeight() / (float) page.getWidth()));
                 bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                 bitmap.eraseColor(Color.WHITE);
@@ -228,7 +229,7 @@ public class PdfReaderActivity extends Activity {
                 }
                 synchronized (cache) {
                     cache.put(index, result);
-                    while (cache.size() > 4) {
+                    while (cache.size() > 6) {
                         Integer eldest = cache.keySet().iterator().next();
                         Bitmap old = cache.remove(eldest);
                         ImageView oldView = pageViews.get(eldest);
