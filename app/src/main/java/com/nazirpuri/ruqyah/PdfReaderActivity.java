@@ -160,8 +160,10 @@ public class PdfReaderActivity extends Activity {
                 int top = index * (pageHeight + pageGap);
                 Bitmap bitmap = getPageBitmap(index);
                 if (bitmap != null) {
-                    canvas.drawColor(Color.rgb(220,225,221), new android.graphics.PorterDuff.ModeColorFilter(Color.TRANSPARENT, android.graphics.PorterDuff.Mode.SRC_OVER));
                     RectF target = new RectF(0, top, contentWidth, top + pageHeight);
+                    Paint paper = new Paint();
+                    paper.setColor(Color.WHITE);
+                    canvas.drawRect(target, paper);
                     canvas.drawBitmap(bitmap, null, target, paint);
                 }
             }
