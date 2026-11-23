@@ -104,6 +104,9 @@ public class PdfReaderActivity extends Activity {
         FrameLayout frame = new FrameLayout(this);
         scroll = new ScrollView(this);
         scroll.setFillViewport(true);
+        scroll.setVerticalScrollBarEnabled(true);
+        scroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        scroll.setSmoothScrollingEnabled(true);
         scroll.setBackgroundColor(Color.rgb(224,228,225));
         // One virtualized drawing surface replaces hundreds of ImageViews.
         // Only pages near the viewport are rendered and drawn.
@@ -126,7 +129,7 @@ public class PdfReaderActivity extends Activity {
 
         // Draggable fast-scroll handle on the right edge.
         FastScrollHandle fastScroll = new FastScrollHandle();
-        FrameLayout.LayoutParams fastLp = new FrameLayout.LayoutParams(dp(38), -1, Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+        FrameLayout.LayoutParams fastLp = new FrameLayout.LayoutParams(dp(24), -1, Gravity.RIGHT | Gravity.CENTER_VERTICAL);
         fastLp.rightMargin = dp(2);
         frame.addView(fastScroll, fastLp);
 
@@ -305,15 +308,23 @@ public class PdfReaderActivity extends Activity {
 
         @Override public boolean onTouchEvent(android.view.MotionEvent event) {
             if (scroll == null) return false;
-            switch (event.getAction()) {
+            float trackTop = dp(12), trackBottom = getHeight() - dp(12);
+            float contentHeight = scroll.getChildAt(0) == null ? 0 : scroll.getChildAt(0).getHeight();
+            float maxScroll = Math.max(0, contentHeight - scroll.getHeight());
+            switch (event.getActionMasked()) {
                 case android.view.MotionEvent.ACTION_DOWN:
+                    // Only capture a gesture when the user actually touches the thumb.
+                    // All other touches pass through so the PDF ScrollView receives swipes.
+                    if (event.getY() < thumbTop - dp(8) || event.getY() > thumbTop + thumbHeight + dp(8)) {
+                        return false;
+                    }
                     fastScrolling = true;
                     dragging = true;
+                    getParent().requestDisallowInterceptTouchEvent(true);
+                    return true;
+
                 case android.view.MotionEvent.ACTION_MOVE:
-                    dragging = true;
-                    float trackTop = dp(12), trackBottom = getHeight() - dp(12);
-                    float contentHeight = scroll.getChildAt(0) == null ? 0 : scroll.getChildAt(0).getHeight();
-                    float maxScroll = Math.max(0, contentHeight - scroll.getHeight());
+                    if (!dragging) return false;
                     float usable = Math.max(1, trackBottom - trackTop - thumbHeight);
                     float targetTop = Math.max(trackTop, Math.min(trackBottom - thumbHeight, event.getY() - thumbHeight / 2f));
                     float fraction = (targetTop - trackTop) / usable;
@@ -321,11 +332,13 @@ public class PdfReaderActivity extends Activity {
                     updatePageNumber();
                     invalidate();
                     return true;
+
                 case android.view.MotionEvent.ACTION_UP:
                 case android.view.MotionEvent.ACTION_CANCEL:
+                    if (!dragging) return false;
                     fastScrolling = false;
                     dragging = false;
-                    // Drop obsolete queued page renders and render only the pages now in view.
+                    getParent().requestDisallowInterceptTouchEvent(false);
                     generation++;
                     if (renderHandler != null) renderHandler.removeCallbacksAndMessages(null);
                     synchronized (cache) { pending.clear(); }
@@ -333,7 +346,7 @@ public class PdfReaderActivity extends Activity {
                     invalidate();
                     return true;
             }
-            return true;
+            return dragging;
         }
     }
 
