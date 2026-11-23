@@ -1488,6 +1488,12 @@ public class MainActivity extends Activity {
                         out.flush();
                     }
                     if (temp.length() < 1000) throw new Exception("PDF ফাইলটি অসম্পূর্ণ");
+                    try (java.io.RandomAccessFile check = new java.io.RandomAccessFile(temp, "r")) {
+                        byte[] signature = new byte[5];
+                        check.readFully(signature);
+                        if (!"%PDF-".equals(new String(signature, "US-ASCII")))
+                            throw new Exception("ডাউনলোড লিংকে PDF পাওয়া যায়নি; Google Drive-এর অনুমতি যাচাই করুন");
+                    }
                     if (!temp.renameTo(target)) throw new Exception("ফাইল সংরক্ষণ করা যায়নি");
                     kitabCallback(safe, true, "কিতাব ডাউনলোড ও সেভ হয়েছে। এখন অফলাইনেও পড়তে পারবেন।");
                 } catch (Exception e) {
@@ -1504,15 +1510,13 @@ public class MainActivity extends Activity {
             if (!f.isFile()) { kitabCallback(safe, false, "সেভ করা কিতাব পাওয়া যায়নি"); return; }
             mainHandler.post(() -> {
                 try {
-                    Uri uri = androidx.core.content.FileProvider.getUriForFile(
-                        MainActivity.this, getPackageName() + ".files", f);
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setDataAndType(uri, "application/pdf");
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    startActivity(Intent.createChooser(intent, "কিতাব পড়ুন"));
+                    Intent intent = new Intent(MainActivity.this, PdfReaderActivity.class);
+                    intent.putExtra(PdfReaderActivity.EXTRA_FILE_PATH, f.getAbsolutePath());
+                    intent.putExtra(PdfReaderActivity.EXTRA_TITLE, name);
+                    startActivity(intent);
                 } catch (Exception e) {
                     android.widget.Toast.makeText(MainActivity.this,
-                        "PDF পড়ার অ্যাপ ইনস্টল/সক্রিয় করুন", android.widget.Toast.LENGTH_LONG).show();
+                        "কিতাবটি খোলা যাচ্ছে না", android.widget.Toast.LENGTH_LONG).show();
                 }
             });
         }
