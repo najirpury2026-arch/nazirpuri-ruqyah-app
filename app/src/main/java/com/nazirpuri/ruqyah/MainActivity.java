@@ -1519,14 +1519,12 @@ public class MainActivity extends Activity {
             }
             mainHandler.post(() -> {
                 try {
-                    Uri uri = Uri.parse("content://" + getPackageName() + ".files/kitab_books/" + Uri.encode(f.getName()));
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setDataAndType(uri, "application/pdf");
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    Intent intent = new Intent(MainActivity.this, PdfReaderActivity.class);
+                    intent.putExtra("pdf_path", f.getAbsolutePath());
                     startActivity(intent);
                 } catch (Exception e) {
                     android.widget.Toast.makeText(MainActivity.this,
-                        "PDF পড়ার অ্যাপ পাওয়া যায়নি। একটি PDF Reader ইনস্টল করুন।", android.widget.Toast.LENGTH_LONG).show();
+                        "কিতাবটি খোলা যাচ্ছে না। আবার চেষ্টা করুন।", android.widget.Toast.LENGTH_LONG).show();
                 }
             });
         }
