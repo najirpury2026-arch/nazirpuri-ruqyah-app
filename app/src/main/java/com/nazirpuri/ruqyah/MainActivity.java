@@ -1470,6 +1470,7 @@ public class MainActivity extends Activity {
                 openOfflineBook(name);
                 return;
             }
+            notifyBook(name, false, "ডাউনলোড হচ্ছে, অপেক্ষা করুন…");
             new Thread(() -> {
                 File dir = target.getParentFile();
                 File temp = new File(dir, target.getName() + ".part");
