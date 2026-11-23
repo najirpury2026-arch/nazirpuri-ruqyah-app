@@ -34,6 +34,8 @@ public class PdfReaderActivity extends Activity {
     private ParcelFileDescriptor descriptor;
     private HandlerThread renderThread;
     private Handler renderHandler;
+    private final Handler mainHandler = new Handler();
+    private Runnable visibleUpdate;
     private ScrollView scroll;
     private PdfPagesView pagesView;
     private TextView pageNumber;
@@ -148,8 +150,10 @@ public class PdfReaderActivity extends Activity {
         setContentView(root);
 
         scroll.setOnScrollChangeListener((View v, int x, int y, int oldX, int oldY) -> {
-            // Render the current viewport during fast drags too, preventing blank-page flashes.
-            updateVisiblePages();
+            // Debounce viewport requests so pages already scrolled past do not clog the render queue.
+            if (visibleUpdate != null) mainHandler.removeCallbacks(visibleUpdate);
+            visibleUpdate = this::updateVisiblePages;
+            mainHandler.postDelayed(visibleUpdate, 120);
             if (fastScrollHandle != null) fastScrollHandle.invalidate();
         });
         scroll.post(() -> updateVisiblePages());
@@ -189,32 +193,42 @@ public class PdfReaderActivity extends Activity {
         final int requestGeneration = generation;
         renderHandler.post(() -> {
             Bitmap bitmap = null;
-            PdfRenderer.Page page = null;
-            try {
-                if (closing || renderer == null) return;
-                page = renderer.openPage(index);
-                int width = Math.min(pageWidth, 1000);
-                int height = Math.max(1, Math.round(width * page.getHeight() / (float) page.getWidth()));
-                bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                bitmap.eraseColor(Color.WHITE);
-                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
-            } catch (Exception ignored) {
-                if (bitmap != null && !bitmap.isRecycled()) bitmap.recycle();
-                bitmap = null;
-            } finally {
-                if (page != null) page.close();
+            for (int attempt = 0; attempt < 3 && bitmap == null && !closing; attempt++) {
+                PdfRenderer.Page page = null;
+                try {
+                    if (renderer == null) break;
+                    page = renderer.openPage(index);
+                    int width = Math.min(pageWidth, 1000);
+                    int height = Math.max(1, Math.round(width * page.getHeight() / (float) page.getWidth()));
+                    bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                    bitmap.eraseColor(Color.WHITE);
+                    page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+                } catch (Exception ignored) {
+                    if (bitmap != null && !bitmap.isRecycled()) bitmap.recycle();
+                    bitmap = null;
+                    try { Thread.sleep(80L * (attempt + 1)); } catch (InterruptedException interrupted) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                } finally {
+                    if (page != null) page.close();
+                }
             }
             final Bitmap result = bitmap;
             runOnUiThread(() -> {
                 synchronized (cache) { pending.remove(index); }
-                if (result == null) return;
                 if (closing || requestGeneration != generation || isFinishing() || isDestroyed()) {
-                    result.recycle();
+                    if (result != null && !result.isRecycled()) result.recycle();
+                    return;
+                }
+                if (result == null) {
+                    if (pagesView != null) pagesView.postInvalidateOnAnimation();
+                    mainHandler.postDelayed(() -> requestPage(index), 350);
                     return;
                 }
                 synchronized (cache) {
                     cache.put(index, result);
-                    while (cache.size() > 10) {
+                    while (cache.size() > 6) {
                         Integer eldest = cache.keySet().iterator().next();
                         Bitmap old = cache.remove(eldest);
                         if (!old.isRecycled()) old.recycle();
@@ -265,13 +279,15 @@ public class PdfReaderActivity extends Activity {
                 android.graphics.RectF dst = new android.graphics.RectF(left, top, right, top + pageHeight);
                 shadowPaint.setColor(Color.WHITE);
                 canvas.drawRect(dst, shadowPaint);
-                Bitmap bitmap;
-                synchronized (cache) { bitmap = cache.get(i); }
-                if (bitmap != null && !bitmap.isRecycled()) {
-                    canvas.drawBitmap(bitmap, null, dst, pagePaint);
-                } else {
-                    requestPage(i);
+                boolean drawn = false;
+                synchronized (cache) {
+                    Bitmap bitmap = cache.get(i);
+                    if (bitmap != null && !bitmap.isRecycled()) {
+                        canvas.drawBitmap(bitmap, null, dst, pagePaint);
+                        drawn = true;
+                    }
                 }
+                if (!drawn) requestPage(i);
             }
         }
     }
@@ -376,6 +392,8 @@ public class PdfReaderActivity extends Activity {
     @Override protected void onDestroy() {
         closing = true;
         generation++;
+        if (visibleUpdate != null) mainHandler.removeCallbacks(visibleUpdate);
+        mainHandler.removeCallbacksAndMessages(null);
         if (renderHandler != null) {
             renderHandler.removeCallbacksAndMessages(null);
             renderHandler.post(() -> {
