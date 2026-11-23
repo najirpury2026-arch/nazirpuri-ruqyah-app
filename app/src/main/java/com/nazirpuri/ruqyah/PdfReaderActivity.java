@@ -101,8 +101,9 @@ public class PdfReaderActivity extends Activity {
         pageNumber.setGravity(Gravity.CENTER);
         pageNumber.setPadding(dp(10), dp(7), dp(10), dp(7));
         pageNumber.setBackgroundColor(0xCC174D38);
-        FrameLayout.LayoutParams badge = new FrameLayout.LayoutParams(-2, -2, Gravity.RIGHT | Gravity.CENTER_VERTICAL);
-        badge.rightMargin = dp(8);
+        FrameLayout.LayoutParams badge = new FrameLayout.LayoutParams(-2, -2, Gravity.RIGHT | Gravity.BOTTOM);
+        badge.rightMargin = dp(12);
+        badge.bottomMargin = dp(12);
         frame.addView(pageNumber, badge);
         root.addView(frame, new LinearLayout.LayoutParams(-1, 0, 1));
 
@@ -149,6 +150,7 @@ public class PdfReaderActivity extends Activity {
             super(PdfReaderActivity.this);
             contentWidth = width;
             setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+            setBackgroundColor(Color.rgb(220,225,221));
         }
 
         @Override protected void onDraw(Canvas canvas) {
