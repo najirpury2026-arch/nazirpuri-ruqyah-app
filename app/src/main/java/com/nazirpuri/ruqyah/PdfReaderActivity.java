@@ -102,7 +102,7 @@ public class PdfReaderActivity extends Activity {
         root.addView(header, new LinearLayout.LayoutParams(-1, dp(52)));
 
         FrameLayout frame = new FrameLayout(this);
-        scroll = new ReliableScrollView(this);
+        scroll = new ReliableScrollView();
         scroll.setFillViewport(true);
         scroll.setVerticalScrollBarEnabled(true);
         scroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
