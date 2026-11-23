@@ -1476,7 +1476,6 @@ public class MainActivity extends Activity {
                 openOfflineBook(name);
                 return;
             }
-            notifyBook(name, false, "ডাউনলোড হচ্ছে, অপেক্ষা করুন…");
             new Thread(() -> {
                 File dir = target.getParentFile();
                 File temp = new File(dir, target.getName() + ".part");
@@ -1546,6 +1545,45 @@ public class MainActivity extends Activity {
         }
 
         // Handle Google Drive's confirmation form and cookies before accepting a PDF.
+        // Stream PDF bytes directly to disk and report live progress to the book list.
+        // If Drive returns HTML, keep it in memory only to parse its confirmation form.
+        private byte[] readDriveResponse(HttpURLConnection connection, File temp, String name) throws Exception {
+            long total = connection.getContentLengthLong();
+            try (java.io.InputStream input = new java.io.BufferedInputStream(connection.getInputStream())) {
+                byte[] header = new byte[5];
+                int got = 0;
+                while (got < 5) {
+                    int n = input.read(header, got, 5 - got);
+                    if (n == -1) break;
+                    got += n;
+                }
+                if (got == 5 && isPdfBytes(header)) {
+                    long done = 0;
+                    try (FileOutputStream out = new FileOutputStream(temp)) {
+                        out.write(header);
+                        done = header.length;
+                        notifyBookProgress(name, done, total);
+                        byte[] buffer = new byte[65536];
+                        int n;
+                        while ((n = input.read(buffer)) != -1) {
+                            out.write(buffer, 0, n);
+                            done += n;
+                            notifyBookProgress(name, done, total);
+                        }
+                        out.flush();
+                    }
+                    if (!isPdfFile(temp)) throw new Exception("ডাউনলোড করা ফাইলটি বৈধ PDF নয়");
+                    return null;
+                }
+                java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                if (got > 0) out.write(header, 0, got);
+                byte[] buffer = new byte[8192];
+                int n;
+                while ((n = input.read(buffer)) != -1) out.write(buffer, 0, n);
+                return out.toByteArray();
+            }
+        }
+
         private void downloadGoogleDrivePdf(String id, File temp, String name) throws Exception {
             String encoded = Uri.encode(id);
             String[] urls = {
@@ -1575,16 +1613,8 @@ public class MainActivity extends Activity {
                         }
                         cookies = cb.toString();
                     }
-                    byte[] body;
-                    try (java.io.InputStream input = c.getInputStream(); java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
-                        byte[] buffer = new byte[16384]; int n;
-                        while ((n = input.read(buffer)) != -1) out.write(buffer, 0, n);
-                        body = out.toByteArray();
-                    }
-                    if (isPdfBytes(body)) {
-                        writePdfBytes(body, temp, name, c.getContentLengthLong());
-                        return;
-                    }
+                    byte[] body = readDriveResponse(c, temp, name);
+                    if (body == null) return;
                     String html = new String(body, java.nio.charset.StandardCharsets.UTF_8);
                     java.util.regex.Matcher form = java.util.regex.Pattern.compile("(?is)<form[^>]*action=['\\\"]([^'\\\"]+)['\\\"][^>]*>(.*?)</form>").matcher(html);
                     if (form.find()) {
@@ -1617,16 +1647,8 @@ public class MainActivity extends Activity {
                                 if (!cookies.isEmpty()) c2.setRequestProperty("Cookie", cookies);
                                 int code2 = c2.getResponseCode();
                                 if (code2 >= 200 && code2 < 300) {
-                                    byte[] confirmedBody;
-                                    try (java.io.InputStream input = c2.getInputStream(); java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
-                                        byte[] buffer = new byte[16384]; int n;
-                                        while ((n = input.read(buffer)) != -1) out.write(buffer, 0, n);
-                                        confirmedBody = out.toByteArray();
-                                    }
-                                    if (isPdfBytes(confirmedBody)) {
-                                        writePdfBytes(confirmedBody, temp, name, c2.getContentLengthLong());
-                                        return;
-                                    }
+                                    byte[] confirmedBody = readDriveResponse(c2, temp, name);
+                                    if (confirmedBody == null) return;
                                 }
                             } finally { if (c2 != null) c2.disconnect(); }
                         }
