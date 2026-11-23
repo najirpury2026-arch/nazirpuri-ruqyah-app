@@ -1461,7 +1461,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean isBookDownloaded(String name) {
             File f = bookFile(name);
-            return f.isFile() && f.length() > 1000;
+            return isPdfFile(f);
         }
 
         @JavascriptInterface
@@ -1472,7 +1472,7 @@ public class MainActivity extends Activity {
                 return;
             }
             File target = bookFile(name);
-            if (target.isFile() && target.length() > 1000) {
+            if (isPdfFile(target)) {
                 openOfflineBook(name);
                 return;
             }
@@ -1505,8 +1505,9 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void openOfflineBook(String name) {
             File f = bookFile(name);
-            if (!f.isFile() || f.length() < 1000) {
-                notifyBook(name, false, "অফলাইনে পড়ার জন্য আগে কিতাবটি ডাউনলোড করুন");
+            if (!isPdfFile(f)) {
+                if (f.exists()) f.delete(); // Remove an old incomplete/non-PDF cache so it can be downloaded again.
+                notifyBook(name, false, "সংরক্ষিত ফাইলটি অসম্পূর্ণ বা নষ্ট। ইন্টারনেট চালু করে আবার ডাউনলোড করুন।");
                 return;
             }
             mainHandler.post(() -> {
