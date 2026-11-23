@@ -1636,6 +1636,23 @@ public class MainActivity extends Activity {
                             if (confirm.find()) fields = "confirm=" + java.net.URLEncoder.encode(confirm.group(1), "UTF-8") + "&id=" + encoded;
                         }
                     }
+                    // Some Drive responses expose the virus-scan confirmation token only
+                    // as a download_warning_* cookie, not as a hidden HTML field.
+                    if (action == null && fields.isEmpty()) {
+                        String warningToken = null;
+                        String uuidToken = null;
+                        for (java.net.HttpCookie cookie : cookieJar.getCookieStore().getCookies()) {
+                            if (cookie.getName() != null && cookie.getName().startsWith("download_warning")) warningToken = cookie.getValue();
+                            if ("uuid".equalsIgnoreCase(cookie.getName())) uuidToken = cookie.getValue();
+                        }
+                        if (warningToken != null && !warningToken.isEmpty()) {
+                            fields = "id=" + encoded + "&export=download&confirm=" +
+                                java.net.URLEncoder.encode(warningToken, "UTF-8");
+                            if (uuidToken != null && !uuidToken.isEmpty())
+                                fields += "&uuid=" + java.net.URLEncoder.encode(uuidToken, "UTF-8");
+                            action = "https://drive.usercontent.google.com/download";
+                        }
+                    }
                     if (action != null) {
                         action = action.replace("&amp;", "&");
                         if (action.startsWith("/")) action = "https://drive.google.com" + action;
@@ -1661,8 +1678,12 @@ public class MainActivity extends Activity {
                     String contentType = c.getContentType();
                     String finalUrl = c.getURL() == null ? address : c.getURL().toString();
                     String detail = summarizeDriveHtml(html);
+                    String disposition = c.getHeaderField("Content-Disposition");
+                    String firstBytes = describeBytes(body);
                     last = new Exception("Drive PDF দেয়নি; HTTP " + code + ", " + contentType +
-                        ", URL=" + finalUrl + (detail.isEmpty() ? "" : ", উত্তর: " + detail));
+                        ", disposition=" + disposition + ", URL=" + finalUrl +
+                        (detail.isEmpty() ? "" : ", উত্তর: " + detail) +
+                        (firstBytes.isEmpty() ? "" : ", শুরু: " + firstBytes));
                 } catch (Exception e) { last = e; }
                 finally { if (c != null) c.disconnect(); }
             }
@@ -1713,6 +1734,17 @@ public class MainActivity extends Activity {
                 return connection;
             }
             throw new Exception("Google Drive অতিরিক্ত redirect পাঠিয়েছে");
+        }
+
+        private String describeBytes(byte[] bytes) {
+            if (bytes == null || bytes.length == 0) return "";
+            StringBuilder result = new StringBuilder();
+            int limit = Math.min(bytes.length, 24);
+            for (int i = 0; i < limit; i++) {
+                if (i > 0) result.append(' ');
+                result.append(String.format(java.util.Locale.US, "%02X", bytes[i] & 0xff));
+            }
+            return result.toString();
         }
 
         private String readDriveError(HttpURLConnection connection) {
