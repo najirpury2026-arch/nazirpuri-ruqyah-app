@@ -148,8 +148,8 @@ public class PdfReaderActivity extends Activity {
         setContentView(root);
 
         scroll.setOnScrollChangeListener((View v, int x, int y, int oldX, int oldY) -> {
-            if (fastScrolling) updatePageNumber();
-            else updateVisiblePages();
+            // Render the current viewport during fast drags too, preventing blank-page flashes.
+            updateVisiblePages();
             if (fastScrollHandle != null) fastScrollHandle.invalidate();
         });
         scroll.post(() -> updateVisiblePages());
@@ -256,34 +256,7 @@ public class PdfReaderActivity extends Activity {
             setMeasuredDimension(measuredWidth, Math.max(1, contentHeight));
         }
 
-        // Handle vertical drags directly on the PDF surface. This bypasses
-        // device-specific ScrollView gesture interception problems.
-        @Override public boolean onTouchEvent(android.view.MotionEvent event) {
-            switch (event.getActionMasked()) {
-                case android.view.MotionEvent.ACTION_DOWN:
-                    lastTouchY = event.getY();
-                    draggingPages = true;
-                    getParent().requestDisallowInterceptTouchEvent(true);
-                    return true;
-                case android.view.MotionEvent.ACTION_MOVE:
-                    if (!draggingPages) return false;
-                    float currentY = event.getY();
-                    int delta = Math.round(lastTouchY - currentY);
-                    lastTouchY = currentY;
-                    if (scroll != null && delta != 0) {
-                        scroll.scrollBy(0, delta);
-                        updateVisiblePages();
-                        if (fastScrollHandle != null) fastScrollHandle.invalidate();
-                    }
-                    return true;
-                case android.view.MotionEvent.ACTION_UP:
-                case android.view.MotionEvent.ACTION_CANCEL:
-                    draggingPages = false;
-                    getParent().requestDisallowInterceptTouchEvent(false);
-                    return true;
-            }
-            return true;
-        }
+        // Let ScrollView handle touch gestures and fling natively for smooth scrolling.
 
         @Override protected void onDraw(android.graphics.Canvas canvas) {
             super.onDraw(canvas);
@@ -347,9 +320,12 @@ public class PdfReaderActivity extends Activity {
             canvas.drawRoundRect(centerX - dp(8), thumbTop, centerX + dp(8), thumbTop + thumbHeight,
                 dp(9), dp(9), paint);
             paint.setColor(Color.WHITE);
-            paint.setTextSize(dp(16));
+            paint.setTextSize(dp(18));
+            paint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD));
             paint.setTextAlign(android.graphics.Paint.Align.CENTER);
+            paint.setShadowLayer(dp(2), 0, dp(1), 0xAA000000);
             canvas.drawText("↕", centerX, thumbTop + thumbHeight / 2f + dp(6), paint);
+            paint.clearShadowLayer();
         }
 
         @Override public boolean onTouchEvent(android.view.MotionEvent event) {
