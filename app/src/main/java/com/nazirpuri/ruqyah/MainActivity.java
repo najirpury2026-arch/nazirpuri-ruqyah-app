@@ -870,7 +870,22 @@ public class MainActivity extends Activity {
                     connection.setRequestProperty("User-Agent", "NazirpuriRuqyahAndroid/1.0");
                     int response = connection.getResponseCode();
                     if (response != 200) throw new Exception("সার্ভার সাড়া দেয়নি (" + response + ")");
-                    long total = connection.getContentLengthLong();
+                    // Google Drive may report a compressed/partial response length.
+            // Trust Content-Length only for identity encoding; prefer the full
+            // object size from Content-Range when Drive provides it.
+            long total = connection.getContentLengthLong();
+            String encoding = connection.getHeaderField("Content-Encoding");
+            if (encoding != null && !encoding.trim().isEmpty() &&
+                    !"identity".equalsIgnoreCase(encoding.trim())) total = -1L;
+            String contentRange = connection.getHeaderField("Content-Range");
+            if (contentRange != null) {
+                java.util.regex.Matcher range = java.util.regex.Pattern
+                    .compile("/(\\d+)\\s*$").matcher(contentRange.trim());
+                if (range.find()) {
+                    try { total = Long.parseLong(range.group(1)); }
+                    catch (NumberFormatException ignored) { total = -1L; }
+                }
+            }
             String encoding = connection.getHeaderField("Content-Encoding");
             if (encoding != null && !encoding.trim().isEmpty() && !"identity".equalsIgnoreCase(encoding.trim())) total = -1L;
             String contentRange = connection.getHeaderField("Content-Range");
