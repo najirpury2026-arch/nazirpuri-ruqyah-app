@@ -43,7 +43,7 @@ public class PdfReaderActivity extends Activity {
     private final LinkedHashMap<Integer, Bitmap> cache = new LinkedHashMap<>(4, .75f, true);
     private volatile boolean closing = false;
     private int pageHeight, pageWidth, pageGap, pageCount, contentHeight;
-    private int generation = 0;
+    private volatile int generation = 0;
     private boolean fastScrolling = false;
     private FastScrollHandle fastScrollHandle;
 
@@ -161,6 +161,14 @@ public class PdfReaderActivity extends Activity {
 
     private void updateVisiblePages() {
         if (closing || scroll == null) return;
+
+        // A long PDF can enqueue renders for pages that have already moved off-screen.
+        // Drop queued stale work whenever scrolling settles, then render the current
+        // viewport first. A render already in progress is invalidated by generation.
+        generation++;
+        if (renderHandler != null) renderHandler.removeCallbacksAndMessages(null);
+        synchronized (cache) { pending.clear(); }
+
         int y = scroll.getScrollY();
         int stride = pageHeight + pageGap;
         int first = Math.max(0, y / stride);
@@ -216,8 +224,14 @@ public class PdfReaderActivity extends Activity {
             }
             final Bitmap result = bitmap;
             runOnUiThread(() -> {
+                // An older render must not clear the pending marker belonging to a
+                // newer request for the same page.
+                if (requestGeneration != generation) {
+                    if (result != null && !result.isRecycled()) result.recycle();
+                    return;
+                }
                 synchronized (cache) { pending.remove(index); }
-                if (closing || requestGeneration != generation || isFinishing() || isDestroyed()) {
+                if (closing || isFinishing() || isDestroyed()) {
                     if (result != null && !result.isRecycled()) result.recycle();
                     return;
                 }
@@ -370,9 +384,6 @@ public class PdfReaderActivity extends Activity {
                     fastScrolling = false;
                     dragging = false;
                     getParent().requestDisallowInterceptTouchEvent(false);
-                    generation++;
-                    if (renderHandler != null) renderHandler.removeCallbacksAndMessages(null);
-                    synchronized (cache) { pending.clear(); }
                     updateVisiblePages();
                     invalidate();
                     return true;
