@@ -35,9 +35,8 @@ public class PdfReaderActivity extends Activity {
     private HandlerThread renderThread;
     private Handler renderHandler;
     private ScrollView scroll;
-    private LinearLayout pageColumn;
+    private PdfPagesView pagesView;
     private TextView pageNumber;
-    private final java.util.ArrayList<ImageView> pageViews = new java.util.ArrayList<>();
     private final Set<Integer> pending = new HashSet<>();
     private final LinkedHashMap<Integer, Bitmap> cache = new LinkedHashMap<>(4, .75f, true);
     private volatile boolean closing = false;
@@ -106,20 +105,11 @@ public class PdfReaderActivity extends Activity {
         scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         scroll.setBackgroundColor(Color.rgb(224,228,225));
-        pageColumn = new LinearLayout(this);
-        pageColumn.setOrientation(LinearLayout.VERTICAL);
-        pageColumn.setPadding(dp(8), dp(6), dp(8), dp(6));
-        for (int i = 0; i < pageCount; i++) {
-            ImageView image = new ImageView(this);
-            image.setBackgroundColor(Color.WHITE);
-            image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            image.setAdjustViewBounds(false);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, pageHeight);
-            if (i > 0) lp.topMargin = pageGap;
-            pageColumn.addView(image, lp);
-            pageViews.add(image);
-        }
-        scroll.addView(pageColumn, new ScrollView.LayoutParams(-1, -2));
+        // One virtualized drawing surface replaces hundreds of ImageViews.
+        // Only pages near the viewport are rendered and drawn.
+        pagesView = new PdfPagesView();
+        int contentHeight = dp(12) + pageCount * pageHeight + Math.max(0, pageCount - 1) * pageGap;
+        scroll.addView(pagesView, new ScrollView.LayoutParams(-1, contentHeight));
         frame.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
 
         pageNumber = new TextView(this);
@@ -174,8 +164,6 @@ public class PdfReaderActivity extends Activity {
             while (it.hasNext()) {
                 Map.Entry<Integer, Bitmap> entry = it.next();
                 if (!wanted.contains(entry.getKey())) {
-                    ImageView iv = pageViews.get(entry.getKey());
-                    if (iv.getDrawable() != null) iv.setImageDrawable(null);
                     if (!entry.getValue().isRecycled()) entry.getValue().recycle();
                     it.remove();
                 }
@@ -194,10 +182,7 @@ public class PdfReaderActivity extends Activity {
     private void requestPage(final int index) {
         synchronized (cache) {
             Bitmap ready = cache.get(index);
-            if (ready != null && !ready.isRecycled()) {
-                if (pageViews.get(index).getDrawable() == null) pageViews.get(index).setImageBitmap(ready);
-                return;
-            }
+            if (ready != null && !ready.isRecycled()) return;
             if (pending.contains(index)) return;
             pending.add(index);
         }
@@ -232,14 +217,48 @@ public class PdfReaderActivity extends Activity {
                     while (cache.size() > 6) {
                         Integer eldest = cache.keySet().iterator().next();
                         Bitmap old = cache.remove(eldest);
-                        ImageView oldView = pageViews.get(eldest);
-                        if (oldView.getDrawable() != null) oldView.setImageDrawable(null);
                         if (!old.isRecycled()) old.recycle();
                     }
                 }
-                pageViews.get(index).setImageBitmap(result);
+                if (pagesView != null) pagesView.invalidate();
             });
         });
+    }
+
+    /** Draw only the visible PDF pages; no per-page Android views are created. */
+    private final class PdfPagesView extends View {
+        private final android.graphics.Paint pagePaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG | android.graphics.Paint.FILTER_BITMAP_FLAG);
+        private final android.graphics.Paint shadowPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+
+        PdfPagesView() {
+            super(PdfReaderActivity.this);
+            setWillNotDraw(false);
+            setBackgroundColor(Color.rgb(224,228,225));
+        }
+
+        @Override protected void onDraw(android.graphics.Canvas canvas) {
+            super.onDraw(canvas);
+            if (closing || pageCount < 1) return;
+            android.graphics.Rect clip = canvas.getClipBounds();
+            int stride = pageHeight + pageGap;
+            int first = Math.max(0, clip.top / Math.max(1, stride));
+            int last = Math.min(pageCount - 1, Math.max(first, clip.bottom / Math.max(1, stride)));
+            float left = dp(8);
+            float right = getWidth() - dp(8);
+            for (int i = first; i <= last; i++) {
+                float top = dp(6) + i * stride;
+                android.graphics.RectF dst = new android.graphics.RectF(left, top, right, top + pageHeight);
+                shadowPaint.setColor(Color.WHITE);
+                canvas.drawRect(dst, shadowPaint);
+                Bitmap bitmap;
+                synchronized (cache) { bitmap = cache.get(i); }
+                if (bitmap != null && !bitmap.isRecycled()) {
+                    canvas.drawBitmap(bitmap, null, dst, pagePaint);
+                } else {
+                    requestPage(i);
+                }
+            }
+        }
     }
 
     private final class FastScrollHandle extends View {
