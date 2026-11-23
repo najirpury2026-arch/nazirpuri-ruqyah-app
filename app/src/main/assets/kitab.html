@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#294f42"><title>কিতাবসমূহ</title>
+<style>
+:root{--g:#294f42;--bg:#eef3f6;--ink:#26352f;--muted:#68766f;--line:#d9e1e5}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:SolaimanLipi,"Noto Sans Bengali",sans-serif}
+header{height:68px;background:var(--g);color:white;display:flex;align-items:center;justify-content:space-between;padding:0 17px;position:sticky;top:0;z-index:3}
+header button{border:0;background:none;color:white;font-size:25px}header h1{font-size:22px;font-weight:500;margin:0}
+.tabs{display:flex;background:#f8fafb;overflow:auto;border-bottom:1px solid var(--line)}.tabs button{flex:1;min-width:76px;border:0;background:none;padding:16px 7px;color:#59635f;font:inherit;font-size:16px;border-bottom:2px solid transparent}.tabs button.active{color:var(--g);border-color:var(--g);font-weight:bold}
+.wrap{padding:12px 14px 28px;max-width:850px;margin:auto}.filters{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px}
+select,.search{font:inherit;color:#555;background:transparent;border:1.5px solid #39433f;border-radius:10px;padding:12px 11px;min-width:0;width:100%;font-size:14px}
+.searchrow{display:flex;gap:7px;align-items:center}.searchrow span{font-size:29px;color:#303a35}
+.status{font-size:13px;color:var(--muted);padding:12px 3px 6px}
+.book{display:flex;align-items:center;gap:14px;background:#f2f6f9;border-radius:32px;padding:16px 17px;margin:12px 0 20px;min-height:132px;box-shadow:0 7px 15px #172a3026;border:1px solid #e5ebef}
+.cover{width:88px;height:116px;flex:0 0 88px;object-fit:cover;background:#e2e8e9;border:1px solid #d4dcdf;padding:3px}.coverblank{display:grid;place-items:center;color:#8a9a91;font-size:34px}
+.meta{min-width:0;flex:1}.title{font-size:18px;line-height:1.6;color:#2d3933}.author{font-size:14px;color:#707a74;margin-top:6px;line-height:1.5}
+.action{border:0;background:none;color:#376b57;font-size:32px;min-width:40px;cursor:pointer}.action:disabled{opacity:.45}
+.empty{background:#fff;border:1px dashed #c8d5ce;border-radius:16px;text-align:center;padding:25px 16px;color:#66756c;line-height:1.9;margin-top:18px}.empty strong{display:block;color:var(--g);font-size:18px;margin-bottom:6px}
+footer{text-align:center;color:#849087;font-size:12px;padding:12px}
+</style></head><body>
+<header><button onclick="history.back()" aria-label="ফিরে যান">‹</button><h1>কিতাবসমূহ</h1><button onclick="alert('ডাউনলোড করা কিতাব অফলাইন ট্যাব থেকে খুঁজে পাবেন।')" aria-label="তথ্য">ⓘ</button></header>
+<nav class="tabs"><button class="active" data-tab="all">সকল</button><button data-tab="offline">অফলাইন</button><button data-tab="popular">জনপ্রিয়</button><button data-tab="latest">সর্বশেষ</button></nav>
+<main class="wrap"><div class="filters"><select id="author"><option value="">সকল লেখক</option></select><select id="subject"><option value="">সকল বিষয়</option></select></div>
+<div class="searchrow"><input class="search" id="q" placeholder="কিতাবের নাম লিখে খুঁজুন…" autocomplete="off"><span>⌕</span></div>
+<div class="status" id="status">কিতাবের তালিকা</div><section id="list"></section>
+<div class="empty" id="empty"><strong>কিতাবের তালিকা প্রস্তুত</strong>ইনশাআল্লাহ, এখানে ধারাবাহিকভাবে কিতাব যুক্ত করা হবে।<br>ডান পাশের ডাউনলোড চিহ্নে চাপ দিলে প্রথমবার কিতাব ফোনে সেভ হবে; পরে অফলাইনেও পাওয়া যাবে।</div>
+</main><footer>নাজিরপুরী রুকইয়া ও দাওয়াখানা</footer>
+<script>
+/* নতুন কিতাব যুক্ত করতে নিচের তালিকায় title, author, subject, cover ও সরাসরি PDF url যোগ করুন। */
+const books=[
+{title:"নূরানী হাফেজী কুরআন শরীফ",author:"",subject:"কুরআন",cover:"",url:"",popular:true},
+{title:"হাফেজ কুরআন اور اس کا مقام",author:"",subject:"কুরআন",cover:"",url:"",popular:false},
+{title:"মিশকাত শরীফ",author:"ইমাম তাবারাবী রহঃ",subject:"হাদীস",cover:"",url:"",popular:true},
+{title:"তাহাবী শরীফ ১ম খণ্ড",author:"ইমাম আবু জাফর তাহাবী রহঃ",subject:"হাদীস",cover:"",url:"",popular:false}
+];
+let tab="all";const $=id=>document.getElementById(id);
+const safe=s=>String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function fillFilters(){const authors=[...new Set(books.map(b=>b.author).filter(Boolean))],subjects=[...new Set(books.map(b=>b.subject).filter(Boolean))];$("author").innerHTML='<option value="">সকল লেখক</option>'+authors.map(x=>'<option>'+safe(x)+'</option>').join("");$("subject").innerHTML='<option value="">সকল বিষয়</option>'+subjects.map(x=>'<option>'+safe(x)+'</option>').join("")}
+function isSaved(b){return !!(window.AndroidKitab&&AndroidKitab.isDownloaded&&AndroidKitab.isDownloaded(b.file||slug(b.title)))}
+function slug(s){return String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"book"}
+function render(){const q=$("q").value.trim().toLowerCase(),a=$("author").value,s=$("subject").value;
+let rows=books.filter(b=>(!q||(b.title+" "+b.author+" "+b.subject).toLowerCase().includes(q))&&(!a||b.author===a)&&(!s||b.subject===s)&&(tab!=="popular"||b.popular)&&(tab!=="latest"||b.latest));
+if(tab==="offline")rows=rows.filter(isSaved);
+$("list").innerHTML=rows.map(b=>'<article class="book"><div class="cover coverblank">'+(b.cover?'<img class="cover" src="'+safe(b.cover)+'" alt="">':'📖')+'</div><div class="meta"><div class="title">'+safe(b.title)+'</div><div class="author">'+safe(b.author||b.subject||"")+'</div></div><button class="action" aria-label="ডাউনলোড" onclick="bookAction(\''+safe(b.file||slug(b.title))+'\',\''+safe(b.url)+'\')">'+(isSaved(b)?"✓":"⬇")+'</button></article>').join("");
+$("empty").style.display=rows.length?"none":"block";$("status").textContent=rows.length?rows.length+"টি কিতাব দেখানো হচ্ছে":(tab==="offline"?"এখনো অফলাইনে কোনো কিতাব সেভ করা হয়নি":"কোনো কিতাব পাওয়া যায়নি")}
+function bookAction(name,url){if(!url){alert("এই কিতাবের PDF এখনো যুক্ত করা হয়নি। পরে PDF লিংক যুক্ত হলে এখান থেকে ডাউনলোড করা যাবে।");return}if(window.AndroidKitab){if(AndroidKitab.isDownloaded(name)){AndroidKitab.openBook(name)}else{AndroidKitab.downloadBook(url,name)}}else{alert("এই সুবিধাটি অ্যাপের ভেতরে ব্যবহার করুন।")}}
+window.onKitabDownload=function(name,ok,msg){$("status").textContent=msg|| (ok?"ডাউনলোড সম্পন্ন":"ডাউনলোড ব্যর্থ");render()};
+document.querySelectorAll("[data-tab]").forEach(x=>x.onclick=()=>{tab=x.dataset.tab;document.querySelectorAll("[data-tab]").forEach(y=>y.classList.toggle("active",y===x));render()});
+$("q").addEventListener("input",render);$("author").addEventListener("change",render);$("subject").addEventListener("change",render);fillFilters();render();
+</script></body></html>
