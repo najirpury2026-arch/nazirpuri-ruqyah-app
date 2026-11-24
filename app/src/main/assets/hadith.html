@@ -43,6 +43,7 @@ const books=[
 const $=id=>document.getElementById(id);let current=null,metaData={},selectedChapter=null;
 // Retry Hadith JSON from a mirror if the primary CDN is unavailable.
 async function fetchHadithJson(url){
+ if(window.AndroidHadith){try{const saved=AndroidHadith.getCachedJson(url);if(saved)return JSON.parse(saved)}catch(e){}}
  const candidates=[url,
   url.replace('cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/','cdn.jsdelivr.net/gh/kafelanetwork/hadith-api@main/'),
   url.replace('cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/','raw.githubusercontent.com/md-rifatkhan/hadithbangla/main/'),
@@ -50,7 +51,7 @@ async function fetchHadithJson(url){
  ].filter((v,i,a)=>a.indexOf(v)===i);
  let lastError;
  for(const endpoint of candidates){
-  try{const response=await fetch(endpoint,{cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);return await response.json()}
+  try{const response=await fetch(endpoint,{cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);const data=await response.json();if(window.AndroidHadith){try{AndroidHadith.saveCachedJson(url,JSON.stringify(data))}catch(e){}}return data}
   catch(error){lastError=error}
  }
  throw lastError||new Error('ডেটা সার্ভার সাড়া দেয়নি');
@@ -59,7 +60,26 @@ const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[+d]);con
 function renderBooks(){document.body.classList.remove('in-reader');$('books').innerHTML=books.map((b,i)=>'<article class="book" data-id="'+b.id+'"><div class="num">'+bn(i+1)+'</div><div class="info"><div class="bn">'+b.bn+'</div><div class="ar">'+b.ar+'</div><div class="stats">'+b.count+' টি হাদীস · '+bn(b.chapters)+' টি অধ্যায়</div></div><div class="act">↓</div></article>').join('');document.querySelectorAll('.book').forEach(el=>el.onclick=()=>openBook(el.dataset.id))}
 async function openBook(id){document.body.classList.add('in-reader');current=books.find(b=>b.id===id);selectedChapter=null;$('books').classList.add('hidden');$('reader').classList.remove('hidden');$('detailPanel').classList.remove('hidden');$('chapters').classList.remove('hidden');$('hadiths').classList.remove('hidden');$('headtitle').textContent=current.bn;$('bookbn').textContent=current.bn;$('bookar').textContent=current.ar;$('bookstats').textContent=current.count+' টি হাদীস · '+bn(current.chapters)+' টি অধ্যায়';$('chapters').innerHTML='';$('hadiths').innerHTML='';$('chapterQ').value='';$('hadithNo').value='';$('loading').textContent='অধ্যায়ের তালিকা আনা হচ্ছে…';
 if(!current.meta){$('loading').textContent='এই কিতাবের অধ্যায় ও বাংলা হাদীসের তথ্যসূত্র এখনো যুক্ত করা হয়নি।';return}
-try{metaData=await fetchHadithJson(current.meta);renderChapters()}catch(e){$('loading').textContent='তথ্য লোড হয়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।'}}
+try{metaData=await fetchHadithJson(current.meta);renderChapters();if(window.AndroidHadith)preloadWholeBook(current)}catch(e){$('loading').textContent='তথ্য লোড হয়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।'}}
+let preloadRunning={};
+async function preloadWholeBook(book){
+ if(!book.api||!metaData||preloadRunning[book.id])return;
+ if(window.AndroidHadith&&AndroidHadith.isBookComplete(book.id)){return}
+ preloadRunning[book.id]=true;
+ const ranges=Object.values(metaData).map(v=>parseRange(v.hadis_range)).filter(r=>r[0]>0&&r[1]>=r[0]);
+ const nums=[];ranges.forEach(r=>{for(let n=r[0];n<=r[1];n++)nums.push(n)});
+ const unique=[...new Set(nums)];let done=0,failed=0;
+ const status=$('loading');if(status)status.textContent='প্রথমবারের জন্য '+book.bn+' অফলাইনে সংরক্ষণ হচ্ছে…';
+ for(let i=0;i<unique.length;i+=6){
+  const batch=unique.slice(i,i+6);
+  const results=await Promise.all(batch.map(async n=>{try{await fetchHadithJson(book.api+n+'.json');return true}catch(e){return false}}));
+  results.forEach(ok=>{done++;if(!ok)failed++});
+  if(status&&current&&current.id===book.id)status.textContent='অফলাইনে সংরক্ষণ: '+bn(done)+' / '+bn(unique.length)+' হাদীস'+(failed?' · '+bn(failed)+'টি এখনো ডাউনলোড হয়নি':'');
+ }
+ if(window.AndroidHadith)AndroidHadith.markBookComplete(book.id,failed===0);
+ if(status&&current&&current.id===book.id)status.textContent=failed===0?'এই কিতাবের সব হাদীস ফোনে সংরক্ষিত। এখন অফলাইনেও পড়তে পারবেন।':'কিছু হাদীস ডাউনলোড হয়নি। ইন্টারনেট পেলে আবার কিতাবটি খুলুন।';
+ delete preloadRunning[book.id];
+}
 function renderChapters(){const q=$('chapterQ').value.trim().toLowerCase();const entries=Object.entries(metaData).filter(([k,v])=>(String(v.title||'')+' '+String(v.hadis_range||'')).toLowerCase().includes(q));$('chapters').innerHTML=entries.map(([k,v])=>{const active=String(k)===String(selectedChapter);return '<div class="chapter '+(active?'selected':'')+'" data-ch="'+esc(k)+'"><div class="chno">'+bn(k)+'</div><div><div class="chtitle">'+esc(v.title||'অধ্যায়')+'</div><div class="range">হাদীস '+esc(v.hadis_range||'')+'</div></div></div>'}).join('');$('loading').textContent=entries.length?'':'কোনো অধ্যায় পাওয়া যায়নি';document.querySelectorAll('.chapter').forEach(el=>el.onclick=()=>selectChapter(el.dataset.ch))}
 function parseRange(s){const nums=(String(s||'').match(/[0-9০-৯]+/g)||[]).map(x=>parseInt(x.replace(/[০-৯]/g,d=>'০১২৩৪৫৬৭৮৯'.indexOf(d)),10));return nums.length>=2?[nums[0],nums[1]]:nums.length?[nums[0],nums[0]]:[0,0]}
 function selectChapter(k){selectedChapter=k;const v=metaData[k];const [a,b]=parseRange(v.hadis_range);let start=Math.max(1,a),end=Math.min(b,start+249);$('chapters').classList.add('hidden');$('detailPanel').classList.add('hidden');$('hadiths').classList.remove('hidden');if(!start||!end){$('hadiths').innerHTML='<div class="status">হাদীস নম্বর পাওয়া যায়নি</div>';$('loading').textContent='';return}
