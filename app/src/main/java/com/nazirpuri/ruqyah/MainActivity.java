@@ -1468,8 +1468,10 @@ public class MainActivity extends Activity {
 
     // Download books once into private app storage; keep them available offline.
     private final class KitabBridge {
-        // Track each title independently: different books may download at the same time.
+        // Run up to ten downloads simultaneously; queue any additional selected books.
         private final java.util.Set<String> activeBookDownloads = java.util.concurrent.ConcurrentHashMap.newKeySet();
+        private final java.util.concurrent.ExecutorService bookDownloadExecutor =
+            java.util.concurrent.Executors.newFixedThreadPool(10);
 
         private File bookFile(String name) {
             String safe = name == null ? "" : name.replaceAll("[^a-zA-Z0-9_-]", "");
@@ -1498,7 +1500,10 @@ public class MainActivity extends Activity {
                 notifyBook(name, false, "এই কিতাবটির ডাউনলোড ইতোমধ্যে চলছে।");
                 return;
             }
-            new Thread(() -> {
+            notifyBookQueued(name);
+            try {
+            bookDownloadExecutor.execute(() -> {
+                notifyBookStarted(name);
                 File dir = target.getParentFile();
                 File temp = new File(dir, target.getName() + ".part");
                 try {
@@ -1508,8 +1513,8 @@ public class MainActivity extends Activity {
                     if (id == null || id.trim().isEmpty()) throw new Exception("Drive ফাইলের ID পাওয়া যায়নি");
                     downloadGoogleDrivePdf(id, temp, name);
                     if (temp.length() < 1000) throw new Exception("ফাইলটি সম্পূর্ণ ডাউনলোড হয়নি");
-                    if (!isPdfFile(temp)) {
-                        throw new Exception("Drive থেকে বৈধ PDF ফাইল পাওয়া যায়নি (PDF header প্রথম 1024 বাইটেও নেই)");
+                    if (!isPdfFile(temp) || !hasPdfEof(temp)) {
+                        throw new Exception("Drive থেকে সম্পূর্ণ ও বৈধ PDF ফাইল পাওয়া যায়নি");
                     }
                     if (target.exists()) target.delete();
                     if (!temp.renameTo(target)) throw new Exception("ফাইল সংরক্ষণ করা যায়নি");
@@ -1523,7 +1528,11 @@ public class MainActivity extends Activity {
                 } finally {
                     activeBookDownloads.remove(name);
                 }
-            }).start();
+            });
+            } catch (java.util.concurrent.RejectedExecutionException e) {
+                activeBookDownloads.remove(name);
+                notifyBook(name, false, "ডাউনলোডের সারি পূর্ণ। কিছুক্ষণ পর আবার চেষ্টা করুন।");
+            }
         }
 
         @JavascriptInterface
@@ -1542,6 +1551,24 @@ public class MainActivity extends Activity {
                 } catch (Exception e) {
                     android.widget.Toast.makeText(MainActivity.this,
                         "কিতাবটি খোলা যাচ্ছে না। আবার চেষ্টা করুন।", android.widget.Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+
+        private void notifyBookQueued(String name) {
+            mainHandler.post(() -> {
+                if (webView != null) {
+                    String key = org.json.JSONObject.quote(name == null ? "" : name);
+                    webView.evaluateJavascript("if(window.onBookQueued)window.onBookQueued(" + key + ")", null);
+                }
+            });
+        }
+
+        private void notifyBookStarted(String name) {
+            mainHandler.post(() -> {
+                if (webView != null) {
+                    String key = org.json.JSONObject.quote(name == null ? "" : name);
+                    webView.evaluateJavascript("if(window.onBookStarted)window.onBookStarted(" + key + ")", null);
                 }
             });
         }
@@ -1571,6 +1598,13 @@ public class MainActivity extends Activity {
         // If Drive returns HTML, keep it in memory only to parse its confirmation form.
         private byte[] readDriveResponse(HttpURLConnection connection, File temp, String name) throws Exception {
             long total = connection.getContentLengthLong();
+            String contentRange = connection.getHeaderField("Content-Range");
+            if (contentRange != null) {
+                java.util.regex.Matcher range = java.util.regex.Pattern.compile("(?i)bytes\\s+\\d+-\\d+/(\\d+)").matcher(contentRange);
+                if (range.find()) {
+                    try { total = Long.parseLong(range.group(1)); } catch (NumberFormatException ignored) { }
+                }
+            }
             try (java.io.InputStream input = new java.io.BufferedInputStream(connection.getInputStream())) {
                 // PDF specifications permit the %PDF- marker within the first 1024 bytes.
                 // Some Drive octet-stream responses contain a short preamble before the header.
@@ -1590,10 +1624,15 @@ public class MainActivity extends Activity {
                         notifyBookProgress(name, done, total);
                         byte[] buffer = new byte[65536];
                         int n;
+                        long lastProgressAt = android.os.SystemClock.elapsedRealtime();
                         while ((n = input.read(buffer)) != -1) {
                             out.write(buffer, 0, n);
                             done += n;
-                            notifyBookProgress(name, done, total);
+                            long now = android.os.SystemClock.elapsedRealtime();
+                            if (now - lastProgressAt >= 250L) {
+                                notifyBookProgress(name, done, total);
+                                lastProgressAt = now;
+                            }
                         }
                         out.flush();
                     }
@@ -1604,7 +1643,11 @@ public class MainActivity extends Activity {
                         notifyBookProgress(name, done, total);
                         throw new Exception("ডাউনলোড অসম্পূর্ণ: " + done + " / " + total + " বাইট এসেছে। ইন্টারনেট স্থিতিশীল হলে আবার চেষ্টা করুন।");
                     }
-                    if (!isPdfFile(temp)) throw new Exception("ডাউনলোড করা ফাইলটি বৈধ PDF নয়");
+                    if (!isPdfFile(temp) || !hasPdfEof(temp))
+                        throw new Exception("PDF ফাইলটি সম্পূর্ণ আসেনি; শেষ অংশ যাচাই করা যায়নি। আবার ডাউনলোড করুন।");
+                    // Unknown server length? Show 100% only after EOF and PDF trailer validation.
+                    if (total <= 0) notifyBookProgress(name, done, done);
+                    else notifyBookProgress(name, done, total);
                     return null;
                 }
                 java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
@@ -1831,6 +1874,18 @@ public class MainActivity extends Activity {
                 notifyBookProgress(name, bytes.length, total > 0 ? total : bytes.length);
             }
             if (!isPdfFile(temp)) throw new Exception("ডাউনলোড করা ফাইলটি বৈধ PDF নয়");
+        }
+
+        private boolean hasPdfEof(File file) {
+            if (file == null || !file.isFile() || file.length() < 1000) return false;
+            try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(file, "r")) {
+                int length = (int)Math.min(4096L, raf.length());
+                byte[] tail = new byte[length];
+                raf.seek(raf.length() - length);
+                raf.readFully(tail);
+                String ending = new String(tail, java.nio.charset.StandardCharsets.ISO_8859_1);
+                return ending.contains("%%EOF");
+            } catch (Exception ignored) { return false; }
         }
 
         private boolean isPdfFile(File file) {
