@@ -62,6 +62,17 @@ public class MainActivity extends Activity {
     private volatile boolean rahmanDownloading = false;
     private volatile boolean mulkDownloading = false;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    // One app-wide queue: up to 10 PDF downloads run at the same time;
+    // every additional tap is kept in the queue until a worker becomes free.
+    private static final java.util.Set<String> ACTIVE_BOOK_DOWNLOADS =
+        java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private static final java.util.concurrent.ExecutorService BOOK_DOWNLOAD_EXECUTOR =
+        java.util.concurrent.Executors.newFixedThreadPool(10, runnable -> {
+            Thread thread = new Thread(runnable, "kitab-pdf-download");
+            thread.setPriority(Thread.NORM_PRIORITY - 1);
+            return thread;
+        });
     private final String[] titles = {"কুরআন","তাফসীর","হাদীস","নামাজের সময়সূচী","তিলাওয়াত","অডিও তেলাওয়াত","অনুবাদসহ তেলাওয়াত","রুকইয়া","কিতাব","কুরআন শিক্ষা","দু'আ","কিবলা","তাসবীহ্","মসজিদ খুঁজুন","ইসলামিক নাম","ক্যালেন্ডার","গুরুত্বপূর্ণ দিন","অন্যান্য","আমাদের সেবা","আমাদের ওয়েবসাইট"};
     private final String[] icons = {"📖","📜","📚","🕌","🎧","🔊","🎙️","🤲","📘","🌙","🤲","🧭","📿","🕌","👶","🗓️","🌙","☪️","🤝","🌐"};
 
@@ -1468,10 +1479,8 @@ public class MainActivity extends Activity {
 
     // Download books once into private app storage; keep them available offline.
     private final class KitabBridge {
-        // Run up to ten downloads simultaneously; queue any additional selected books.
-        private final java.util.Set<String> activeBookDownloads = java.util.concurrent.ConcurrentHashMap.newKeySet();
-        private final java.util.concurrent.ExecutorService bookDownloadExecutor =
-            java.util.concurrent.Executors.newFixedThreadPool(10);
+        // Shared app-wide executor and active set prevent separate WebView bridge
+        // instances from creating competing pools or duplicate downloads.
 
         private File bookFile(String name) {
             String safe = name == null ? "" : name.replaceAll("[^a-zA-Z0-9_-]", "");
@@ -1496,13 +1505,13 @@ public class MainActivity extends Activity {
                 openOfflineBook(name);
                 return;
             }
-            if (!activeBookDownloads.add(name)) {
+            if (!ACTIVE_BOOK_DOWNLOADS.add(name)) {
                 notifyBook(name, false, "এই কিতাবটির ডাউনলোড ইতোমধ্যে চলছে।");
                 return;
             }
             notifyBookQueued(name);
             try {
-            bookDownloadExecutor.execute(() -> {
+            BOOK_DOWNLOAD_EXECUTOR.execute(() -> {
                 notifyBookStarted(name);
                 File dir = target.getParentFile();
                 File temp = new File(dir, target.getName() + ".part");
@@ -1526,11 +1535,11 @@ public class MainActivity extends Activity {
                     temp.delete();
                     notifyBook(name, false, "ডাউনলোড হয়নি: " + e.getMessage());
                 } finally {
-                    activeBookDownloads.remove(name);
+                    ACTIVE_BOOK_DOWNLOADS.remove(name);
                 }
             });
             } catch (java.util.concurrent.RejectedExecutionException e) {
-                activeBookDownloads.remove(name);
+                ACTIVE_BOOK_DOWNLOADS.remove(name);
                 notifyBook(name, false, "ডাউনলোডের সারি পূর্ণ। কিছুক্ষণ পর আবার চেষ্টা করুন।");
             }
         }
