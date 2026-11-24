@@ -41,17 +41,31 @@ const books=[
 {id:'muwatta',bn:'মুয়াত্তা মালিক',ar:'موطأ الإمام مالك',count:'১৮৮৯',chapters:61,base:'',meta:'',api:''}
 ];
 const $=id=>document.getElementById(id);let current=null,metaData={},selectedChapter=null;
+// Retry Hadith JSON from a mirror if the primary CDN is unavailable.
+async function fetchHadithJson(url){
+ const candidates=[url,
+  url.replace('cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/','cdn.jsdelivr.net/gh/kafelanetwork/hadith-api@main/'),
+  url.replace('cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/','raw.githubusercontent.com/md-rifatkhan/hadithbangla/main/'),
+  url.replace('cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/','raw.githubusercontent.com/kafelanetwork/hadith-api/main/')
+ ].filter((v,i,a)=>a.indexOf(v)===i);
+ let lastError;
+ for(const endpoint of candidates){
+  try{const response=await fetch(endpoint,{cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);return await response.json()}
+  catch(error){lastError=error}
+ }
+ throw lastError||new Error('ডেটা সার্ভার সাড়া দেয়নি');
+}
 const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[+d]);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function renderBooks(){document.body.classList.remove('in-reader');$('books').innerHTML=books.map((b,i)=>'<article class="book" data-id="'+b.id+'"><div class="num">'+bn(i+1)+'</div><div class="info"><div class="bn">'+b.bn+'</div><div class="ar">'+b.ar+'</div><div class="stats">'+b.count+' টি হাদীস · '+bn(b.chapters)+' টি অধ্যায়</div></div><div class="act">↓</div></article>').join('');document.querySelectorAll('.book').forEach(el=>el.onclick=()=>openBook(el.dataset.id))}
 async function openBook(id){document.body.classList.add('in-reader');current=books.find(b=>b.id===id);selectedChapter=null;$('books').classList.add('hidden');$('reader').classList.remove('hidden');$('headtitle').textContent=current.bn;$('bookbn').textContent=current.bn;$('bookar').textContent=current.ar;$('bookstats').textContent=current.count+' টি হাদীস · '+bn(current.chapters)+' টি অধ্যায়';$('chapters').innerHTML='';$('hadiths').innerHTML='';$('chapterQ').value='';$('hadithNo').value='';$('loading').textContent='অধ্যায়ের তালিকা আনা হচ্ছে…';
 if(!current.meta){$('loading').textContent='এই কিতাবের অধ্যায় ও বাংলা হাদীসের তথ্যসূত্র এখনো যুক্ত করা হয়নি।';return}
-try{const res=await fetch(current.meta);if(!res.ok)throw Error('network');metaData=await res.json();renderChapters()}catch(e){$('loading').textContent='তথ্য লোড হয়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।'}}
+try{const res=await fetch(current.meta);if(!res.ok)throw Error('network');metaData=await fetchHadithJson(current.meta);renderChapters()}catch(e){$('loading').textContent='তথ্য লোড হয়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।'}}
 function renderChapters(){const q=$('chapterQ').value.trim().toLowerCase();const entries=Object.entries(metaData).filter(([k,v])=>(String(v.title||'')+' '+String(v.hadis_range||'')).toLowerCase().includes(q));$('chapters').innerHTML=entries.map(([k,v])=>{const active=String(k)===String(selectedChapter);return '<div class="chapter '+(active?'selected':'')+'" data-ch="'+esc(k)+'"><div class="chno">'+bn(k)+'</div><div><div class="chtitle">'+esc(v.title||'অধ্যায়')+'</div><div class="range">হাদীস '+esc(v.hadis_range||'')+'</div></div></div>'}).join('');$('loading').textContent=entries.length?'':'কোনো অধ্যায় পাওয়া যায়নি';document.querySelectorAll('.chapter').forEach(el=>el.onclick=()=>selectChapter(el.dataset.ch))}
 function parseRange(s){const nums=(String(s||'').match(/[0-9০-৯]+/g)||[]).map(x=>parseInt(x.replace(/[০-৯]/g,d=>'০১২৩৪৫৬৭৮৯'.indexOf(d)),10));return nums.length>=2?[nums[0],nums[1]]:nums.length?[nums[0],nums[0]]:[0,0]}
 function selectChapter(k){selectedChapter=k;const v=metaData[k];renderChapters();$('hadiths').innerHTML='';const [a,b]=parseRange(v.hadis_range);let start=Math.max(1,a),end=Math.min(b,start+249);$('loading').textContent='অধ্যায়ের হাদীস নম্বর লোড হচ্ছে…';if(!start||!end){$('loading').textContent='হাদীস নম্বর পাওয়া যায়নি';return}
 let html='';for(let n=start;n<=end;n++){html+='<article class="hadith" data-h="'+n+'"><div class="hno">হাদীস '+bn(n)+' দেখুন</div></article>'}
 $('hadiths').innerHTML=html;$('loading').textContent=end<b?'এই অধ্যায়ের প্রথম ২৫০টি হাদীস দেখানো হয়েছে।':'অধ্যায়ের হাদীস নম্বর নির্বাচন করুন।';document.querySelectorAll('.hadith').forEach(el=>el.onclick=()=>loadHadith(el.dataset.h))}
-async function loadHadith(n){$('loading').textContent='হাদীস লোড হচ্ছে…';try{const r=await fetch(current.api+n+'.json');if(!r.ok)throw Error();const j=await r.json();const h=j.hadith||j;$('hadiths').innerHTML='<article class="hadith"><div class="hno">হাদীস '+bn(h.hadith_id||n)+' · '+esc(h.grade||'')+'</div><div class="har">'+esc(h.ar||'')+'</div><div class="hbn">'+esc(h.narrator||'')+' '+esc(h.bn||'')+'</div>'+(h.note?'<div class="grade">'+esc(h.note)+'</div>':'')+'</article>';$('loading').textContent=''}catch(e){$('loading').textContent='এই হাদীসটি এখন লোড করা যাচ্ছে না।'}}
+async function loadHadith(n){$('loading').textContent='হাদীস লোড হচ্ছে…';try{const j=await fetchHadithJson(current.api+n+'.json');const h=j.hadith||j;$('hadiths').innerHTML='<article class="hadith"><div class="hno">হাদীস '+bn(h.hadith_id||n)+' · '+esc(h.grade||'')+'</div><div class="har">'+esc(h.ar||'')+'</div><div class="hbn">'+esc(h.narrator||'')+' '+esc(h.bn||'')+'</div>'+(h.note?'<div class="grade">'+esc(h.note)+'</div>':'')+'</article>';$('loading').textContent=''}catch(e){$('loading').textContent='এই হাদীসটি এখন লোড করা যাচ্ছে না।'}}
 $('back').onclick=()=>{if(!$('reader').classList.contains('hidden')){$('reader').classList.add('hidden');$('books').classList.remove('hidden');$('headtitle').textContent='হাদীসের কিতাবসমূহ';$('loading').textContent=''}else if(window.AndroidHadith&&AndroidHadith.close){AndroidHadith.close()}else history.back()};
 $('chapterQ').addEventListener('input',renderChapters);$('jump').onclick=()=>{const n=parseInt($('hadithNo').value,10);if(!n){$('loading').textContent='হাদীস নম্বর লিখুন';return}loadHadith(n)};
 renderBooks();
