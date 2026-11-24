@@ -1468,16 +1468,30 @@ public class MainActivity extends Activity {
         v.setGravity(Gravity.CENTER); return v;
     }
     private int dp(int n){return (int)(n*getResources().getDisplayMetrics().density+0.5f);}
+    private boolean androidBackCheckPending = false;
     @Override public void onBackPressed(){
-        if (showingWeb) {
-            if (hadithReaderOpen && webView != null) {
-                hadithReaderOpen = false;
-                webView.evaluateJavascript("if(window.nazirHandleAndroidBack)window.nazirHandleAndroidBack()", null);
-                return;
+        if (!showingWeb || webView == null) { super.onBackPressed(); return; }
+        if (androidBackCheckPending) return;
+        final WebView current = webView;
+        androidBackCheckPending = true;
+        try {
+            current.evaluateJavascript(
+                "(function(){try{return !!(window.nazirHandleAndroidBack && window.nazirHandleAndroidBack());}catch(e){return false;}})()",
+                result -> {
+                    androidBackCheckPending = false;
+                    if (current != webView || !showingWeb) return;
+                    if ("true".equals(result)) return;
+                    if (current.canGoBack()) current.goBack();
+                    else showHome();
+                }
+            );
+        } catch (Exception e) {
+            androidBackCheckPending = false;
+            if (current == webView && showingWeb) {
+                if (current.canGoBack()) current.goBack();
+                else showHome();
             }
-            if (webView != null && webView.canGoBack()) webView.goBack();
-            else showHome();
-        } else super.onBackPressed();
+        }
     }
     @Override protected void onDestroy(){
         if(yasinPlayer!=null){ yasinPlayer.release(); yasinPlayer=null; }
