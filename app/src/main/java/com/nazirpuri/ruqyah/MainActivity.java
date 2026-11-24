@@ -40,6 +40,7 @@ public class MainActivity extends Activity {
     private ProgressBar progressBar;
     private LinearLayout root;
     private boolean showingWeb = false;
+    private volatile boolean hadithReaderOpen = false;
     private boolean openQuranWhenLoaded = false;
     private MediaPlayer yasinPlayer;
     private MediaPlayer rahmanPlayer;
@@ -1468,8 +1469,15 @@ public class MainActivity extends Activity {
     }
     private int dp(int n){return (int)(n*getResources().getDisplayMetrics().density+0.5f);}
     @Override public void onBackPressed(){
-        if(showingWeb){if(webView!=null&&webView.canGoBack())webView.goBack();else showHome();}
-        else super.onBackPressed();
+        if (showingWeb) {
+            if (hadithReaderOpen && webView != null) {
+                hadithReaderOpen = false;
+                webView.evaluateJavascript("if(window.nazirHandleAndroidBack)window.nazirHandleAndroidBack()", null);
+                return;
+            }
+            if (webView != null && webView.canGoBack()) webView.goBack();
+            else showHome();
+        } else super.onBackPressed();
     }
     @Override protected void onDestroy(){
         if(yasinPlayer!=null){ yasinPlayer.release(); yasinPlayer=null; }
@@ -1481,6 +1489,7 @@ public class MainActivity extends Activity {
 
     // Persistent per-URL Hadith JSON cache for full offline access.
     private final class HadithBridge {
+        @JavascriptInterface public void setReaderOpen(boolean open) { hadithReaderOpen = open; }
         private File cacheDir() {
             File dir = new File(getFilesDir(), "hadith_cache");
             if (!dir.exists()) dir.mkdirs();
