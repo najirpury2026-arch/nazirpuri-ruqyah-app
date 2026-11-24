@@ -1468,6 +1468,9 @@ public class MainActivity extends Activity {
 
     // Download books once into private app storage; keep them available offline.
     private final class KitabBridge {
+        // Track each title independently: different books may download at the same time.
+        private final java.util.Set<String> activeBookDownloads = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
         private File bookFile(String name) {
             String safe = name == null ? "" : name.replaceAll("[^a-zA-Z0-9_-]", "");
             return new File(new File(getFilesDir(), "kitab_books"), safe + ".pdf");
@@ -1491,10 +1494,13 @@ public class MainActivity extends Activity {
                 openOfflineBook(name);
                 return;
             }
+            if (!activeBookDownloads.add(name)) {
+                notifyBook(name, false, "এই কিতাবটির ডাউনলোড ইতোমধ্যে চলছে।");
+                return;
+            }
             new Thread(() -> {
                 File dir = target.getParentFile();
                 File temp = new File(dir, target.getName() + ".part");
-                HttpURLConnection connection = null;
                 try {
                     if (!dir.exists() && !dir.mkdirs()) throw new Exception("ফোল্ডার তৈরি করা যায়নি");
                     Uri source = Uri.parse(address);
@@ -1508,16 +1514,14 @@ public class MainActivity extends Activity {
                     if (target.exists()) target.delete();
                     if (!temp.renameTo(target)) throw new Exception("ফাইল সংরক্ষণ করা যায়নি");
                     notifyBookProgress(name, target.length(), target.length());
-                    notifyBook(name, true, "ডাউনলোড সম্পূর্ণ হয়েছে। কিতাব খুলছে…");
-                    // Open the verified, fully saved PDF immediately after download.
-                    // This avoids relying on a WebView re-render/tap while its download
-                    // progress callbacks are still settling.
-                    openOfflineBook(name);
+                    // Do not open the reader automatically: leave the book list visible
+                    // so users can start or finish other book downloads independently.
+                    notifyBook(name, true, "ডাউনলোড সম্পূর্ণ হয়েছে। অফলাইনে পড়তে কিতাবটিতে আবার চাপ দিন।");
                 } catch (Exception e) {
                     temp.delete();
                     notifyBook(name, false, "ডাউনলোড হয়নি: " + e.getMessage());
                 } finally {
-                    if (connection != null) connection.disconnect();
+                    activeBookDownloads.remove(name);
                 }
             }).start();
         }
