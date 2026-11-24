@@ -70,7 +70,7 @@ public class MainActivity extends Activity {
     private static final java.util.concurrent.ExecutorService BOOK_DOWNLOAD_EXECUTOR =
         java.util.concurrent.Executors.newFixedThreadPool(10, runnable -> {
             Thread thread = new Thread(runnable, "kitab-pdf-download");
-            thread.setPriority(Thread.NORM_PRIORITY - 1);
+            thread.setPriority(Thread.NORM_PRIORITY);
             return thread;
         });
     private final String[] titles = {"কুরআন","তাফসীর","হাদীস","নামাজের সময়সূচী","তিলাওয়াত","অডিও তেলাওয়াত","অনুবাদসহ তেলাওয়াত","রুকইয়া","কিতাব","কুরআন শিক্ষা","দু'আ","কিবলা","তাসবীহ্","মসজিদ খুঁজুন","ইসলামিক নাম","ক্যালেন্ডার","গুরুত্বপূর্ণ দিন","অন্যান্য","আমাদের সেবা","আমাদের ওয়েবসাইট"};
@@ -1176,7 +1176,7 @@ public class MainActivity extends Activity {
             int code = connection.getResponseCode();
             if (code < 200 || code >= 300) throw new Exception("ডাউনলোড সার্ভার সাড়া দেয়নি (" + code + ")");
             try (InputStream in = connection.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
-                byte[] buffer = new byte[65536]; int n;
+                byte[] buffer = new byte[262144]; int n;
                 while ((n = in.read(buffer)) != -1) out.write(buffer, 0, n);
             }
             if (temp.length() < 1000000) throw new Exception("অডিও ফাইলটি সম্পূর্ণ ডাউনলোড হয়নি।");
