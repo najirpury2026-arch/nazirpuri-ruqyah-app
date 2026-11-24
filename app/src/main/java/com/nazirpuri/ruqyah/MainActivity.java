@@ -711,6 +711,7 @@ public class MainActivity extends Activity {
     }
 
     private void openSection(int index) {
+        if (index == 2) { showWeb("file:///android_asset/hadith.html"); return; }
         if (index == 1) { showWeb("file:///android_asset/tafsir.html"); return; }
         if (index == 8) { showWeb("file:///android_asset/kitab.html"); return; }
         if (index == 0) {
