@@ -86,11 +86,12 @@ function formatSpeed(bytesPerSecond){bytesPerSecond=Math.max(0,Number(bytesPerSe
 function formatDuration(seconds){if(!isFinite(seconds)||seconds<0)return "হিসাব হচ্ছে";seconds=Math.ceil(seconds);if(seconds<60)return seconds+" সেকেন্ড";const m=Math.floor(seconds/60),s=seconds%60;if(m<60)return m+" মিনিট "+s+" সেকেন্ড";const h=Math.floor(m/60),r=m%60;return h+" ঘণ্টা "+r+" মিনিট"}
 function bookAction(name,url){
 if(window.AndroidKitab){
- // Open saved books before checking the global download lock. A stale lock must not block offline reading.
+ // A lock is maintained per book, so different books can download concurrently.
  if(isDownloaded(name)){AndroidKitab.openOfflineBook(name);return}
- if(window.__tafsirDownloading)return;
+ window.__tafsirDownloading=window.__tafsirDownloading||Object.create(null);
+ if(window.__tafsirDownloading[name])return;
  if(!url){alert("এই কিতাবের PDF লিংক এখনো যুক্ত করা হয়নি।");return}
- window.__tafsirDownloading=true;window.__tafsirProgress=window.__tafsirProgress||{};window.__tafsirProgress[name]={downloaded:0,total:0,speedBps:0,sampleBytes:0,sampleAt:Date.now()};
+ window.__tafsirDownloading[name]=true;window.__tafsirProgress=window.__tafsirProgress||{};window.__tafsirProgress[name]={downloaded:0,total:0,speedBps:0,sampleBytes:0,sampleAt:Date.now()};
  render();AndroidKitab.downloadBook(name,url);return
 }
 if(url)window.open(url,"_blank","noopener")
@@ -114,7 +115,7 @@ window.onBookProgress=function(name,downloaded,total){
 };
 window.onBookDownload=function(name,success,message){
  if(success)downloadedBooks.add(name);
- window.__tafsirDownloading=false;
+ if(window.__tafsirDownloading)delete window.__tafsirDownloading[name];
  if(window.__tafsirProgress)delete window.__tafsirProgress[name];
  render()
 };
