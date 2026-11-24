@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#00574d"><title>হাদীস বিভাগ</title>
+<style>
+:root{--deep:#00574d;--green:#4d9b87;--mint:#d9f4f1;--pale:#c5e4df;--ink:#183e3a;--blue:#20566a;--line:#b7dcd5}
+*{box-sizing:border-box}body{margin:0;background:var(--pale);color:var(--ink);font-family:SolaimanLipi,"Noto Sans Bengali",sans-serif}
+header{height:66px;background:var(--deep);color:#e3fff8;display:flex;align-items:center;gap:14px;padding:0 17px;position:sticky;top:0;z-index:5;box-shadow:0 2px 5px #003c3540}
+header button{border:0;background:none;color:inherit;font-size:29px;min-width:35px}header h1{font-size:21px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;flex:1}
+.wrap{padding:9px 14px 30px;max-width:850px;margin:auto}
+.book{display:flex;align-items:center;gap:13px;background:var(--mint);border:1px solid #c9efea;border-radius:26px;padding:15px 15px;margin:10px 0 17px;min-height:132px;box-shadow:0 2px 5px #4c93851a;cursor:pointer}
+.num{width:57px;height:57px;flex:0 0 57px;border-radius:50%;display:grid;place-items:center;background:#c9eeea;border:2px solid #addbd4;color:#064e47;font-size:26px}
+.info{min-width:0;flex:1}.bn{font-size:21px;font-weight:bold;color:#172f2d;line-height:1.45}.ar{font-family:serif;font-size:19px;direction:rtl;text-align:left;color:#244e49;margin-top:5px}.stats{font-size:17px;color:var(--blue);margin-top:7px}.act{color:var(--green);font-size:29px;padding:0 2px}
+.detail{padding:17px 14px 5px}.dtitle{font-size:21px;font-weight:bold;color:#142f2c}.dar{font-family:serif;font-size:25px;text-align:right;direction:rtl;margin:14px 0 18px;color:#1e3935}.dmeta{font-size:18px;color:var(--blue);margin:16px 0 22px}
+.searchrow{display:flex;gap:9px;align-items:center;margin:13px 0}.field{font:inherit;font-size:17px;background:var(--mint);border:1.5px solid var(--line);border-radius:19px;padding:15px 16px;min-width:0;width:100%;color:var(--ink);outline:none}.go{border:0;border-radius:28px;background:var(--green);color:#073e37;font:inherit;font-size:18px;padding:13px 24px;white-space:nowrap}
+.chapter-search{margin:14px 0}.chapter{display:flex;gap:14px;align-items:center;padding:16px 7px;border-bottom:1px solid #b7d9d2;cursor:pointer;min-height:91px}.chapter.selected{background:#8bb9b2;border-left:7px solid var(--deep);border-radius:0 12px 12px 0}.chno{width:64px;height:64px;flex:0 0 64px;border-radius:17px;background:#d8f2ef;display:grid;place-items:center;color:#07584e;font-size:25px}.chtitle{font-size:19px;font-weight:bold;color:#1b3532}.range{font-size:17px;color:var(--blue);margin-top:3px}.hadith{background:#ddf5f2;border:1px solid #b8ded7;border-radius:18px;padding:15px;margin:13px 0;cursor:pointer}.hno{color:var(--green);font-size:16px;font-weight:bold}.har{font-family:serif;direction:rtl;text-align:right;font-size:24px;line-height:1.9;margin:12px 0}.hbn{font-size:18px;line-height:1.9;color:#244a44}.grade{font-size:14px;color:#448b79;margin-top:8px}
+.status{text-align:center;color:#49776e;padding:18px;font-size:15px}.hidden{display:none!important}.footer{text-align:center;color:#63857d;font-size:12px;padding:20px}
+</style></head><body>
+<header><button id="back" aria-label="ফিরে যান">‹</button><h1 id="headtitle">হাদীসের কিতাবসমূহ</h1><span style="font-size:23px">☰</span></header>
+<main class="wrap">
+<section id="books"></section>
+<section id="reader" class="hidden">
+<div class="detail"><div class="dtitle" id="bookbn"></div><div class="dar" id="bookar"></div><div class="dmeta" id="bookstats"></div>
+<div class="searchrow"><input id="hadithNo" class="field" inputmode="numeric" placeholder="হাদীস নম্বর"><button class="go" id="jump">যান</button></div>
+<input id="chapterQ" class="field chapter-search" placeholder="অধ্যায় খুঁজুন">
+</div>
+<div id="chapters"></div><div id="hadiths"></div><div id="loading" class="status"></div>
+</section>
+</main><div class="footer">নাজিরপুরী রুকইয়া ও দাওয়াখানা</div>
+<script>
+const books=[
+{id:'bukhari',bn:'সহীহ বুখারী',ar:'الجامع الصحيح للبخاري',count:'৭৫৬৩',chapters:97,base:'Bukhari',meta:'https://cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/Bukhari/Meta/bukhari.json',api:'https://cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/Bukhari/hadith/'},
+{id:'muslim',bn:'সহীহ মুসলিম',ar:'المسند الصحيح لمسلم',count:'৭৪৫৩',chapters:56,base:'Muslim',meta:'https://cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/Muslim/Meta/muslim.json',api:'https://cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/Muslim/hadith/'},
+{id:'tirmidhi',bn:'জামে’ তিরমিযী',ar:'الجامع الكبير للترمذي',count:'৩৯৫৬',chapters:46,base:'At-tirmizi',meta:'https://cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/At-tirmizi/Meta/at-tirmizi.json',api:'https://cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/At-tirmizi/hadith/'},
+{id:'abudawud',bn:'সুনানে আবু দাউদ',ar:'كتاب السنن للإمام أبي داود',count:'৫২৭৪',chapters:43,base:'AbuDaud',meta:'https://cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/AbuDaud/Meta/abudaud.json',api:'https://cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/AbuDaud/hadith/'},
+{id:'nasai',bn:'সুনানে নাসাঈ',ar:'المجتبى من السنن للنسائي',count:'৫৭৫৮',chapters:50,base:'Al-Nasai',meta:"https://cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/Al-Nasai/Meta/nasa'i.json",api:'https://cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/Al-Nasai/hadith/'},
+{id:'ibnmajah',bn:'সুনানে ইবনে মাজাহ',ar:'كتاب السنن للإمام ابن ماجه',count:'৪৩৪১',chapters:37,base:'Ibne-Mazah',meta:'https://cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/Ibne-Mazah/Meta/ibnemajah.json',api:'https://cdn.jsdelivr.net/gh/md-rifatkhan/hadithbangla@main/Ibne-Mazah/hadith/'},
+{id:'muwatta',bn:'মুয়াত্তা মালিক',ar:'موطأ الإمام مالك',count:'১৮৮৯',chapters:61,base:'',meta:'',api:''}
+];
+const $=id=>document.getElementById(id);let current=null,metaData={},selectedChapter=null;
+const bn=n=>String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[+d]);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function renderBooks(){$('books').innerHTML=books.map((b,i)=>'<article class="book" data-id="'+b.id+'"><div class="num">'+bn(i+1)+'</div><div class="info"><div class="bn">'+b.bn+'</div><div class="ar">'+b.ar+'</div><div class="stats">'+b.count+' টি হাদীস · '+bn(b.chapters)+' টি অধ্যায়</div></div><div class="act">↓</div></article>').join('');document.querySelectorAll('.book').forEach(el=>el.onclick=()=>openBook(el.dataset.id))}
+async function openBook(id){current=books.find(b=>b.id===id);selectedChapter=null;$('books').classList.add('hidden');$('reader').classList.remove('hidden');$('headtitle').textContent=current.bn;$('bookbn').textContent=current.bn;$('bookar').textContent=current.ar;$('bookstats').textContent=current.count+' টি হাদীস · '+bn(current.chapters)+' টি অধ্যায়';$('chapters').innerHTML='';$('hadiths').innerHTML='';$('chapterQ').value='';$('hadithNo').value='';$('loading').textContent='অধ্যায়ের তালিকা আনা হচ্ছে…';
+if(!current.meta){$('loading').textContent='এই কিতাবের অধ্যায় ও বাংলা হাদীসের তথ্যসূত্র এখনো যুক্ত করা হয়নি।';return}
+try{const res=await fetch(current.meta);if(!res.ok)throw Error('network');metaData=await res.json();renderChapters()}catch(e){$('loading').textContent='তথ্য লোড হয়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।'}}
+function renderChapters(){const q=$('chapterQ').value.trim().toLowerCase();const entries=Object.entries(metaData).filter(([k,v])=>(String(v.title||'')+' '+String(v.hadis_range||'')).toLowerCase().includes(q));$('chapters').innerHTML=entries.map(([k,v])=>{const active=String(k)===String(selectedChapter);return '<div class="chapter '+(active?'selected':'')+'" data-ch="'+esc(k)+'"><div class="chno">'+bn(k)+'</div><div><div class="chtitle">'+esc(v.title||'অধ্যায়')+'</div><div class="range">হাদীস '+esc(v.hadis_range||'')+'</div></div></div>'}).join('');$('loading').textContent=entries.length?'':'কোনো অধ্যায় পাওয়া যায়নি';document.querySelectorAll('.chapter').forEach(el=>el.onclick=()=>selectChapter(el.dataset.ch))}
+function parseRange(s){const nums=(String(s||'').match(/[0-9০-৯]+/g)||[]).map(x=>parseInt(x.replace(/[০-৯]/g,d=>'০১২৩৪৫৬৭৮৯'.indexOf(d)),10));return nums.length>=2?[nums[0],nums[1]]:nums.length?[nums[0],nums[0]]:[0,0]}
+function selectChapter(k){selectedChapter=k;const v=metaData[k];renderChapters();$('hadiths').innerHTML='';const [a,b]=parseRange(v.hadis_range);let start=Math.max(1,a),end=Math.min(b,start+249);$('loading').textContent='অধ্যায়ের হাদীস নম্বর লোড হচ্ছে…';if(!start||!end){$('loading').textContent='হাদীস নম্বর পাওয়া যায়নি';return}
+let html='';for(let n=start;n<=end;n++){html+='<article class="hadith" data-h="'+n+'"><div class="hno">হাদীস '+bn(n)+' দেখুন</div></article>'}
+$('hadiths').innerHTML=html;$('loading').textContent=end<b?'এই অধ্যায়ের প্রথম ২৫০টি হাদীস দেখানো হয়েছে।':'অধ্যায়ের হাদীস নম্বর নির্বাচন করুন।';document.querySelectorAll('.hadith').forEach(el=>el.onclick=()=>loadHadith(el.dataset.h))}
+async function loadHadith(n){$('loading').textContent='হাদীস লোড হচ্ছে…';try{const r=await fetch(current.api+n+'.json');if(!r.ok)throw Error();const j=await r.json();const h=j.hadith||j;$('hadiths').innerHTML='<article class="hadith"><div class="hno">হাদীস '+bn(h.hadith_id||n)+' · '+esc(h.grade||'')+'</div><div class="har">'+esc(h.ar||'')+'</div><div class="hbn">'+esc(h.narrator||'')+' '+esc(h.bn||'')+'</div>'+(h.note?'<div class="grade">'+esc(h.note)+'</div>':'')+'</article>';$('loading').textContent=''}catch(e){$('loading').textContent='এই হাদীসটি এখন লোড করা যাচ্ছে না।'}}
+$('back').onclick=()=>{if(!$('reader').classList.contains('hidden')){$('reader').classList.add('hidden');$('books').classList.remove('hidden');$('headtitle').textContent='হাদীসের কিতাবসমূহ';$('loading').textContent=''}else if(window.AndroidHadith&&AndroidHadith.close){AndroidHadith.close()}else history.back()};
+$('chapterQ').addEventListener('input',renderChapters);$('jump').onclick=()=>{const n=parseInt($('hadithNo').value,10);if(!n){$('loading').textContent='হাদীস নম্বর লিখুন';return}loadHadith(n)};
+renderBooks();
+</script></body></html>
