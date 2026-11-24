@@ -1375,6 +1375,7 @@ public class MainActivity extends Activity {
         webView.addJavascriptInterface(new AudioBridge(), "AndroidAudio");
         webView.addJavascriptInterface(new DuaTtsBridge(), "AndroidDuaTts");
         webView.addJavascriptInterface(new KitabBridge(), "AndroidKitab");
+        if (url != null && url.endsWith("/hadith.html")) webView.addJavascriptInterface(new HadithBridge(), "AndroidHadith");
         if (openQuranWhenLoaded) webView.setVisibility(View.INVISIBLE);
         WebSettings s=webView.getSettings();
         s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setLoadsImagesAutomatically(true);
@@ -1476,6 +1477,59 @@ public class MainActivity extends Activity {
         if(mulkPlayer!=null){ mulkPlayer.release(); mulkPlayer=null; }
         if(duaTextToSpeech!=null){duaTextToSpeech.stop();duaTextToSpeech.shutdown();duaTextToSpeech=null;}
         if(webView!=null){webView.destroy();webView=null;} super.onDestroy();
+    }
+
+    // Persistent per-URL Hadith JSON cache for full offline access.
+    private final class HadithBridge {
+        private File cacheDir() {
+            File dir = new File(getFilesDir(), "hadith_cache");
+            if (!dir.exists()) dir.mkdirs();
+            return dir;
+        }
+        private String key(String value) {
+            try {
+                java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+                byte[] bytes = digest.digest(value.getBytes("UTF-8"));
+                StringBuilder out = new StringBuilder();
+                for (byte b : bytes) out.append(String.format(java.util.Locale.US, "%02x", b & 0xff));
+                return out.toString();
+            } catch (Exception e) { return Integer.toHexString(value.hashCode()); }
+        }
+        private File jsonFile(String url) { return new File(cacheDir(), key(url) + ".json"); }
+        @JavascriptInterface public String getCachedJson(String url) {
+            if (url == null || !(url.startsWith("https://cdn.jsdelivr.net/") || url.startsWith("https://raw.githubusercontent.com/"))) return "";
+            File file = jsonFile(url);
+            if (!file.isFile() || file.length() == 0) return "";
+            try {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                InputStream in = new java.io.FileInputStream(file);
+                byte[] buffer = new byte[8192]; int count;
+                while ((count = in.read(buffer)) != -1) out.write(buffer, 0, count);
+                in.close();
+                return out.toString("UTF-8");
+            } catch (Exception e) { return ""; }
+        }
+        @JavascriptInterface public void saveCachedJson(String url, String json) {
+            if (url == null || json == null || json.length() < 2 ||
+                !(url.startsWith("https://cdn.jsdelivr.net/") || url.startsWith("https://raw.githubusercontent.com/"))) return;
+            File target = jsonFile(url), temp = new File(target.getParentFile(), target.getName() + ".part");
+            try {
+                java.io.FileOutputStream out = new java.io.FileOutputStream(temp);
+                out.write(json.getBytes("UTF-8")); out.flush(); out.getFD().sync(); out.close();
+                if (target.exists()) target.delete();
+                temp.renameTo(target);
+            } catch (Exception ignored) { temp.delete(); }
+        }
+        private File marker(String bookId) {
+            String safe = bookId == null ? "" : bookId.replaceAll("[^a-zA-Z0-9_-]", "");
+            return new File(cacheDir(), "complete_" + safe + ".flag");
+        }
+        @JavascriptInterface public boolean isBookComplete(String bookId) { return marker(bookId).isFile(); }
+        @JavascriptInterface public void markBookComplete(String bookId, boolean complete) {
+            File f = marker(bookId);
+            try { if (complete) { java.io.FileOutputStream out = new java.io.FileOutputStream(f); out.write(1); out.close(); } else if (f.exists()) f.delete(); }
+            catch (Exception ignored) { }
+        }
     }
 
     // Download books once into private app storage; keep them available offline.
