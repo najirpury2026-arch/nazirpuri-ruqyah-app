@@ -56,3 +56,5 @@ jobs:
           files: app/build/outputs/apk/debug/nazirpuri-${{ env.VERSION_CODE }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+# Trigger a fresh build after updating the tafsir volume links.
