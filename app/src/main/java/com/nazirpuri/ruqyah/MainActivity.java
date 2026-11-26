@@ -1742,6 +1742,46 @@ public class MainActivity extends Activity {
                 if (currentView != null && showingWeb) currentView.loadUrl(uri.toString());
             });
         }
+        @JavascriptInterface public void shareHadithText(String text) {
+            if (text == null || text.trim().isEmpty()) return;
+            mainHandler.post(() -> {
+                try {
+                    Intent send = new Intent(Intent.ACTION_SEND);
+                    send.setType("text/plain");
+                    send.putExtra(Intent.EXTRA_TEXT, text);
+                    startActivity(Intent.createChooser(send, "হাদীস শেয়ার করুন"));
+                } catch (Exception ignored) { }
+            });
+        }
+        @JavascriptInterface public void captureHadithScreenshot(int top, int height) {
+            mainHandler.post(() -> {
+                WebView view = webView;
+                if (view == null || view.getWidth() <= 0 || view.getHeight() <= 0) return;
+                android.graphics.Bitmap full = null, crop = null;
+                try {
+                    int width = view.getWidth(), viewHeight = view.getHeight();
+                    full = android.graphics.Bitmap.createBitmap(width, viewHeight, android.graphics.Bitmap.Config.ARGB_8888);
+                    view.draw(new android.graphics.Canvas(full));
+                    int y = Math.max(0, Math.min(top, viewHeight - 1));
+                    int h = Math.max(1, Math.min(height, viewHeight - y));
+                    crop = android.graphics.Bitmap.createBitmap(full, 0, y, width, h);
+                    String saved = android.provider.MediaStore.Images.Media.insertImage(
+                        getContentResolver(), crop, "Nazirpuri-Hadith", "হাদীসের স্ক্রিনশট");
+                    if (saved == null) throw new Exception("ছবি সংরক্ষণ করা যায়নি");
+                    Intent send = new Intent(Intent.ACTION_SEND);
+                    send.setType("image/jpeg");
+                    send.putExtra(Intent.EXTRA_STREAM, Uri.parse(saved));
+                    send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(Intent.createChooser(send, "হাদীসের স্ক্রিনশট শেয়ার করুন"));
+                    android.widget.Toast.makeText(MainActivity.this, "স্ক্রিনশট তৈরি হয়েছে", android.widget.Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    android.widget.Toast.makeText(MainActivity.this, "স্ক্রিনশট তৈরি করা যায়নি", android.widget.Toast.LENGTH_SHORT).show();
+                } finally {
+                    if (crop != null && !crop.isRecycled()) crop.recycle();
+                    if (full != null && !full.isRecycled()) full.recycle();
+                }
+            });
+        }
         @JavascriptInterface public void setReaderOpen(boolean open) { hadithReaderOpen = open; }
         private File cacheDir() {
             File dir = new File(getFilesDir(), "hadith_cache");
