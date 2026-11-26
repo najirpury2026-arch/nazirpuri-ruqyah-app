@@ -162,7 +162,7 @@ public class MainActivity extends Activity {
         releaseWebView();
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.rgb(244,248,245));
+        root.setBackgroundResource(R.drawable.islamic_background);
 
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);

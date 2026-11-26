@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="0.1" y2="1"><stop stop-color="#07372c"/><stop offset=".48" stop-color="#0c6549"/><stop offset="1" stop-color="#092f26"/></linearGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0b0"/><stop offset=".45" stop-color="#d6a63d"/><stop offset="1" stop-color="#f9df83"/></linearGradient>
+ <radialGradient id="glow"><stop stop-color="#a6d78c" stop-opacity=".34"/><stop offset="1" stop-color="#a6d78c" stop-opacity="0"/></radialGradient>
+ <pattern id="geo" width="150" height="150" patternUnits="userSpaceOnUse"><path d="M75 0L150 75 75 150 0 75Z M75 25L125 75 75 125 25 75Z M0 0L150 150M150 0L0 150" fill="none" stroke="#d9b75c" stroke-opacity=".14" stroke-width="3"/></pattern>
+</defs>
+<rect width="1080" height="1920" fill="url(#bg)"/>
+<rect width="1080" height="1920" fill="url(#geo)"/>
+<circle cx="540" cy="800" r="610" fill="url(#glow)"/>
+<g fill="none" stroke="url(#gold)" stroke-width="12" opacity=".9">
+ <path d="M55 710V365Q55 125 300 125Q540 -65 780 125Q1025 125 1025 365V710"/>
+ <path d="M105 690V390Q105 205 320 205Q540 15 760 205Q975 205 975 390V690" stroke-width="5"/>
+ <path d="M145 680V415Q145 260 340 260Q540 90 740 260Q935 260 935 415V680" stroke-width="3"/>
+</g>
+<g fill="url(#gold)" opacity=".88">
+ <path d="M160 400h60v170h-60zM145 390h90v20h-90zM150 570h80v15h-80zM170 370q20-55 40 0z"/>
+ <path d="M860 400h60v170h-60zM845 390h90v20h-90zM850 570h80v15h-80zM870 370q20-55 40 0z"/>
+ <path d="M540 1150l-30 45h60z" opacity=".8"/>
+</g>
+<g fill="none" stroke="#f4d779" stroke-width="3" opacity=".6">
+ <path d="M540 210l38 38-38 38-38-38zM540 290l22 22-22 22-22-22z"/>
+ <path d="M540 430l38 38-38 38-38-38zM540 510l22 22-22 22-22-22z"/>
+</g>
+<g transform="translate(0 1260)" opacity=".9">
+ <path d="M0 320Q180 120 360 300Q540 110 720 300Q900 120 1080 320V660H0Z" fill="#061f1b" opacity=".65"/>
+ <g fill="#092b24" stroke="#d6ad4b" stroke-width="5">
+  <path d="M210 510V250h90v260zM190 250h130v25H190zM225 225q30-90 60 0z"/>
+  <path d="M780 510V250h90v260zM760 250h130v25H760zM795 225q30-90 60 0z"/>
+  <path d="M355 510V300h370v210zM330 300h420v35H330z"/>
+  <path d="M380 300q80-180 160 0zM540 300q80-180 160 0z"/>
+  <path d="M470 510V410q70-115 140 0v100z"/>
+  <path d="M510 510v-70q30-45 60 0v70z" fill="#d5a83f"/>
+  <path d="M440 510v-80q30-45 60 0v80zM580 510v-80q30-45 60 0v80z"/>
+ </g>
+ <path d="M530 95l10-55 10 55q-10 20-20 0z" fill="#f4d779"/>
+ <path d="M540 40q40-35 60 0q-35-10-60 0z" fill="#f4d779"/>
+</g>
+<g fill="none" stroke="url(#gold)" stroke-width="10" opacity=".65">
+ <path d="M0 1770Q180 1600 330 1780L0 1920Z"/>
+ <path d="M1080 1770Q900 1600 750 1780L1080 1920Z"/>
+</g>
+</svg>

@@ -24,6 +24,7 @@ jobs:
         run: |
           mkdir -p app/src/main/res/drawable-nodpi
           rsvg-convert -w 512 -h 512 app/src/main/assets/ic_launcher.svg -o app/src/main/res/drawable-nodpi/ic_launcher.png
+          rsvg-convert -w 1080 -h 1920 app/src/main/assets/islamic_background.svg -o app/src/main/res/drawable-nodpi/islamic_background.png
       - name: Restore stable debug signing key
         run: base64 -d debug.keystore.b64 > debug.keystore
       - name: Set up JDK 17
