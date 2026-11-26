@@ -1624,7 +1624,10 @@ public class MainActivity extends Activity {
 
     private TextView text(String value,int size,int color,boolean bold){
         TextView v=new TextView(this); v.setText(value);
-        int chosenSize=size;\n        if(value.codePoints().anyMatch(c -> c >= 0x0600 && c <= 0x06FF)) chosenSize=getSharedPreferences("app_preferences",MODE_PRIVATE).getInt("arabic_text_size",24);\n        else if(value.codePoints().anyMatch(c -> c >= 0x0980 && c <= 0x09FF)) chosenSize=getSharedPreferences("app_preferences",MODE_PRIVATE).getInt("bangla_text_size",18);\n        v.setTextSize(chosenSize); v.setTextColor(color);
+        int chosenSize=size;
+        if(value.codePoints().anyMatch(c -> c >= 0x0600 && c <= 0x06FF)) chosenSize=getSharedPreferences("app_preferences",MODE_PRIVATE).getInt("arabic_text_size",24);
+        else if(value.codePoints().anyMatch(c -> c >= 0x0980 && c <= 0x09FF)) chosenSize=getSharedPreferences("app_preferences",MODE_PRIVATE).getInt("bangla_text_size",18);
+        v.setTextSize(chosenSize); v.setTextColor(color);
         boolean hasBangla = value.codePoints().anyMatch(c -> c >= 0x0980 && c <= 0x09FF);
         if (hasBangla) {
             String f=getSharedPreferences("app_preferences",MODE_PRIVATE).getString("bangla_font","Solaiman Lipi");
