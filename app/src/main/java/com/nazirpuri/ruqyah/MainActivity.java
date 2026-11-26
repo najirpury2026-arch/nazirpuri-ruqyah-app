@@ -1731,6 +1731,17 @@ public class MainActivity extends Activity {
 
     // Persistent per-URL Hadith JSON cache for full offline access.
     private final class HadithBridge {
+        @JavascriptInterface public void openExternalBook(String address) {
+            if (address == null) return;
+            Uri uri = Uri.parse(address);
+            String host = uri.getHost();
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || host == null ||
+                    !(host.equalsIgnoreCase("hadithbd.com") || host.toLowerCase(Locale.US).endsWith(".hadithbd.com"))) return;
+            mainHandler.post(() -> {
+                WebView currentView = webView;
+                if (currentView != null && showingWeb) currentView.loadUrl(uri.toString());
+            });
+        }
         @JavascriptInterface public void setReaderOpen(boolean open) { hadithReaderOpen = open; }
         private File cacheDir() {
             File dir = new File(getFilesDir(), "hadith_cache");
