@@ -1736,7 +1736,7 @@ public class MainActivity extends Activity {
             Uri uri = Uri.parse(address);
             String host = uri.getHost();
             if (!"https".equalsIgnoreCase(uri.getScheme()) || host == null ||
-                    !(host.equalsIgnoreCase("hadithbd.com") || host.toLowerCase(Locale.US).endsWith(".hadithbd.com"))) return;
+                    !(host.equalsIgnoreCase("hadithbd.com") || host.toLowerCase(Locale.US).endsWith(".hadithbd.com") || host.equalsIgnoreCase("projecthadith.org") || host.toLowerCase(Locale.US).endsWith(".projecthadith.org"))) return;
             mainHandler.post(() -> {
                 WebView currentView = webView;
                 if (currentView != null && showingWeb) currentView.loadUrl(uri.toString());
