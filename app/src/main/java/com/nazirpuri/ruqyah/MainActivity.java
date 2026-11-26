@@ -181,6 +181,12 @@ public class MainActivity extends Activity {
 
         LinearLayout headerTop = new LinearLayout(this);
         headerTop.setGravity(Gravity.CENTER_VERTICAL);
+        TextView menuButton = text("☰", 25, Color.WHITE, true);
+        menuButton.setGravity(Gravity.CENTER); menuButton.setContentDescription("অ্যাপ মেনু");
+        GradientDrawable menuBg = new GradientDrawable(); menuBg.setColor(0x337FFFFF); menuBg.setCornerRadius(dp(22));
+        menuButton.setBackground(menuBg); menuButton.setOnClickListener(v -> showHomeMenu());
+        LinearLayout.LayoutParams menuLp = new LinearLayout.LayoutParams(dp(44),dp(42)); menuLp.setMargins(0,0,dp(7),0);
+        headerTop.addView(menuButton, menuLp);
         TextView brandMark = text("۞", 27, Color.rgb(244,211,130), true);
         headerTop.addView(brandMark, new LinearLayout.LayoutParams(0,dp(42),1));
         TextView refresh = text("⟳", 27, Color.WHITE, true);
@@ -1327,18 +1333,40 @@ public class MainActivity extends Activity {
     }
 
     private void showSettings() {
-        new android.app.AlertDialog.Builder(this)
-            .setTitle("সেটিংস")
-            .setItems(new String[]{"ওয়েবসাইট খুলুন", "অ্যাপ সম্পর্কে"}, (dialog, which) -> {
-                if (which == 0) showWeb(HOME_URL);
-                else new android.app.AlertDialog.Builder(this)
-                    .setTitle("নাজিরপুরী রুকইয়া ও দাওয়াখানা")
-                    .setMessage("কুরআন • সুন্নাহ • ইলম • আমল\\n\\nআপনার দ্বীনি সেবা ও তথ্যের সহযোগী অ্যাপ।")
-                    .setPositiveButton("ঠিক আছে", null)
-                    .show();
-            })
-            .setNegativeButton("বন্ধ", null)
-            .show();
+        new android.app.AlertDialog.Builder(this).setTitle("অ্যাপ সেটিংস")
+            .setItems(new String[]{"আরবি ফন্ট", "বাংলা ফন্ট", "ওয়েবসাইট খুলুন", "অ্যাপ সম্পর্কে"}, (d, w) -> {
+                if(w==0) showFontPicker(true); else if(w==1) showFontPicker(false);
+                else if(w==2) showWeb(HOME_URL); else showAboutDialog();
+            }).setNegativeButton("বন্ধ",null).show();
+    }
+    private void showFontPicker(boolean arabic) {
+        final String[] opts=arabic?new String[]{"Noorehuda (Default)","Al Qalam Quran Majeed","Al Qalam Kolkatta Quran Majeed","Al Mushaf Quran","Al Qalam Quran","Kitab"}:new String[]{"Solaiman Lipi","Siyam Rupali","Noto Sans Bengali"};
+        final String key=arabic?"arabic_font":"bangla_font";
+        android.content.SharedPreferences p=getSharedPreferences("app_preferences",MODE_PRIVATE);
+        String cur=p.getString(key,opts[0]); int checked=0; for(int x=0;x<opts.length;x++)if(opts[x].equals(cur))checked=x;
+        new android.app.AlertDialog.Builder(this).setTitle(arabic?"আরবি ফন্ট নির্বাচন":"বাংলা ফন্ট নির্বাচন")
+            .setSingleChoiceItems(opts,checked,(d,w)->{
+                p.edit().putString(key,opts[w]).apply();
+                if(!arabic) try { banglaTypeface="Solaiman Lipi".equals(opts[w])?Typeface.createFromAsset(getAssets(),"SolaimanLipi.ttf"):Typeface.create("sans-serif",Typeface.NORMAL); } catch(Exception e){banglaTypeface=Typeface.create("sans-serif",Typeface.NORMAL);}
+                d.dismiss(); android.widget.Toast.makeText(this,opts[w]+" নির্বাচিত হয়েছে",android.widget.Toast.LENGTH_SHORT).show(); showHome();
+            }).setNegativeButton("বন্ধ",null).show();
+    }
+    private void showHomeMenu() {
+        new android.app.AlertDialog.Builder(this).setTitle("অ্যাপ মেনু")
+            .setItems(new String[]{"অ্যাপটি শেয়ার করুন","আমাদের সম্পর্কে জানুন","যোগাযোগ"},(d,w)->{
+                if(w==0){Intent share=new Intent(Intent.ACTION_SEND);share.setType("text/plain");share.putExtra(Intent.EXTRA_TEXT,"নাজিরপুরী রুকইয়া ও দাওয়াখানা অ্যাপ\\n"+HOME_URL);startActivity(Intent.createChooser(share,"অ্যাপটি শেয়ার করুন"));}
+                else if(w==1)showAboutDialog();else showContactDialog();
+            }).setNegativeButton("বন্ধ",null).show();
+    }
+    private void showAboutDialog() {
+        new android.app.AlertDialog.Builder(this).setTitle("নাজিরপুরী রুকইয়া ও দাওয়াখানা")
+            .setMessage("কুরআন • সুন্নাহ • ইলম • আমল\\n\\nমুফতী রুহুল আমীন নাজিরপুরীর তত্ত্বাবধানে পরিচালিত দ্বীনি শিক্ষা ও রুকইয়া সেবা কেন্দ্রের সহযোগী অ্যাপ।")
+            .setPositiveButton("ঠিক আছে",null).show();
+    }
+    private void showContactDialog() {
+        new android.app.AlertDialog.Builder(this).setTitle("যোগাযোগ").setMessage("WhatsApp: 01614-776592")
+            .setPositiveButton("WhatsApp খুলুন",(d,w)->{try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(WHATSAPP_URL)));}catch(Exception ignored){}})
+            .setNegativeButton("বন্ধ",null).show();
     }
 
     private void releaseWebView() {
@@ -1386,8 +1414,12 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient(){
             @Override public void onPageFinished(WebView view, String pageUrl){
                 super.onPageFinished(view, pageUrl);
-                String css = "@font-face{font-family:SolaimanLipi;src:url('file:///android_asset/SolaimanLipi.ttf') format('truetype');font-weight:100 900;}html,body,body *:not(i):not([class*='icon']){font-family:SolaimanLipi,'Noto Sans Bengali',sans-serif !important;}";
-                String js = "(function(){var st=document.getElementById('nazirpuri-solaiman-font');if(!st){st=document.createElement('style');st.id='nazirpuri-solaiman-font';document.head.appendChild(st);}st.textContent=" + JSONObject.quote(css) + ";})();";
+                android.content.SharedPreferences fp=getSharedPreferences("app_preferences",MODE_PRIVATE);
+                String bn=fp.getString("bangla_font","Solaiman Lipi"), ar=fp.getString("arabic_font","Noorehuda (Default)");
+                String bnf="Solaiman Lipi".equals(bn)?"SolaimanLipi":("'"+bn+"'");
+                String arf="Noorehuda (Default)".equals(ar)?"'Noorehuda'":"'"+ar.replace("'","")+"'";
+                String css="@font-face{font-family:SolaimanLipi;src:url('file:///android_asset/SolaimanLipi.ttf') format('truetype');}@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');html,body,body *:not(i):not([class*='icon']){font-family:"+bnf+",'Noto Sans Bengali',sans-serif !important;}[lang='ar'],.arabic,.arabic-text,[dir='rtl']{font-family:"+arf+",'Noto Naskh Arabic',serif !important;}";
+                String js="(function(){var st=document.getElementById('nazirpuri-app-fonts');if(!st){st=document.createElement('style');st.id='nazirpuri-app-fonts';document.head.appendChild(st);}st.textContent="+JSONObject.quote(css)+";})();";
                 view.evaluateJavascript(js, null);
                 if (openQuranWhenLoaded) {
                     openQuranWhenLoaded = false;
@@ -1459,8 +1491,12 @@ public class MainActivity extends Activity {
     private TextView text(String value,int size,int color,boolean bold){
         TextView v=new TextView(this); v.setText(value); v.setTextSize(size); v.setTextColor(color);
         boolean hasBangla = value.codePoints().anyMatch(c -> c >= 0x0980 && c <= 0x09FF);
-        if (hasBangla && banglaTypeface != null) v.setTypeface(Typeface.create(banglaTypeface, bold ? Typeface.BOLD : Typeface.NORMAL));
-        else if(bold) v.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        if (hasBangla) {
+            String f=getSharedPreferences("app_preferences",MODE_PRIVATE).getString("bangla_font","Solaiman Lipi");
+            Typeface face=banglaTypeface;
+            if("Noto Sans Bengali".equals(f))face=Typeface.create("sans-serif",Typeface.NORMAL);
+            if(face!=null)v.setTypeface(Typeface.create(face,bold?Typeface.BOLD:Typeface.NORMAL));
+        } else if(bold) v.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         v.setGravity(Gravity.CENTER); return v;
     }
     // Consistent premium icon badges: soft gradient, gold halo and distinct category pictograms.
