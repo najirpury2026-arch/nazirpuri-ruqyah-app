@@ -173,7 +173,7 @@ public class MainActivity extends Activity {
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.VERTICAL);
         header.setGravity(Gravity.CENTER);
-        header.setPadding(dp(20), dp(12), dp(20), dp(24));
+        header.setPadding(dp(20), dp(24), dp(20), dp(24));
         GradientDrawable headerBg = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 new int[]{Color.rgb(7,54,43), Color.rgb(13,91,65), Color.rgb(22,112,78)});
         headerBg.setCornerRadii(new float[]{0,0,0,0,dp(28),dp(28),dp(28),dp(28)});
@@ -210,7 +210,7 @@ public class MainActivity extends Activity {
         settings.setBackground(settingsBg);
         settings.setOnClickListener(v -> showSettings());
         headerTop.addView(settings, new LinearLayout.LayoutParams(dp(44),dp(42)));
-        header.addView(headerTop, new LinearLayout.LayoutParams(-1,dp(44)));
+        header.addView(headerTop, new LinearLayout.LayoutParams(-1,dp(52)));
 
         TextView brand = text("নাজিরপুরী রুকইয়া ও দাওয়াখানা", 22, Color.WHITE, true);
         brand.setGravity(Gravity.CENTER);
@@ -1333,11 +1333,93 @@ public class MainActivity extends Activity {
     }
 
     private void showSettings() {
-        new android.app.AlertDialog.Builder(this).setTitle("অ্যাপ সেটিংস")
-            .setItems(new String[]{"আরবি ফন্ট", "বাংলা ফন্ট", "ওয়েবসাইট খুলুন", "অ্যাপ সম্পর্কে"}, (d, w) -> {
-                if(w==0) showFontPicker(true); else if(w==1) showFontPicker(false);
-                else if(w==2) showWeb(HOME_URL); else showAboutDialog();
-            }).setNegativeButton("বন্ধ",null).show();
+        showingWeb = false;
+        releaseWebView();
+        root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(Color.rgb(190, 222, 219));
+
+        LinearLayout toolbar = new LinearLayout(this);
+        toolbar.setGravity(Gravity.CENTER_VERTICAL);
+        toolbar.setPadding(dp(18), dp(12), dp(18), dp(12));
+        toolbar.setBackgroundColor(Color.rgb(0, 77, 66));
+        TextView back = text("←", 30, Color.rgb(160, 220, 205), true);
+        back.setGravity(Gravity.CENTER);
+        back.setOnClickListener(v -> showHome());
+        toolbar.addView(back, new LinearLayout.LayoutParams(dp(52), dp(48)));
+        TextView heading = text("সেটিংস", 25, Color.WHITE, true);
+        heading.setGravity(Gravity.CENTER);
+        toolbar.addView(heading, new LinearLayout.LayoutParams(0, dp(48), 1));
+        TextView menu = text("☰", 29, Color.rgb(160, 220, 205), true);
+        menu.setGravity(Gravity.CENTER);
+        menu.setContentDescription("অ্যাপ মেনু");
+        menu.setOnClickListener(v -> showHomeMenu());
+        toolbar.addView(menu, new LinearLayout.LayoutParams(dp(52), dp(48)));
+        root.addView(toolbar, new LinearLayout.LayoutParams(-1, -2));
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        LinearLayout outer = new LinearLayout(this);
+        outer.setOrientation(LinearLayout.VERTICAL);
+        outer.setPadding(dp(20), dp(28), dp(20), dp(26));
+        GradientDrawable outerBg = new GradientDrawable();
+        outerBg.setColor(Color.rgb(218, 244, 240));
+        outerBg.setCornerRadius(dp(34));
+        outer.setBackground(outerBg);
+        outer.setElevation(dp(2));
+
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        GradientDrawable cardBg = new GradientDrawable();
+        cardBg.setColor(Color.rgb(218, 244, 240));
+        cardBg.setCornerRadius(dp(30));
+        cardBg.setStroke(dp(1), Color.rgb(197, 230, 225));
+        card.setBackground(cardBg);
+        card.setClipToOutline(true);
+
+        android.content.SharedPreferences prefs = getSharedPreferences("app_preferences", MODE_PRIVATE);
+        String selectedArabic = prefs.getString("arabic_font", "Noorehuda (Default)");
+        String selectedBangla = prefs.getString("bangla_font", "Solaiman Lipi");
+        addSettingsRow(card, "ভাষা", "বাংলা", null);
+        addSettingsRow(card, "আরবি ফন্ট", selectedArabic, () -> showFontPicker(true));
+        addSettingsRow(card, "বাংলা ফন্ট", selectedBangla, () -> showFontPicker(false));
+
+        LinearLayout extra = new LinearLayout(this);
+        extra.setOrientation(LinearLayout.VERTICAL);
+        extra.setPadding(dp(22), dp(14), dp(22), dp(18));
+        TextView website = text("ওয়েবসাইট খুলুন  ›", 16, Color.rgb(0, 92, 76), true);
+        website.setPadding(0, dp(8), 0, dp(8));
+        website.setOnClickListener(v -> showWeb(HOME_URL));
+        extra.addView(website);
+        TextView about = text("আমাদের সম্পর্কে জানুন  ›", 16, Color.rgb(0, 92, 76), true);
+        about.setPadding(0, dp(8), 0, dp(8));
+        about.setOnClickListener(v -> showAboutDialog());
+        extra.addView(about);
+        card.addView(extra);
+        outer.addView(card, new LinearLayout.LayoutParams(-1, -2));
+        scroll.addView(outer);
+        root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        setContentView(root);
+    }
+
+    private void addSettingsRow(LinearLayout card, String labelText, String valueText, Runnable action) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(22), dp(22), dp(20), dp(22));
+        TextView label = text(labelText, 20, Color.rgb(28, 42, 39), true);
+        row.addView(label, new LinearLayout.LayoutParams(0, -2, 1));
+        TextView value = text(valueText + (action == null ? "" : "  ⌄"), 17, Color.rgb(0, 91, 77), true);
+        value.setGravity(Gravity.CENTER_VERTICAL | Gravity.RIGHT);
+        row.addView(value, new LinearLayout.LayoutParams(-2, -2));
+        if (action != null) {
+            row.setClickable(true);
+            row.setFocusable(true);
+            row.setOnClickListener(v -> { action.run(); });
+        }
+        card.addView(row, new LinearLayout.LayoutParams(-1, -2));
+        View divider = new View(this);
+        divider.setBackgroundColor(Color.rgb(192, 225, 220));
+        card.addView(divider, new LinearLayout.LayoutParams(-1, dp(1)));
     }
     private void showFontPicker(boolean arabic) {
         final String[] opts=arabic?new String[]{"Noorehuda (Default)","Al Qalam Quran Majeed","Al Qalam Kolkatta Quran Majeed","Al Mushaf Quran","Al Qalam Quran","Kitab"}:new String[]{"Solaiman Lipi","Siyam Rupali","Noto Sans Bengali"};
