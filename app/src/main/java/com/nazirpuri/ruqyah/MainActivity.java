@@ -1488,7 +1488,7 @@ public class MainActivity extends Activity {
             paint.setShadowLayer(dp(3),0,dp(2),0x260D3528);
             canvas.drawRoundRect(rect,dp(17),dp(17),paint);
             paint.clearShadowLayer(); paint.setShader(null);
-            paint.setStyle(android.graphics.Paint.Style.STROKE); paint.setStrokeWidth(dp(1.4f));
+            paint.setStyle(android.graphics.Paint.Style.STROKE); paint.setStrokeWidth(dp(1)*1.4f);
             paint.setColor(Color.argb(125,255,255,255));
             rect.inset(dp(3),dp(3)); canvas.drawRoundRect(rect,dp(14),dp(14),paint);
             paint.setStyle(android.graphics.Paint.Style.FILL);
@@ -1499,7 +1499,7 @@ public class MainActivity extends Activity {
             android.graphics.Paint.FontMetrics fm=paint.getFontMetrics();
             canvas.drawText(icons[category],cx,cy-(fm.ascent+fm.descent)/2f,paint);
             paint.setColor(Color.rgb(225,181,91));
-            canvas.drawCircle(cx+r*.72f,cy-r*.68f,dp(2.2f),paint);
+            canvas.drawCircle(cx+r*.72f,cy-r*.68f,dp(2)*1.1f,paint);
         }
     }
 
