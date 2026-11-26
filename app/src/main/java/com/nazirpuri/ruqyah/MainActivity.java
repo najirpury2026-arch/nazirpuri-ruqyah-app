@@ -1552,16 +1552,26 @@ public class MainActivity extends Activity {
         s.setAllowFileAccessFromFileURLs(true);
         s.setAllowUniversalAccessFromFileURLs(true);
         webView.setWebViewClient(new WebViewClient(){
-            // Keep web links opened from in-app readers (including the six additional
-            // Hadith collections) inside this same WebView instead of launching a browser.
-            @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url != null && (url.startsWith("https://") || url.startsWith("http://"))) {
-                    return false;
+            // Route both modern and legacy navigation callbacks into this WebView.
+            private boolean openInside(WebView view, String url) {
+                if (url == null) return true;
+                if (url.startsWith("https://") || url.startsWith("http://")) {
+                    view.loadUrl(url);
+                    return true;
                 }
                 return true;
             }
+            @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return openInside(view, url);
+            }
+            @Override public boolean shouldOverrideUrlLoading(WebView view, android.webkit.WebResourceRequest request) {
+                return openInside(view, request.getUrl().toString());
+            }
             @Override public void onPageFinished(WebView view, String pageUrl){
                 super.onPageFinished(view, pageUrl);
+                // Some book pages use target=_blank or window.open; force those links
+                // to navigate the current WebView instead of creating an unhandled window.
+                view.evaluateJavascript("(function(){if(window.__nazirInAppLinks)return;window.__nazirInAppLinks=true;document.addEventListener('click',function(e){var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;if(a&&/^https?:/i.test(a.href)){e.preventDefault();e.stopPropagation();window.location.href=a.href;}},true);var oldOpen=window.open;window.open=function(u){if(u&&/^https?:/i.test(String(u))){window.location.href=String(u);return window;}return oldOpen?oldOpen.apply(window,arguments):null;};})();", null);
                 applySelectedFonts(view);
                 if (openQuranWhenLoaded) {
                     openQuranWhenLoaded = false;
