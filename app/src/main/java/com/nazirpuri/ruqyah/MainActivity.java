@@ -1417,7 +1417,6 @@ public class MainActivity extends Activity {
         String arabicFace="'Noto Naskh Arabic'";
         String css="@font-face{font-family:SolaimanLipi;src:url('file:///android_asset/SolaimanLipi.ttf') format('truetype');}@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');html,body,body *:not(i):not([class*='icon']){font-family:"+banglaFace+",'Noto Sans Bengali',sans-serif !important;font-size:"+bSize+"px !important;}[lang='ar'],.arabic,.arabic-text,[dir='rtl'],.quran,.ayah{font-family:"+arabicFace+",serif !important;font-size:"+aSize+"px !important;}";
         String js="(function(){var st=document.getElementById('nazirpuri-app-fonts');if(!st){st=document.createElement('style');st.id='nazirpuri-app-fonts';document.head.appendChild(st);}st.textContent="+JSONObject.quote(css)+";document.querySelectorAll('body *').forEach(function(el){var t=el.childElementCount===0?(el.textContent||''):'';if(/[\u0600-\u06FF]/.test(t)){el.classList.add('nazirpuri-arabic-font');}});})();";
-        css += ".nazirpuri-arabic-font{font-family:"+arabicFace+",serif !important;font-size:"+aSize+"px !important;}";
         js="(function(){var st=document.getElementById('nazirpuri-app-fonts');if(!st){st=document.createElement('style');st.id='nazirpuri-app-fonts';document.head.appendChild(st);}st.textContent="+JSONObject.quote(css)+";document.querySelectorAll('body *').forEach(function(el){if(el.children.length===0&&/[\\u0600-\\u06FF]/.test(el.textContent||''))el.classList.add('nazirpuri-arabic-font');});})();";
         view.evaluateJavascript(js,null);
     }
@@ -1442,11 +1441,6 @@ public class MainActivity extends Activity {
                 if(fromUser){
                     prefs.edit().putInt(prefKey,size).apply();
                     if(webView!=null)applySelectedFonts(webView);
-                    if(!showingWeb) {
-                        // Native home content is rebuilt to apply the chosen size immediately.
-                        mainHandler.removeCallbacks(sizeRefresh);
-                        mainHandler.postDelayed(sizeRefresh,180);
-                    }
                 }
             }
             public void onStartTrackingTouch(SeekBar bar){}
@@ -1457,8 +1451,6 @@ public class MainActivity extends Activity {
         View divider=new View(this); divider.setBackgroundColor(Color.rgb(192,225,220));
         card.addView(divider,new LinearLayout.LayoutParams(-1,dp(1)));
     }
-    private final Runnable sizeRefresh=()->showHome();
-
     private void addSettingsRow(LinearLayout card, String labelText, String valueText, Runnable action) {
         LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -1631,7 +1623,8 @@ public class MainActivity extends Activity {
     }
 
     private TextView text(String value,int size,int color,boolean bold){
-        TextView v=new TextView(this); v.setText(value);\n        int chosenSize=size;\n        if(value.codePoints().anyMatch(c -> c >= 0x0600 && c <= 0x06FF)) chosenSize=getSharedPreferences("app_preferences",MODE_PRIVATE).getInt("arabic_text_size",24);\n        else if(value.codePoints().anyMatch(c -> c >= 0x0980 && c <= 0x09FF)) chosenSize=getSharedPreferences("app_preferences",MODE_PRIVATE).getInt("bangla_text_size",18);\n        v.setTextSize(chosenSize); v.setTextColor(color);
+        TextView v=new TextView(this); v.setText(value);
+        int chosenSize=size;\n        if(value.codePoints().anyMatch(c -> c >= 0x0600 && c <= 0x06FF)) chosenSize=getSharedPreferences("app_preferences",MODE_PRIVATE).getInt("arabic_text_size",24);\n        else if(value.codePoints().anyMatch(c -> c >= 0x0980 && c <= 0x09FF)) chosenSize=getSharedPreferences("app_preferences",MODE_PRIVATE).getInt("bangla_text_size",18);\n        v.setTextSize(chosenSize); v.setTextColor(color);
         boolean hasBangla = value.codePoints().anyMatch(c -> c >= 0x0980 && c <= 0x09FF);
         if (hasBangla) {
             String f=getSharedPreferences("app_preferences",MODE_PRIVATE).getString("bangla_font","Solaiman Lipi");
