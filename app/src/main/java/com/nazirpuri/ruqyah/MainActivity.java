@@ -162,7 +162,7 @@ public class MainActivity extends Activity {
         releaseWebView();
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundResource(R.drawable.islamic_background);
+        root.setBackgroundResource(R.drawable.islamic_background); // Lightweight native drawable; no large bitmap bundled.
 
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
