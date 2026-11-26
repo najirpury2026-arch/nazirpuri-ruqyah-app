@@ -1552,6 +1552,14 @@ public class MainActivity extends Activity {
         s.setAllowFileAccessFromFileURLs(true);
         s.setAllowUniversalAccessFromFileURLs(true);
         webView.setWebViewClient(new WebViewClient(){
+            // Keep web links opened from in-app readers (including the six additional
+            // Hadith collections) inside this same WebView instead of launching a browser.
+            @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (url != null && (url.startsWith("https://") || url.startsWith("http://"))) {
+                    return false;
+                }
+                return true;
+            }
             @Override public void onPageFinished(WebView view, String pageUrl){
                 super.onPageFinished(view, pageUrl);
                 applySelectedFonts(view);
