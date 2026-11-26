@@ -261,13 +261,9 @@ public class MainActivity extends Activity {
             tile.setBackground(tileBg);
             tile.setElevation(dp(2));
 
-            TextView icon = text(icons[i],27,Color.rgb(palette[3],palette[4],palette[5]),false);
-            GradientDrawable iconBg = new GradientDrawable();
-            iconBg.setColor(Color.rgb(Math.min(255,palette[0]+7),Math.min(255,palette[1]+7),Math.min(255,palette[2]+7)));
-            iconBg.setCornerRadius(dp(15));
-            icon.setBackground(iconBg);
-            icon.setGravity(Gravity.CENTER);
-            tile.addView(icon,new LinearLayout.LayoutParams(dp(48),dp(45)));
+            SectionIconView icon = new SectionIconView(i, palette);
+            LinearLayout.LayoutParams iconLp = new LinearLayout.LayoutParams(dp(56),dp(54));
+            tile.addView(icon, iconLp);
 
             TextView label = text(titles[i],12,Color.rgb(35,66,49),true);
             label.setGravity(Gravity.CENTER);
@@ -1467,6 +1463,46 @@ public class MainActivity extends Activity {
         else if(bold) v.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         v.setGravity(Gravity.CENTER); return v;
     }
+    // Consistent premium icon badges: soft gradient, gold halo and distinct category pictograms.
+    private class SectionIconView extends View {
+        private final int category;
+        private final int[] colors;
+        private final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.RectF rect = new android.graphics.RectF();
+        SectionIconView(int category, int[] palette) {
+            super(MainActivity.this);
+            this.category = category;
+            this.colors = palette.clone();
+            setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+            setContentDescription(titles[category] + " আইকন");
+        }
+        @Override protected void onDraw(android.graphics.Canvas canvas) {
+            super.onDraw(canvas);
+            float w=getWidth(), h=getHeight(), cx=w/2f, cy=h/2f;
+            float r=Math.min(w,h)*.47f;
+            paint.setStyle(android.graphics.Paint.Style.FILL);
+            paint.setShader(new android.graphics.LinearGradient(0,0,w,h,
+                Color.rgb(Math.min(255,colors[0]+18),Math.min(255,colors[1]+18),Math.min(255,colors[2]+18)),
+                Color.rgb(colors[0],colors[1],colors[2]),android.graphics.Shader.TileMode.CLAMP));
+            rect.set(cx-r,cy-r,cx+r,cy+r);
+            paint.setShadowLayer(dp(3),0,dp(2),0x260D3528);
+            canvas.drawRoundRect(rect,dp(17),dp(17),paint);
+            paint.clearShadowLayer(); paint.setShader(null);
+            paint.setStyle(android.graphics.Paint.Style.STROKE); paint.setStrokeWidth(dp(1.4f));
+            paint.setColor(Color.argb(125,255,255,255));
+            rect.inset(dp(3),dp(3)); canvas.drawRoundRect(rect,dp(14),dp(14),paint);
+            paint.setStyle(android.graphics.Paint.Style.FILL);
+            paint.setColor(Color.rgb(colors[3],colors[4],colors[5]));
+            paint.setTextAlign(android.graphics.Paint.Align.CENTER);
+            paint.setTypeface(android.graphics.Typeface.create("sans-serif",android.graphics.Typeface.NORMAL));
+            paint.setTextSize(dp(27));
+            android.graphics.Paint.FontMetrics fm=paint.getFontMetrics();
+            canvas.drawText(icons[category],cx,cy-(fm.ascent+fm.descent)/2f,paint);
+            paint.setColor(Color.rgb(225,181,91));
+            canvas.drawCircle(cx+r*.72f,cy-r*.68f,dp(2.2f),paint);
+        }
+    }
+
     private int dp(int n){return (int)(n*getResources().getDisplayMetrics().density+0.5f);}
     private boolean androidBackCheckPending = false;
     @Override public void onBackPressed(){
