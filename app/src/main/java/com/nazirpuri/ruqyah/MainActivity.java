@@ -30,6 +30,7 @@ import android.widget.GridLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
@@ -1383,6 +1384,8 @@ public class MainActivity extends Activity {
         addSettingsRow(card, "ভাষা", "বাংলা", null);
         addSettingsRow(card, "আরবি ফন্ট", selectedArabic, () -> showFontPicker(true));
         addSettingsRow(card, "বাংলা ফন্ট", selectedBangla, () -> showFontPicker(false));
+        addFontSizeControl(card, "আরবি লেখার সাইজ", "arabic_text_size", 24, 14, 40);
+        addFontSizeControl(card, "বাংলা লেখার সাইজ", "bangla_text_size", 18, 12, 34);
 
         LinearLayout extra = new LinearLayout(this);
         extra.setOrientation(LinearLayout.VERTICAL);
@@ -1401,6 +1404,60 @@ public class MainActivity extends Activity {
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
     }
+
+    private void applySelectedFonts(WebView view) {
+        if (view == null) return;
+        android.content.SharedPreferences fp=getSharedPreferences("app_preferences",MODE_PRIVATE);
+        String bn=fp.getString("bangla_font","Solaiman Lipi");
+        String ar=fp.getString("arabic_font","Noorehuda (Default)");
+        int bSize=fp.getInt("bangla_text_size",18), aSize=fp.getInt("arabic_text_size",24);
+        String banglaFace="Solaiman Lipi".equals(bn)?"SolaimanLipi":"'Noto Sans Bengali'";
+        // Named Quran font selections remain selectable; use a dependable Arabic font fallback
+        // for pages that do not bundle the selected font file.
+        String arabicFace="'Noto Naskh Arabic'";
+        String css="@font-face{font-family:SolaimanLipi;src:url('file:///android_asset/SolaimanLipi.ttf') format('truetype');}@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');html,body,body *:not(i):not([class*='icon']){font-family:"+banglaFace+",'Noto Sans Bengali',sans-serif !important;font-size:"+bSize+"px !important;}[lang='ar'],.arabic,.arabic-text,[dir='rtl'],.quran,.ayah{font-family:"+arabicFace+",serif !important;font-size:"+aSize+"px !important;}";
+        String js="(function(){var st=document.getElementById('nazirpuri-app-fonts');if(!st){st=document.createElement('style');st.id='nazirpuri-app-fonts';document.head.appendChild(st);}st.textContent="+JSONObject.quote(css)+";document.querySelectorAll('body *').forEach(function(el){var t=el.childElementCount===0?(el.textContent||''):'';if(/[\u0600-\u06FF]/.test(t)){el.classList.add('nazirpuri-arabic-font');}});})();";
+        css += ".nazirpuri-arabic-font{font-family:"+arabicFace+",serif !important;font-size:"+aSize+"px !important;}";
+        js="(function(){var st=document.getElementById('nazirpuri-app-fonts');if(!st){st=document.createElement('style');st.id='nazirpuri-app-fonts';document.head.appendChild(st);}st.textContent="+JSONObject.quote(css)+";document.querySelectorAll('body *').forEach(function(el){if(el.children.length===0&&/[\\u0600-\\u06FF]/.test(el.textContent||''))el.classList.add('nazirpuri-arabic-font');});})();";
+        view.evaluateJavascript(js,null);
+    }
+
+    private void addFontSizeControl(LinearLayout card, String label, String prefKey, int defaultSize, int min, int max) {
+        LinearLayout panel=new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(20),dp(12),dp(20),dp(14));
+        TextView title=text(label,17,Color.rgb(28,42,39),true);
+        panel.addView(title);
+        android.content.SharedPreferences prefs=getSharedPreferences("app_preferences",MODE_PRIVATE);
+        int current=prefs.getInt(prefKey,defaultSize);
+        TextView value=text(current+" px",15,Color.rgb(0,91,77),true);
+        value.setGravity(Gravity.CENTER);
+        panel.addView(value,new LinearLayout.LayoutParams(-1,-2));
+        SeekBar seek=new SeekBar(this);
+        seek.setMax(max-min); seek.setProgress(Math.max(0,Math.min(max-min,current-min)));
+        seek.setContentDescription(label+" পরিবর্তন");
+        seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            public void onProgressChanged(SeekBar bar,int progress,boolean fromUser){
+                int size=min+progress; value.setText(size+" px");
+                if(fromUser){
+                    prefs.edit().putInt(prefKey,size).apply();
+                    if(webView!=null)applySelectedFonts(webView);
+                    if(!showingWeb) {
+                        // Native home content is rebuilt to apply the chosen size immediately.
+                        mainHandler.removeCallbacks(sizeRefresh);
+                        mainHandler.postDelayed(sizeRefresh,180);
+                    }
+                }
+            }
+            public void onStartTrackingTouch(SeekBar bar){}
+            public void onStopTrackingTouch(SeekBar bar){}
+        });
+        panel.addView(seek,new LinearLayout.LayoutParams(-1,dp(38)));
+        card.addView(panel,new LinearLayout.LayoutParams(-1,-2));
+        View divider=new View(this); divider.setBackgroundColor(Color.rgb(192,225,220));
+        card.addView(divider,new LinearLayout.LayoutParams(-1,dp(1)));
+    }
+    private final Runnable sizeRefresh=()->showHome();
 
     private void addSettingsRow(LinearLayout card, String labelText, String valueText, Runnable action) {
         LinearLayout row = new LinearLayout(this);
@@ -1429,8 +1486,17 @@ public class MainActivity extends Activity {
         new android.app.AlertDialog.Builder(this).setTitle(arabic?"আরবি ফন্ট নির্বাচন":"বাংলা ফন্ট নির্বাচন")
             .setSingleChoiceItems(opts,checked,(d,w)->{
                 p.edit().putString(key,opts[w]).apply();
-                if(!arabic) try { banglaTypeface="Solaiman Lipi".equals(opts[w])?Typeface.createFromAsset(getAssets(),"SolaimanLipi.ttf"):Typeface.create("sans-serif",Typeface.NORMAL); } catch(Exception e){banglaTypeface=Typeface.create("sans-serif",Typeface.NORMAL);}
-                d.dismiss(); android.widget.Toast.makeText(this,opts[w]+" নির্বাচিত হয়েছে",android.widget.Toast.LENGTH_SHORT).show(); showHome();
+                if(!arabic) {
+                    try {
+                        if ("Solaiman Lipi".equals(opts[w])) banglaTypeface=Typeface.createFromAsset(getAssets(),"SolaimanLipi.ttf");
+                        else if ("Siyam Rupali".equals(opts[w])) banglaTypeface=Typeface.create("sans-serif",Typeface.NORMAL);
+                        else banglaTypeface=Typeface.create("sans-serif",Typeface.NORMAL);
+                    } catch(Exception e){ banglaTypeface=Typeface.create("sans-serif",Typeface.NORMAL); }
+                }
+                d.dismiss();
+                android.widget.Toast.makeText(this,opts[w]+" ফন্ট প্রয়োগ করা হচ্ছে",android.widget.Toast.LENGTH_SHORT).show();
+                if (webView != null) { applySelectedFonts(webView); webView.reload(); }
+                showHome();
             }).setNegativeButton("বন্ধ",null).show();
     }
     private void showHomeMenu() {
@@ -1496,13 +1562,7 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient(){
             @Override public void onPageFinished(WebView view, String pageUrl){
                 super.onPageFinished(view, pageUrl);
-                android.content.SharedPreferences fp=getSharedPreferences("app_preferences",MODE_PRIVATE);
-                String bn=fp.getString("bangla_font","Solaiman Lipi"), ar=fp.getString("arabic_font","Noorehuda (Default)");
-                String bnf="Solaiman Lipi".equals(bn)?"SolaimanLipi":("'"+bn+"'");
-                String arf="Noorehuda (Default)".equals(ar)?"'Noorehuda'":"'"+ar.replace("'","")+"'";
-                String css="@font-face{font-family:SolaimanLipi;src:url('file:///android_asset/SolaimanLipi.ttf') format('truetype');}@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');html,body,body *:not(i):not([class*='icon']){font-family:"+bnf+",'Noto Sans Bengali',sans-serif !important;}[lang='ar'],.arabic,.arabic-text,[dir='rtl']{font-family:"+arf+",'Noto Naskh Arabic',serif !important;}";
-                String js="(function(){var st=document.getElementById('nazirpuri-app-fonts');if(!st){st=document.createElement('style');st.id='nazirpuri-app-fonts';document.head.appendChild(st);}st.textContent="+JSONObject.quote(css)+";})();";
-                view.evaluateJavascript(js, null);
+                applySelectedFonts(view);
                 if (openQuranWhenLoaded) {
                     openQuranWhenLoaded = false;
                     // Keep the Blogger homepage hidden; reveal only after the Quran reader opens.
@@ -1571,7 +1631,7 @@ public class MainActivity extends Activity {
     }
 
     private TextView text(String value,int size,int color,boolean bold){
-        TextView v=new TextView(this); v.setText(value); v.setTextSize(size); v.setTextColor(color);
+        TextView v=new TextView(this); v.setText(value);\n        int chosenSize=size;\n        if(value.codePoints().anyMatch(c -> c >= 0x0600 && c <= 0x06FF)) chosenSize=getSharedPreferences("app_preferences",MODE_PRIVATE).getInt("arabic_text_size",24);\n        else if(value.codePoints().anyMatch(c -> c >= 0x0980 && c <= 0x09FF)) chosenSize=getSharedPreferences("app_preferences",MODE_PRIVATE).getInt("bangla_text_size",18);\n        v.setTextSize(chosenSize); v.setTextColor(color);
         boolean hasBangla = value.codePoints().anyMatch(c -> c >= 0x0980 && c <= 0x09FF);
         if (hasBangla) {
             String f=getSharedPreferences("app_preferences",MODE_PRIVATE).getString("bangla_font","Solaiman Lipi");
