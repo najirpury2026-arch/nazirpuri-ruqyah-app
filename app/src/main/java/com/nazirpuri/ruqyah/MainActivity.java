@@ -1913,7 +1913,16 @@ public class MainActivity extends Activity {
                     if (!dir.exists() && !dir.mkdirs()) throw new Exception("ফোল্ডার তৈরি করা যায়নি");
                     Uri source = Uri.parse(address);
                     String id = source.getQueryParameter("id");
-                    if (id == null || id.trim().isEmpty()) throw new Exception("Drive ফাইলের ID পাওয়া যায়নি");
+                    // Google Drive share links commonly use /file/d/FILE_ID/view,
+                    // not ?id=FILE_ID. Support both formats and validate the ID.
+                    if (id == null || id.trim().isEmpty()) {
+                        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                            .compile("/(?:file/)?d/([a-zA-Z0-9_-]+)")
+                            .matcher(source.getPath() == null ? "" : source.getPath());
+                        if (matcher.find()) id = matcher.group(1);
+                    }
+                    if (id == null || !id.matches("[a-zA-Z0-9_-]{10,}"))
+                        throw new Exception("Google Drive লিংক থেকে ফাইলের ID শনাক্ত করা যায়নি");
                     downloadGoogleDrivePdf(id, temp, name);
                     if (temp.length() < 1000) throw new Exception("ফাইলটি সম্পূর্ণ ডাউনলোড হয়নি");
                     if (!isPdfFile(temp) || !hasPdfEof(temp)) {
