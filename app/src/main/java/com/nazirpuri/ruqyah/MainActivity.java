@@ -1612,7 +1612,7 @@ public class MainActivity extends Activity {
                 super.onPageFinished(view, pageUrl);
                 // Some book pages use target=_blank or window.open; force those links
                 // to navigate the current WebView instead of creating an unhandled window.
-                view.evaluateJavascript("(function(){if(window.__nazirInAppLinks)return;window.__nazirInAppLinks=true;document.addEventListener('click',function(e){var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;if(a&&/^https?:/i.test(a.href)){e.preventDefault();e.stopPropagation();window.location.href=a.href;}},true);var oldOpen=window.open;window.open=function(u){if(u&&/^https?:/i.test(String(u))){window.location.href=String(u);return window;}return oldOpen?oldOpen.apply(window,arguments):null;};})();", null);
+                view.evaluateJavascript("(function(){if(window.__nazirInAppLinks)return;window.__nazirInAppLinks=true;document.addEventListener('click',function(e){var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;if(a&&/^https?:/i.test(a.href)&&!a.hasAttribute('onclick')){e.preventDefault();e.stopPropagation();window.location.href=a.href;}},true);var oldOpen=window.open;window.open=function(u){if(u&&/^https?:/i.test(String(u))){window.location.href=String(u);return window;}return oldOpen?oldOpen.apply(window,arguments):null;};})();", null);
                 applySelectedFonts(view);
                 if (openQuranWhenLoaded) {
                     openQuranWhenLoaded = false;
