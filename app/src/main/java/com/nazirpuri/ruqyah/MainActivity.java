@@ -799,7 +799,7 @@ public class MainActivity extends Activity {
             return;
         }
         if (index == 18) {
-            showServicesPlaceholder();
+            showInstitutionAbout();
             return;
         }
         String url=index==19?HOME_URL:HOME_URL+"search?q="+Uri.encode(titles[index]);
@@ -1336,8 +1336,15 @@ public class MainActivity extends Activity {
         }
     }
 
+       // App-native copy of the website's "প্রতিষ্ঠান সম্পর্কে জানুন" page.
+    // The "আমাদের সেবা" action opens a second native page, never the website.
     private void showServicesPlaceholder() {
+        showInstitutionAbout();
+    }
+
+    private void showInstitutionAbout() {
         showingWeb = false;
+        releaseWebView();
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.rgb(246,249,246));
@@ -1351,22 +1358,113 @@ public class MainActivity extends Activity {
         bar.addView(back);
         root.addView(bar);
 
+        ScrollView scroll = new ScrollView(this);
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
-        page.setGravity(Gravity.CENTER_HORIZONTAL);
-        page.setPadding(dp(20), dp(30), dp(20), dp(24));
-        TextView title = text("আমাদের রুকইয়া সেবা", 23, Color.rgb(12,73,52), true);
+        page.setPadding(dp(18), dp(22), dp(18), dp(28));
+
+        TextView title = text("নাজিরপুরী রুকইয়া ও দাওয়াখানা", 23, Color.rgb(12,73,52), true);
+        title.setGravity(Gravity.CENTER);
         page.addView(title);
-        TextView intro = text("কুরআন ও সুন্নাহভিত্তিক শরিয়তসম্মত রুকইয়া সেবা", 16, Color.rgb(49,73,57), true);
-        LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(-1, -2);
-        ip.topMargin = dp(14);
-        page.addView(intro, ip);
-        TextView note = text("রুকইয়া সেবা বিভাগের বিস্তারিত লেখা ও সেবার বিবরণ পরবর্তী আপডেটে যুক্ত করা হবে।", 15, Color.rgb(80,90,82), false);
-        LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(-1, -2);
-        np.topMargin = dp(24);
-        page.addView(note, np);
-        root.addView(page, new LinearLayout.LayoutParams(-1, 0, 1));
+        TextView subtitle = text("কুরআন-সুন্নাহভিত্তিক শরিয়তসম্মত রুকইয়া সেবা কেন্দ্র", 14, Color.rgb(70,94,78), true);
+        subtitle.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams subp = new LinearLayout.LayoutParams(-1,-2);
+        subp.topMargin = dp(8);
+        page.addView(subtitle, subp);
+
+        addInfoHeading(page, "পরিচালনায়");
+        addInfoText(page, "মুফতী রুহুল আমীন নাজিরপুরী\nমুফতী, মুহাদ্দিস, লেখক এবং বিশিষ্ট রাক্বী ও মুদাব্বির");
+        addInfoHeading(page, "আমাদের মূলনীতি ও অঙ্গীকার");
+        addInfoText(page, "• আল্লাহর উপর পূর্ণ আস্থা ও ভরসা করা\n• কুরআন-সুন্নাহর অনুসরণ করা\n• রোগীদের গোপনীয়তা রক্ষা করা\n• রোগীর কথা মনোযোগ দিয়ে শোনা এবং সমস্যার ধরন বুঝে যথাসাধ্য পরামর্শ দেওয়া\n• চিকিৎসা বা রুকইয়ার ফলাফল সম্পর্কে অবাস্তব নিশ্চয়তা না দেওয়া\n• শরিয়তসম্মত সেবা প্রদান করা।");
+        addInfoHeading(page, "রোগীর প্রতি আমাদের অঙ্গীকার");
+        addInfoText(page, "প্রত্যেক রোগীর সঙ্গে সম্মান, ধৈর্য ও সহানুভূতিশীল আচরণ করা, ব্যক্তিগত তথ্যের গোপনীয়তা রক্ষা করা, সহজ ভাষায় প্রয়োজনীয় দিকনির্দেশনা দেওয়া এবং প্রয়োজন অনুযায়ী যোগ্য চিকিৎসকের পরামর্শ নিতে উৎসাহিত করা।");
+        addInfoHeading(page, "আমাদের সেবার নীতি");
+        addInfoText(page, "রুকইয়া শরয়ী কুরআন ও সহিহ সুন্নাহভিত্তিক একটি আধ্যাত্মিক সহায়তা। শিফা একমাত্র আল্লাহ তাআলার পক্ষ থেকে আসে। আমরা সাধ্যমতো আন্তরিক সেবা ও পরামর্শ দেওয়ার চেষ্টা করি।");
+        
+        TextView servicesButton = text("আমাদের সেবা  ›", 18, Color.WHITE, true);
+        servicesButton.setGravity(Gravity.CENTER);
+        servicesButton.setPadding(dp(18), dp(15), dp(18), dp(15));
+        GradientDrawable buttonBg = new GradientDrawable();
+        buttonBg.setColor(Color.rgb(12,104,72));
+        buttonBg.setCornerRadius(dp(14));
+        servicesButton.setBackground(buttonBg);
+        LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(-1,-2);
+        bp.topMargin = dp(22);
+        bp.bottomMargin = dp(14);
+        page.addView(servicesButton, bp);
+        servicesButton.setOnClickListener(v -> showInstitutionServices());
+
+        addInfoHeading(page, "প্রতিষ্ঠানের ঠিকানা ও যোগাযোগ");
+        addInfoText(page, "নাজিরপুরী রুকইয়া ও দাওয়াখানা\nফাইভ স্টার সুপার মার্কেট, ৫ম তলা, সিপাহীপাড়া চৌরাস্তা, রামপাল, মুন্সীগঞ্জ সদর, মুন্সীগঞ্জ।\nচেম্বার: প্রতিদিন সকাল ৯টা থেকে রাত ১১টা পর্যন্ত।\nWhatsApp: 01614-776592\nসিরিয়াল: 01814-778862\nকামাল শেখ: 01410-776592");
+        scroll.addView(page);
+        root.addView(scroll, new LinearLayout.LayoutParams(-1,0,1));
         setContentView(root);
+    }
+
+    private void showInstitutionServices() {
+        showingWeb = false;
+        releaseWebView();
+        root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(Color.rgb(246,249,246));
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setPadding(dp(14), dp(8), dp(14), dp(8));
+        bar.setBackgroundColor(Color.rgb(12,73,52));
+        TextView back = text("‹  প্রতিষ্ঠান সম্পর্কে", 16, Color.WHITE, true);
+        back.setOnClickListener(v -> showInstitutionAbout());
+        bar.addView(back);
+        root.addView(bar);
+
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout page = new LinearLayout(this);
+        page.setOrientation(LinearLayout.VERTICAL);
+        page.setPadding(dp(18), dp(24), dp(18), dp(30));
+        TextView title = text("আমাদের সেবাসমূহ", 24, Color.rgb(12,73,52), true);
+        title.setGravity(Gravity.CENTER);
+        page.addView(title);
+        TextView intro = text("কুরআন ও সহিহ সুন্নাহর আলোকে শরিয়তসম্মত রুকইয়া এবং প্রয়োজনীয় দিকনির্দেশনা", 15, Color.rgb(55,79,62), true);
+        intro.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(-1,-2);
+        ip.topMargin = dp(10);
+        page.addView(intro, ip);
+
+        addInfoHeading(page, "যেসব বিষয়ে পরামর্শ ও রুকইয়ার দিকনির্দেশনা");
+        addInfoText(page, "জিন-পরী বা অস্বাভাবিক ভয়ের অনুভূতি, জাদু-টোনা বা কুফরি বাণের আশঙ্কা, বদনজর, দুঃস্বপ্ন ও ঘুমের ভয়, শিশুদের অস্থিরতা, স্বামী-স্ত্রীর পারিবারিক অমিল, ব্যবসা-বাণিজ্যসংক্রান্ত দুশ্চিন্তা এবং মাথাব্যথা, মাইগ্রেন, শ্বাসকষ্ট, বুকব্যথা, বুক ধড়ফড়, শরীরব্যথা বা অন্যান্য শারীরিক সমস্যায় কুরআন-সুন্নাহভিত্তিক দোয়া, রুকইয়া ও পরামর্শের ব্যবস্থা রয়েছে।");
+        addInfoHeading(page, "গুরুত্বপূর্ণ স্বাস্থ্য-সতর্কতা");
+        addInfoText(page, "রুকইয়া আধ্যাত্মিক সহায়তা; এটি চিকিৎসকের পরীক্ষা, রোগ নির্ণয় বা চিকিৎসার বিকল্প নয়। শ্বাসকষ্ট, বুকব্যথা বা অন্য কোনো শারীরিক সমস্যায় যোগ্য চিকিৎসকের পরামর্শ নিন। চিকিৎসা বন্ধ বা বিলম্ব করবেন না। কোনো সমস্যাকে নিশ্চিতভাবে জিন, জাদু বা বদনজরের ফল বলা হয় না।");
+        addInfoHeading(page, "পরামর্শ ও যোগাযোগ");
+        addInfoText(page, "মুফতী রুহুল আমীন নাজিরপুরী\nWhatsApp: 01614-776592\nসিরিয়ালের জন্য কল: 01814-778862\nকামাল শেখ: 01410-776592\nঠিকানা: ফাইভ স্টার সুপার মার্কেট, ৫ম তলা, সিপাহীপাড়া চৌরাস্তা, রামপাল, মুন্সীগঞ্জ সদর, মুন্সীগঞ্জ।");
+        TextView backButton = text("‹  প্রতিষ্ঠানের পরিচিতিতে ফিরে যান", 15, Color.WHITE, true);
+        backButton.setGravity(Gravity.CENTER);
+        backButton.setPadding(dp(14), dp(14), dp(14), dp(14));
+        GradientDrawable backBg = new GradientDrawable();
+        backBg.setColor(Color.rgb(12,104,72));
+        backBg.setCornerRadius(dp(14));
+        backButton.setBackground(backBg);
+        LinearLayout.LayoutParams rb = new LinearLayout.LayoutParams(-1,-2);
+        rb.topMargin = dp(22);
+        page.addView(backButton, rb);
+        backButton.setOnClickListener(v -> showInstitutionAbout());
+        scroll.addView(page);
+        root.addView(scroll, new LinearLayout.LayoutParams(-1,0,1));
+        setContentView(root);
+    }
+
+    private void addInfoHeading(LinearLayout page, String value) {
+        TextView heading = text(value, 17, Color.rgb(12,73,52), true);
+        LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1,-2);
+        hp.topMargin = dp(20);
+        page.addView(heading, hp);
+    }
+
+    private void addInfoText(LinearLayout page, String value) {
+        TextView body = text(value, 14, Color.rgb(55,66,58), false);
+        body.setLineSpacing(dp(3), 1.0f);
+        LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(-1,-2);
+        tp.topMargin = dp(8);
+        page.addView(body, tp);
     }
 
     private void showSettings() {
