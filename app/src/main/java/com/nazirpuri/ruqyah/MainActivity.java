@@ -1796,7 +1796,24 @@ public class MainActivity extends Activity {
     private void showHomeMenu() {
         new android.app.AlertDialog.Builder(this).setTitle("অ্যাপ মেনু")
             .setItems(new String[]{"অ্যাপটি শেয়ার করুন","আমাদের সম্পর্কে জানুন","যোগাযোগ"},(d,w)->{
-                if(w==0){Intent share=new Intent(Intent.ACTION_SEND);share.setType("text/plain");share.putExtra(Intent.EXTRA_TEXT,"নাজিরপুরী রুকইয়া ও দাওয়াখানা অ্যাপ\\n"+HOME_URL);startActivity(Intent.createChooser(share,"অ্যাপটি শেয়ার করুন"));}
+                if(w==0){
+                    final String apkLink="https://github.com/najirpury2026-arch/nazirpuri-ruqyah-app/releases/download/latest-apk/nazirpuri.apk";
+                    new android.app.AlertDialog.Builder(MainActivity.this)
+                        .setTitle("অ্যাপটি শেয়ার করুন")
+                        .setItems(new String[]{"APK লিংক শেয়ার করুন","APK লিংক কপি করুন"},(dialog,choice)->{
+                            if(choice==0){
+                                Intent share=new Intent(Intent.ACTION_SEND);
+                                share.setType("text/plain");
+                                share.putExtra(Intent.EXTRA_SUBJECT,"নাজিরপুরী রুকইয়া ও দাওয়াখানা অ্যাপ");
+                                share.putExtra(Intent.EXTRA_TEXT,"নাজিরপুরী রুকইয়া ও দাওয়াখানা অ্যাপ ডাউনলোড করুন। নিচের লিংকে চাপ দিয়ে APK ডাউনলোড করে ইনস্টল করুন:\\n"+apkLink);
+                                startActivity(Intent.createChooser(share,"APK শেয়ার করুন"));
+                            }else{
+                                android.content.ClipboardManager clipboard=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Nazirpuri APK",apkLink));
+                                android.widget.Toast.makeText(MainActivity.this,"APK ডাউনলোড লিংক কপি হয়েছে",android.widget.Toast.LENGTH_LONG).show();
+                            }
+                        }).setNegativeButton("বন্ধ",null).show();
+                }
                 else if(w==1)showAboutDialog();else showContactDialog();
             }).setNegativeButton("বন্ধ",null).show();
     }
