@@ -16,6 +16,10 @@ select,.search{font:inherit;color:#555;background:transparent;border:1.5px solid
 .action{border:0;background:none;color:#376b57;font-size:32px;min-width:40px;cursor:pointer}.action:disabled{opacity:.65}.action.done{color:#376b57;font-weight:800}.action.downloading{font-size:14px;color:#9a6a16;min-width:72px}.download-seal{display:inline-flex;width:48px;height:48px;align-items:center;justify-content:center;border-radius:50%;background:#376b57;color:#fff;font-size:31px;font-weight:800;line-height:1;box-shadow:0 2px 5px #172a3033}.action.done{min-width:54px;display:flex;justify-content:center;align-items:center}
 .book-progress{margin-top:8px;display:none}.progress-track{height:7px;border-radius:8px;background:#dce7e0;overflow:hidden}.progress-fill{height:100%;width:0;background:#376b57;border-radius:8px;transition:width .15s}.progress-fill.waiting{width:35%;animation:bookwait 1.1s ease-in-out infinite alternate}@keyframes bookwait{from{transform:translateX(-35%)}to{transform:translateX(190%)}}.book-progress small{display:block;color:#68766f;font-size:11px;margin-top:4px}.empty{background:#fff;border:1px dashed #c8d5ce;border-radius:16px;text-align:center;padding:25px 16px;color:#66756c;line-height:1.9;margin-top:18px}.empty strong{display:block;color:var(--g);font-size:18px;margin-bottom:6px}
 footer{text-align:center;color:#849087;font-size:12px;padding:12px}
+</style><style>/* App-wide bundled Bengali font: SolaimanLipi */
+@font-face{font-family:'SolaimanLipi';src:url('SolaimanLipi.ttf') format('truetype');font-style:normal;font-weight:100 900;font-display:swap}
+html,body{font-family:'SolaimanLipi',sans-serif!important}
+button,input,select,textarea{font-family:inherit}
 </style></head><body>
 <header><button onclick="history.back()" aria-label="ফিরে যান">‹</button><h1>কিতাবসমূহ</h1><button onclick="alert('কিতাব খুলতে ডান পাশের চিহ্নে চাপ দিন।')" aria-label="তথ্য">ⓘ</button></header>
 <nav class="tabs"><button class="active" data-tab="all">সকল</button><button data-tab="offline">অফলাইন</button><button data-tab="popular">জনপ্রিয়</button><button data-tab="latest">সর্বশেষ</button></nav>
