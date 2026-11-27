@@ -3,23 +3,22 @@
 <style>
 @font-face{font-family:SolaimanLipi;src:url('file:///android_asset/SolaimanLipi.ttf') format('truetype')}
 *{box-sizing:border-box}body{margin:0;background:#f3f7f3;color:#183c2b;font-family:SolaimanLipi,sans-serif}
-header{background:linear-gradient(125deg,#075236,#168253);color:#fff;padding:20px 16px 22px}
-header h1{margin:0;font-size:23px}header p{margin:6px 0 0;font-size:14px;color:#e0f3e7}
-main{max-width:720px;margin:auto;padding:16px}
-.welcome{background:#fff;border:1px solid #dce9df;border-radius:17px;padding:18px;text-align:center;box-shadow:0 4px 14px #123b2410}
+header{background:linear-gradient(125deg,#075236,#168253);color:#fff;padding:20px 16px 22px}header h1{margin:0;font-size:23px}header p{margin:6px 0 0;font-size:14px;color:#e0f3e7}
+main{max-width:720px;margin:auto;padding:16px}.welcome{background:#fff;border:1px solid #dce9df;border-radius:17px;padding:18px;text-align:center;box-shadow:0 4px 14px #123b2410}
 .symbol{width:66px;height:66px;margin:0 auto 12px;border-radius:20px;background:#f8efd9;display:grid;place-items:center;font-size:34px}
-.welcome h2{font-size:20px;margin:0 0 8px;color:#087148}
-.welcome p{font-size:15px;line-height:1.85;margin:0;color:#52695b}
-.notice{margin-top:14px;padding:13px 15px;border-radius:13px;background:#e6f3e9;border:1px solid #c9e5d0;color:#315a40;font-size:14px;line-height:1.8}
-.section-title{margin:22px 2px 10px;font-size:18px;font-weight:bold}
-.book-placeholder{background:#fff;border:1px dashed #b9d4c0;border-radius:14px;padding:15px;display:flex;gap:12px;align-items:center}
-.book-icon{width:44px;height:44px;border-radius:12px;background:#edf6ef;display:grid;place-items:center;font-size:23px;flex:none}
-.book-placeholder strong{display:block;font-size:16px}.book-placeholder small{display:block;color:#718477;font-size:12px;margin-top:4px}
+.welcome h2{font-size:20px;margin:0 0 8px;color:#087148}.welcome p{font-size:15px;line-height:1.85;margin:0;color:#52695b}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:20px}
+a.option{display:flex;align-items:center;gap:12px;min-height:94px;padding:15px;background:#fff;border:1px solid #d8e8dc;border-radius:16px;text-decoration:none;color:#174a32;box-shadow:0 3px 10px #123b2408}
+.icon{width:48px;height:48px;border-radius:14px;background:#eaf5ed;display:grid;place-items:center;font-size:25px;flex:none}
+.option b{display:block;font-size:18px}.option small{display:block;color:#718477;font-size:12px;margin-top:5px}
+.tip{margin-top:16px;padding:13px 15px;border-radius:13px;background:#e6f3e9;border:1px solid #c9e5d0;color:#315a40;font-size:14px;line-height:1.8}
+@media(max-width:360px){.grid{grid-template-columns:1fr}}
 </style></head><body>
 <header><h1>ফাতাওয়ার কিতাব</h1><p>ইসলামি মাসায়েল ও ফাতাওয়ার কিতাবসমূহ</p></header>
-<main>
-<section class="welcome"><div class="symbol">📚</div><h2>ফাতাওয়ার কিতাব বিভাগ</h2><p>কুরআন ও সহিহ সুন্নাহর আলোকে ফাতাওয়া, মাসায়েল এবং নির্ভরযোগ্য আলিমদের কিতাবসমূহ এই স্বতন্ত্র বিভাগে সাজানো হবে, ইনশাআল্লাহ।</p></section>
-<div class="notice">এই বিভাগটি আলাদা করে তৈরি করা হয়েছে। কিতাবের নাম ও পাঠ/ডাউনলোড লিংক পর্যায়ক্রমে যুক্ত করা হবে, ইনশাআল্লাহ।</div>
-<div class="section-title">কিতাবসমূহ</div>
-<div class="book-placeholder"><div class="book-icon">📖</div><div><strong>ফাতাওয়ার কিতাব</strong><small>কিতাবের সংগ্রহ এখানে যুক্ত হবে, ইনশাআল্লাহ</small></div></div>
-</main></body></html>
+<main><section class="welcome"><div class="symbol">📚</div><h2>ফাতাওয়ার কিতাব বিভাগ</h2><p>আপনার পছন্দের ভাষা ও অফলাইন কিতাবের বিভাগ নির্বাচন করুন। প্রতিটি অপশনের নিজস্ব কিতাব পেজ রয়েছে।</p></section>
+<div class="grid">
+<a class="option" href="file:///android_asset/fatawa-ar.html"><span class="icon">ع</span><span><b>আরবি</b><small>আরবি ফাতাওয়ার কিতাব</small></span></a>
+<a class="option" href="file:///android_asset/fatawa-ur.html"><span class="icon">اُردو</span><span><b>উর্দু</b><small>উর্দু ফাতাওয়ার কিতাব</small></span></a>
+<a class="option" href="file:///android_asset/fatawa-bn.html"><span class="icon">অ</span><span><b>বাংলা</b><small>বাংলা ফাতাওয়ার কিতাব</small></span></a>
+<a class="option" href="file:///android_asset/fatawa-offline.html"><span class="icon">⬇</span><span><b>অফলাইন</b><small>ডিভাইসে সংরক্ষিত কিতাব</small></span></a>
+</div><div class="tip">প্রতিটি পেজে সংশ্লিষ্ট ভাষার/ধরনের কিতাবের নাম, ফাইল বা পাঠ যুক্ত করা যাবে। এখনো কিতাবের ফাইল যোগ করা হয়নি।</div></main></body></html>
