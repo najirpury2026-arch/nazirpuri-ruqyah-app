@@ -927,7 +927,7 @@ public class MainActivity extends Activity {
                     // Google Drive may report a compressed/partial response length.
             // Trust Content-Length only for identity encoding; prefer the full
             // object size from Content-Range when Drive provides it.
-            long total = connection.getContentLengthLong();
+            long total = conn.getContentLengthLong();
             String encoding = connection.getHeaderField("Content-Encoding");
             if (encoding != null && !encoding.trim().isEmpty() &&
                     !"identity".equalsIgnoreCase(encoding.trim())) total = -1L;
@@ -1218,7 +1218,7 @@ public class MainActivity extends Activity {
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
             int code = connection.getResponseCode();
             if (code < 200 || code >= 300) throw new Exception("ডাউনলোড সার্ভার সাড়া দেয়নি (" + code + ")");
-            try (InputStream in = connection.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
+            try (InputStream in = conn.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
                 byte[] buffer = new byte[262144]; int n;
                 while ((n = in.read(buffer)) != -1) out.write(buffer, 0, n);
             }
@@ -1508,14 +1508,15 @@ public class MainActivity extends Activity {
             HttpURLConnection connection = null;
             try {
                 URL url = new URL("https://drive.usercontent.google.com/download?id=1NF_XD0ii7FDkijDzwB75KI80z5eZY5Ai&export=download&confirm=t");
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setInstanceFollowRedirects(true);
-                connection.setConnectTimeout(20000);
-                connection.setReadTimeout(30000);
-                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
-                connection.setRequestProperty("Accept", "video/mp4,application/octet-stream,*/*");
-                int code = connection.getResponseCode();
-                String type = connection.getContentType();
+                final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                connection = conn;
+                conn.setInstanceFollowRedirects(true);
+                conn.setConnectTimeout(20000);
+                conn.setReadTimeout(30000);
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
+                conn.setRequestProperty("Accept", "video/mp4,application/octet-stream,*/*");
+                int code = conn.getResponseCode();
+                String type = conn.getContentType();
                 if (code < 200 || code >= 300 || (type != null && (type.contains("text/html") || type.contains("application/json")))) {
                     throw new java.io.IOException("Google Drive ভিডিও ফাইল সরাসরি দেয়নি (HTTP " + code + ")। লিংকের শেয়ারিং অনুমতি পরীক্ষা করুন।");
                 }
