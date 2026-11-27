@@ -1575,7 +1575,7 @@ public class MainActivity extends Activity {
         }, "institution-video-download").start();
     }
 
-     playInstitutionVideo(VideoView player, File videoFile) {
+    private void playInstitutionVideo(VideoView player, File videoFile) {
         try {
             MediaController controls = new MediaController(this);
             controls.setAnchorView(player);
