@@ -1900,6 +1900,7 @@ public class MainActivity extends Activity {
             }
             File target = bookFile(name);
             if (isPdfFile(target)) {
+                notifyBook(name, true, "কিতাবটি আগে থেকেই ডাউনলোড করা আছে। অফলাইনে খুলছে…");
                 openOfflineBook(name);
                 return;
             }
