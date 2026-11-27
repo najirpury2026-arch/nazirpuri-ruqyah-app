@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#294f42"><title>ফাতাওয়ায়ে শামী • ১৩ খণ্ড</title>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#294f42"><title>ফাতাওয়ার কিতাবসমূহ</title>
 <style>
 :root{--g:#294f42;--bg:#eef3f6;--ink:#26352f;--muted:#68766f;--line:#d9e1e5}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:SolaimanLipi,"Noto Sans Bengali",sans-serif}
@@ -17,12 +17,12 @@ select,.search{font:inherit;color:#555;background:transparent;border:1.5px solid
 .book-progress{margin-top:8px;display:none}.progress-track{height:7px;border-radius:8px;background:#dce7e0;overflow:hidden}.progress-fill{height:100%;width:0;background:#376b57;border-radius:8px;transition:width .15s}.progress-fill.waiting{width:35%;animation:bookwait 1.1s ease-in-out infinite alternate}@keyframes bookwait{from{transform:translateX(-35%)}to{transform:translateX(190%)}}.book-progress small{display:block;color:#68766f;font-size:11px;margin-top:4px}.empty{background:#fff;border:1px dashed #c8d5ce;border-radius:16px;text-align:center;padding:25px 16px;color:#66756c;line-height:1.9;margin-top:18px}.empty strong{display:block;color:var(--g);font-size:18px;margin-bottom:6px}
 footer{text-align:center;color:#849087;font-size:12px;padding:12px}
 </style></head><body>
-<header><button onclick="history.back()" aria-label="ফিরে যান">‹</button><h1>ফাতাওয়ায়ে শামী</h1><button onclick="alert('কিতাব খুলতে ডান পাশের চিহ্নে চাপ দিন।')" aria-label="তথ্য">ⓘ</button></header>
+<header><button onclick="history.back()" aria-label="ফিরে যান">‹</button><h1>ফাতাওয়ার কিতাব</h1><button onclick="alert('কিতাব খুলতে ডান পাশের চিহ্নে চাপ দিন।')" aria-label="তথ্য">ⓘ</button></header>
 <nav class="tabs"><button class="active" data-tab="all">সকল</button><button data-tab="offline">অফলাইন</button><button data-tab="popular">জনপ্রিয়</button><button data-tab="latest">সর্বশেষ</button></nav>
 <main class="wrap"><div class="filters"><select id="author"><option value="">সকল লেখক</option></select><select id="subject"><option value="">সকল বিষয়</option></select></div>
 <div class="searchrow"><input class="search" id="q" placeholder="কিতাবের নাম লিখে খুঁজুন…" autocomplete="off"><span>⌕</span></div>
 <div class="status" id="status">কিতাবের তালিকা</div><section id="list"></section>
-<div class="empty" id="empty"><strong>ফাতাওয়ায়ে শামী • ১৩ খণ্ড</strong>প্রথমবার খণ্ডে চাপ দিলে PDF স্বয়ংক্রিয়ভাবে ডাউনলোড হবে।<br>ডাউনলোডের অগ্রগতি ও বাকি পরিমাণ দেখা যাবে; পরে ইন্টারনেট ছাড়াই পড়তে পারবেন।</div>
+<div class="empty" id="empty"><strong>ফাতাওয়ার কিতাবসমূহ</strong>প্রথমবার খণ্ডে চাপ দিলে PDF স্বয়ংক্রিয়ভাবে ডাউনলোড হবে।<br>ডাউনলোডের অগ্রগতি ও বাকি পরিমাণ দেখা যাবে; পরে ইন্টারনেট ছাড়াই পড়তে পারবেন।</div>
 </main><footer><a href="file:///android_asset/fatawa.html" style="color:#376b57;text-decoration:none">← ফাতাওয়ার বিভাগে ফিরে যান</a><br>নাজিরপুরী রুকইয়া ও দাওয়াখানা</footer>
 <script>
 /* নতুন কিতাব যুক্ত করতে নিচের তালিকায় title, author, subject, cover ও সরাসরি PDF url যোগ করুন। */
@@ -39,7 +39,13 @@ const books=[
 {title:"ফাতাওয়ায়ে শামী — ১০ম খণ্ড",file:"fatawa-shami-10",author:"ইবনে আবিদীন (রহ.)",subject:"ফাতাওয়ার কিতাব",cover:"",url:"https://drive.google.com/file/d/1LmxX9TYHKiFymMWsPXf669AYSDINvX2b/view?usp=drivesdk",popular:false},
 {title:"ফাতাওয়ায়ে শামী — ১১তম খণ্ড",file:"fatawa-shami-11",author:"ইবনে আবিদীন (রহ.)",subject:"ফাতাওয়ার কিতাব",cover:"",url:"https://drive.google.com/file/d/1YE3D_BwGP20eWNSGTJPJH5VzwJhtPym9/view?usp=drivesdk",popular:false},
 {title:"ফাতাওয়ায়ে শামী — ১২তম খণ্ড",file:"fatawa-shami-12",author:"ইবনে আবিদীন (রহ.)",subject:"ফাতাওয়ার কিতাব",cover:"",url:"https://drive.google.com/file/d/1s7MWZ7M_3sBl5bfXLh91FzNZwjQCCa7O/view?usp=drivesdk",popular:false},
-{title:"ফাতাওয়ায়ে শামী — ১৩তম খণ্ড",file:"fatawa-shami-13",author:"ইবনে আবিদীন (রহ.)",subject:"ফাতাওয়ার কিতাব",cover:"",url:"https://drive.google.com/file/d/13v_JPxgAFLDnLxEJxto5gq_mXPmUfwEy/view?usp=drivesdk",popular:false}
+{title:"ফাতাওয়ায়ে শামী — ১৩তম খণ্ড",file:"fatawa-shami-13",author:"ইবনে আবিদীন (রহ.)",subject:"ফাতাওয়ার কিতাব",cover:"",url:"https://drive.google.com/file/d/13v_JPxgAFLDnLxEJxto5gq_mXPmUfwEy/view?usp=drivesdk",popular:false},
+{title:"ফাতাওয়ায়ে হিন্দিয়া — ১ম খণ্ড",file:"fatawa-hindi-01",author:"ফাতাওয়ায়ে হিন্দিয়া",subject:"ফাতাওয়ার কিতাব",cover:"",url:"https://drive.google.com/file/d/1el1ELPTtYUEk0WQ2kvHJiadUU9LP_lkJ/view?usp=drivesdk",popular:false},
+{title:"ফাতাওয়ায়ে হিন্দিয়া — ২য় খণ্ড",file:"fatawa-hindi-02",author:"ফাতাওয়ায়ে হিন্দিয়া",subject:"ফাতাওয়ার কিতাব",cover:"",url:"https://drive.google.com/file/d/1_-bBCN71u_AfWzodwvL-c5WEBrVa8hew/view?usp=drivesdk",popular:false},
+{title:"ফাতাওয়ায়ে হিন্দিয়া — ৩য় খণ্ড",file:"fatawa-hindi-03",author:"ফাতাওয়ায়ে হিন্দিয়া",subject:"ফাতাওয়ার কিতাব",cover:"",url:"https://drive.google.com/file/d/1dERvm480dLtjyWOLMhCdkHpf6UpPlXS9/view?usp=drivesdk",popular:false},
+{title:"ফাতাওয়ায়ে হিন্দিয়া — ৪র্থ খণ্ড",file:"fatawa-hindi-04",author:"ফাতাওয়ায়ে হিন্দিয়া",subject:"ফাতাওয়ার কিতাব",cover:"",url:"https://drive.google.com/file/d/16Spguy1yx2Sg-XjXJzXcp8ImJO8Xj00h/view?usp=drivesdk",popular:false},
+{title:"ফাতাওয়ায়ে হিন্দিয়া — ৫ম খণ্ড",file:"fatawa-hindi-05",author:"ফাতাওয়ায়ে হিন্দিয়া",subject:"ফাতাওয়ার কিতাব",cover:"",url:"https://drive.google.com/file/d/1weRT-wBBZiPzgQl4xF3LoBgJqv1ap0q5/view?usp=drivesdk",popular:false},
+{title:"ফাতাওয়ায়ে হিন্দিয়া — ৬ষ্ঠ খণ্ড",file:"fatawa-hindi-06",author:"ফাতাওয়ায়ে হিন্দিয়া",subject:"ফাতাওয়ার কিতাব",cover:"",url:"https://drive.google.com/file/d/1plO4rK3R0cIBMqGbcJgHNrk2zB2FkwTZ/view?usp=drivesdk",popular:false}
 ];
 let tab="all";const downloadedBooks=new Set();const activeDownloads=Object.create(null);const $=id=>document.getElementById(id);
 const safe=s=>String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
