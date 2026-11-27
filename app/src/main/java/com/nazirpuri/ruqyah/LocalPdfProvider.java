@@ -16,10 +16,21 @@ public class LocalPdfProvider extends ContentProvider {
     @Override public boolean onCreate() { return true; }
 
     private File resolve(Uri uri) throws FileNotFoundException {
-        if (uri == null || uri.getPathSegments().size() != 2 ||
-            !"kitab_books".equals(uri.getPathSegments().get(0))) {
-            throw new FileNotFoundException("Invalid kitab path");
+        if (uri == null || uri.getPathSegments().size() != 2) {
+            throw new FileNotFoundException("Invalid file path");
         }
+        String kind = uri.getPathSegments().get(0);
+        if ("installed_apk".equals(kind) && "nazirpuri.apk".equals(uri.getLastPathSegment())) {
+            try {
+                File installedApk = new File(getContext().getApplicationInfo().sourceDir).getCanonicalFile();
+                if (!installedApk.isFile() || installedApk.length() == 0)
+                    throw new FileNotFoundException("Installed APK not found");
+                return installedApk;
+            } catch (java.io.IOException e) {
+                throw new FileNotFoundException("Unable to resolve installed APK");
+            }
+        }
+        if (!"kitab_books".equals(kind)) throw new FileNotFoundException("Invalid kitab path");
         File directory = new File(getContext().getFilesDir(), "kitab_books");
         File file = new File(directory, uri.getLastPathSegment()).getAbsoluteFile();
         try {
@@ -33,7 +44,11 @@ public class LocalPdfProvider extends ContentProvider {
         return file;
     }
 
-    @Override public String getType(Uri uri) { return "application/pdf"; }
+    @Override public String getType(Uri uri) {
+        return uri != null && uri.getPathSegments().size() == 2 &&
+            "installed_apk".equals(uri.getPathSegments().get(0))
+            ? "application/vnd.android.package-archive" : "application/pdf";
+    }
 
     @Override public Cursor query(Uri uri, String[] projection, String selection,
                                   String[] selectionArgs, String sortOrder) {
