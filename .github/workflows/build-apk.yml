@@ -47,13 +47,16 @@ jobs:
           VERSION_CODE=$((1000 + GITHUB_RUN_NUMBER))
           echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
           cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/nazirpuri-$VERSION_CODE.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/nazirpuri.apk
       - name: Publish direct APK download
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest-apk
           name: Latest Nazirpuri Ruqyah APK
           make_latest: true
-          files: app/build/outputs/apk/debug/nazirpuri-${{ env.VERSION_CODE }}.apk
+          files: |
+            app/build/outputs/apk/debug/nazirpuri-${{ env.VERSION_CODE }}.apk
+            app/build/outputs/apk/debug/nazirpuri.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
