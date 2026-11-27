@@ -1,6 +1,7 @@
 package com.nazirpuri.ruqyah;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -19,6 +20,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import org.json.JSONObject;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.speech.tts.TextToSpeech;
 import java.util.Locale;
 import android.webkit.WebChromeClient;
@@ -1567,18 +1570,43 @@ public class MainActivity extends Activity {
 
     private void playInstitutionVideo(VideoView player, File videoFile) {
         try {
+            // Open the saved video in a dedicated full-screen player.
+            Dialog videoDialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+            VideoView fullScreenPlayer = new VideoView(this);
+            videoDialog.setContentView(fullScreenPlayer);
+            Window window = videoDialog.getWindow();
+            if (window != null) {
+                window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                        WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                window.setLayout(WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.MATCH_PARENT);
+                window.getDecorView().setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+            }
             MediaController controls = new MediaController(this);
-            controls.setAnchorView(player);
-            player.setMediaController(controls);
-            player.setVideoURI(Uri.fromFile(videoFile));
-            player.setOnPreparedListener(mp -> {
+            controls.setAnchorView(fullScreenPlayer);
+            fullScreenPlayer.setMediaController(controls);
+            fullScreenPlayer.setVideoURI(Uri.fromFile(videoFile));
+            fullScreenPlayer.setOnPreparedListener(mp -> {
                 mp.setLooping(false);
-                player.start();
+                fullScreenPlayer.start();
             });
-            player.setOnErrorListener((mp, what, extra) -> {
+            fullScreenPlayer.setOnCompletionListener(mp -> videoDialog.dismiss());
+            fullScreenPlayer.setOnErrorListener((mp, what, extra) -> {
+                videoDialog.dismiss();
                 android.widget.Toast.makeText(this, "ভিডিও চালানো যায়নি। আবার ডাউনলোড করে দেখুন।", android.widget.Toast.LENGTH_LONG).show();
                 return true;
             });
+            videoDialog.show();
+            if (window != null) {
+                window.setLayout(WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.MATCH_PARENT);
+            }
         } catch (Exception e) {
             android.widget.Toast.makeText(this, "ভিডিও চালানো যায়নি: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
         }
