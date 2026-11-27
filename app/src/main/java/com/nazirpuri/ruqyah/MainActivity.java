@@ -284,6 +284,8 @@ public class MainActivity extends Activity {
             gp.columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);
             gp.setMargins(dp(4),dp(4),dp(4),dp(4));
             grid.addView(tile,gp);
+            // Fatawa shortcut appears directly after Translation Recitation.
+            if (i == 6) addFatawaHomeTile(grid);
             tile.setOnClickListener(v -> {
                 tile.setAlpha(0.82f);
                 tile.postDelayed(() -> tile.setAlpha(1f), 90);
@@ -712,6 +714,40 @@ public class MainActivity extends Activity {
         new android.app.AlertDialog.Builder(this).setTitle("মসজিদ খুঁজুন")
             .setMessage(message).setPositiveButton("আবার চেষ্টা করুন",(d,w)->findNearbyMosques())
             .setNegativeButton("বন্ধ",null).show();
+    }
+
+    private void addFatawaHomeTile(GridLayout grid) {
+        LinearLayout tile = new LinearLayout(this);
+        tile.setOrientation(LinearLayout.VERTICAL);
+        tile.setGravity(Gravity.CENTER);
+        tile.setPadding(dp(3),dp(10),dp(3),dp(9));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Color.rgb(250,244,226));
+        bg.setCornerRadius(dp(17));
+        bg.setStroke(dp(1),Color.rgb(238,232,214));
+        tile.setBackground(bg);
+        tile.setElevation(dp(2));
+        TextView icon = text("📚",25,Color.rgb(170,126,35),true);
+        icon.setGravity(Gravity.CENTER);
+        tile.addView(icon,new LinearLayout.LayoutParams(dp(56),dp(54)));
+        TextView label = text("ফাতাওয়ার কিতাব",12,Color.rgb(35,66,49),true);
+        label.setGravity(Gravity.CENTER);
+        label.setMaxLines(2);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1,dp(34));
+        lp.topMargin=dp(7);
+        tile.addView(label,lp);
+        GridLayout.LayoutParams gp=new GridLayout.LayoutParams();
+        gp.width=0; gp.height=dp(105);
+        gp.columnSpec=GridLayout.spec(GridLayout.UNDEFINED,1f);
+        gp.setMargins(dp(4),dp(4),dp(4),dp(4));
+        grid.addView(tile,gp);
+        tile.setOnClickListener(v -> {
+            tile.setAlpha(0.82f);
+            tile.postDelayed(() -> tile.setAlpha(1f),90);
+            showWeb("file:///android_asset/tafsir.html");
+        });
+        tile.setClickable(true);
+        tile.setFocusable(true);
     }
 
     private void openSection(int index) {
