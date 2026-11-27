@@ -32,6 +32,8 @@ import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.VideoView;
+import android.widget.MediaController;
 
 public class MainActivity extends Activity {
     private static final String HOME_URL = "https://nazirpuriruqyah.blogspot.com/";
@@ -1447,9 +1449,156 @@ public class MainActivity extends Activity {
         rb.topMargin = dp(22);
         page.addView(backButton, rb);
         backButton.setOnClickListener(v -> showInstitutionAbout());
+
+        // Introductory video is deliberately the final section on this page.
+        addInfoHeading(page, "প্রতিষ্ঠানের পরিচিতিমূলক ভিডিও");
+        addInfoText(page, "প্রথমবার ভিডিওতে চাপ দিলে ইন্টারনেটের মাধ্যমে ভিডিওটি ডাউনলোড হবে। ডাউনলোড শেষ হলে চালানো যাবে এবং পরবর্তীতে ইন্টারনেট ছাড়াই দেখা যাবে।");
+        VideoView introVideo = new VideoView(this);
+        LinearLayout.LayoutParams videoParams = new LinearLayout.LayoutParams(-1, dp(220));
+        videoParams.topMargin = dp(10);
+        page.addView(introVideo, videoParams);
+        TextView videoStatus = text("", 13, Color.rgb(65,78,68), false);
+        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(-1,-2);
+        statusParams.topMargin = dp(8);
+        page.addView(videoStatus, statusParams);
+        ProgressBar videoProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        videoProgress.setMax(100);
+        videoProgress.setVisibility(View.GONE);
+        page.addView(videoProgress, new LinearLayout.LayoutParams(-1, dp(6)));
+        TextView videoAction = text("ভিডিও ডাউনলোড / চালান", 16, Color.WHITE, true);
+        videoAction.setGravity(Gravity.CENTER);
+        videoAction.setPadding(dp(14), dp(14), dp(14), dp(14));
+        GradientDrawable videoButtonBg = new GradientDrawable();
+        videoButtonBg.setColor(Color.rgb(12,104,72));
+        videoButtonBg.setCornerRadius(dp(14));
+        videoAction.setBackground(videoButtonBg);
+        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1,-2);
+        actionParams.topMargin = dp(12);
+        page.addView(videoAction, actionParams);
+        File savedIntroVideo = new File(getFilesDir(), "institution_intro.mp4");
+        if (savedIntroVideo.exists() && savedIntroVideo.length() > 0) {
+            videoStatus.setText("ভিডিওটি এই ডিভাইসে সংরক্ষিত আছে। অফলাইনেও চালানো যাবে।");
+            videoAction.setText("▶ ভিডিও চালান");
+        }
+        videoAction.setOnClickListener(v -> {
+            if (savedIntroVideo.exists() && savedIntroVideo.length() > 0) {
+                playInstitutionVideo(introVideo, savedIntroVideo);
+            } else {
+                downloadInstitutionVideo(savedIntroVideo, videoProgress, videoStatus, videoAction, introVideo);
+            }
+        });
         scroll.addView(page);
         root.addView(scroll, new LinearLayout.LayoutParams(-1,0,1));
         setContentView(root);
+    }
+
+    private void downloadInstitutionVideo(File destination, ProgressBar progress, TextView status,
+                                          TextView action, VideoView player) {
+        if (!isNetworkAvailable()) {
+            status.setText("ভিডিও ডাউনলোড করতে ইন্টারনেট সংযোগ চালু করুন।");
+            return;
+        }
+        action.setEnabled(false);
+        action.setText("ডাউনলোড হচ্ছে…");
+        progress.setVisibility(View.VISIBLE);
+        progress.setIndeterminate(true);
+        status.setText("ভিডিও ডাউনলোড শুরু হচ্ছে…");
+        new Thread(() -> {
+            File temp = new File(getFilesDir(), "institution_intro.mp4.part");
+            HttpURLConnection connection = null;
+            try {
+                URL url = new URL("https://drive.usercontent.google.com/download?id=1NF_XD0ii7FDkijDzwB75KI80z5eZY5Ai&export=download&confirm=t");
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setInstanceFollowRedirects(true);
+                connection.setConnectTimeout(20000);
+                connection.setReadTimeout(30000);
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
+                connection.setRequestProperty("Accept", "video/mp4,application/octet-stream,*/*");
+                int code = connection.getResponseCode();
+                String type = connection.getContentType();
+                if (code < 200 || code >= 300 || (type != null && (type.contains("text/html") || type.contains("application/json")))) {
+                    throw new java.io.IOException("Google Drive ভিডিও ফাইল সরাসরি দেয়নি (HTTP " + code + ")। লিংকের শেয়ারিং অনুমতি পরীক্ষা করুন।");
+                }
+                long total = connection.getContentLengthLong();
+                mainHandler.post(() -> {
+                    progress.setIndeterminate(total <= 0);
+                    if (total > 0) progress.setMax(100);
+                });
+                long downloaded = 0;
+                byte[] buffer = new byte[64 * 1024];
+                try (InputStream in = connection.getInputStream();
+                     FileOutputStream out = new FileOutputStream(temp)) {
+                    int count;
+                    while ((count = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, count);
+                        downloaded += count;
+                        final long done = downloaded;
+                        if (total > 0) {
+                            int percent = (int) Math.min(100, (done * 100) / total);
+                            String message = String.format(Locale.US, "ডাউনলোড: %.1f MB / %.1f MB (%d%%)",
+                                done / 1048576.0, total / 1048576.0, percent);
+                            mainHandler.post(() -> {
+                                progress.setIndeterminate(false);
+                                progress.setProgress(percent);
+                                status.setText(message);
+                            });
+                        } else if (downloaded % (1024 * 1024) < buffer.length) {
+                            String message = String.format(Locale.US, "ডাউনলোড হয়েছে: %.1f MB", done / 1048576.0);
+                            mainHandler.post(() -> status.setText(message));
+                        }
+                    }
+                    out.flush();
+                }
+                if (downloaded < 1024) throw new java.io.IOException("ডাউনলোড করা ফাইলটি ভিডিও নয় বা অসম্পূর্ণ।");
+                if (destination.exists()) destination.delete();
+                if (!temp.renameTo(destination)) throw new java.io.IOException("ভিডিও সংরক্ষণ করা যায়নি।");
+                mainHandler.post(() -> {
+                    progress.setVisibility(View.GONE);
+                    status.setText("ডাউনলোড সম্পন্ন। ভিডিওটি এখন অফলাইনেও দেখা যাবে।");
+                    action.setEnabled(true);
+                    action.setText("▶ ভিডিও চালান");
+                    playInstitutionVideo(player, destination);
+                });
+            } catch (Exception e) {
+                temp.delete();
+                String message = e.getMessage() == null ? "ভিডিও ডাউনলোড করা যায়নি।" : e.getMessage();
+                mainHandler.post(() -> {
+                    progress.setVisibility(View.GONE);
+                    status.setText(message);
+                    action.setEnabled(true);
+                    action.setText("আবার ডাউনলোড করুন");
+                });
+            } finally {
+                if (connection != null) connection.disconnect();
+            }
+        }, "institution-video-download").start();
+    }
+
+    private void playInstitutionVideo(VideoView player, File videoFile) {
+        try {
+            MediaController controls = new MediaController(this);
+            controls.setAnchorView(player);
+            player.setMediaController(controls);
+            player.setVideoURI(Uri.fromFile(videoFile));
+            player.setOnPreparedListener(mp -> {
+                mp.setLooping(false);
+                player.start();
+            });
+            player.setOnErrorListener((mp, what, extra) -> {
+                android.widget.Toast.makeText(this, "ভিডিও চালানো যায়নি। আবার ডাউনলোড করে দেখুন।", android.widget.Toast.LENGTH_LONG).show();
+                return true;
+            });
+        } catch (Exception e) {
+            android.widget.Toast.makeText(this, "ভিডিও চালানো যায়নি: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private boolean isNetworkAvailable() {
+        try {
+            android.net.ConnectivityManager cm = (android.net.ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+            android.net.NetworkInfo info = cm == null ? null : cm.getActiveNetworkInfo();
+            return info != null && info.isConnected();
+        } catch (Exception ignored) { return false; }
     }
 
     private void addInfoHeading(LinearLayout page, String value) {
