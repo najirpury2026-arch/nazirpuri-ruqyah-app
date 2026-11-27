@@ -1218,7 +1218,7 @@ public class MainActivity extends Activity {
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
             int code = connection.getResponseCode();
             if (code < 200 || code >= 300) throw new Exception("ডাউনলোড সার্ভার সাড়া দেয়নি (" + code + ")");
-            try (InputStream in = conn.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
+            try (InputStream in = connection.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
                 byte[] buffer = new byte[262144]; int n;
                 while ((n = in.read(buffer)) != -1) out.write(buffer, 0, n);
             }
