@@ -27,6 +27,7 @@ body.in-reader header .tools{display:none}body:not(.in-reader) header h1{display
 <section id="reader" class="hidden">
 <div class="detail" id="detailPanel"><div class="dtitle" id="bookbn"></div><div class="dar" id="bookar"></div><div class="dmeta" id="bookstats"></div>
 <div class="searchrow"><input id="hadithNo" class="field" inputmode="numeric" placeholder="হাদীস নম্বর"><button class="go" id="jump">যান</button></div>
+<div class="searchrow"><input id="bookTextQ" class="field" placeholder="পুরো কিতাবে আরবি/বাংলা শব্দ খুঁজুন"><button class="go" id="bookSearch">খুঁজুন</button></div>
 <input id="chapterQ" class="field chapter-search" placeholder="অধ্যায় খুঁজুন">
 </div>
 <div id="chapters"></div><div id="hadiths"></div><div id="loading" class="status"></div>
@@ -42,6 +43,7 @@ function openCatalogBook(i){const b=catalogBooks[i];$('catalog').classList.add('
  card.querySelectorAll('.hadith-tab').forEach(b=>b.classList.toggle('active',b===tab));
  card.querySelectorAll('.hadith-panel').forEach(p=>p.classList.toggle('hidden',p.dataset.panel!==tab.dataset.tab));
 });
+$('bookSearch').onclick=searchWholeBookText;$('bookTextQ').addEventListener('keydown',e=>{if(e.key==='Enter')searchWholeBookText()});
 renderBooks();document.body.classList.remove('in-reader');$('headtitle').textContent='হাদীসের কিতাবসমূহ';window.scrollTo({top:0,behavior:'smooth'});};}
 
 const books=[
@@ -111,6 +113,27 @@ function selectChapter(k){
  $('chapterBack').onclick=()=>{hadithLoadToken++;hadithBatchBusy=false;$('hadiths').innerHTML='';$('chapters').classList.remove('hidden');$('detailPanel').classList.remove('hidden');renderChapters();window.scrollTo({top:0,behavior:'instant'});};
  $('hadithSearch').onclick=searchHadithText;$('hadithTextQ').addEventListener('keydown',e=>{if(e.key==='Enter')searchHadithText()});
  chapterHadithEnd=end;nextHadithNumber=start;window.scrollTo({top:0,behavior:'instant'});loadAllFollowingHadiths(hadithLoadToken);
+}
+async function searchWholeBookText(){
+ const query=normalizeHadithSearch($('bookTextQ')?.value);
+ if(!query){$('loading').textContent='পুরো কিতাবে খুঁজতে আরবি বা বাংলা শব্দ লিখুন।';return}
+ if(!current?.api||!metaData||!Object.keys(metaData).length){$('loading').textContent='এই কিতাবে অ্যাপের ভেতরে অনুসন্ধানযোগ্য পাঠ নেই।';return}
+ const ranges=Object.values(metaData).map(v=>parseRange(v.hadis_range)).filter(r=>r[0]>0&&r[1]>=r[0]);
+ const ids=[...new Set(ranges.flatMap(([a,b])=>Array.from({length:Math.min(b-a+1,8000)},(_,i)=>a+i)))];
+ $('chapters').classList.add('hidden');$('detailPanel').classList.add('hidden');$('hadiths').classList.remove('hidden');
+ $('hadiths').innerHTML='<div class="detail"><button class="go" id="wholeSearchBack" type="button">‹ কিতাবের অধ্যায়ে ফিরুন</button><div class="dtitle" style="margin-top:12px">“'+esc(query)+'” — পুরো কিতাবে অনুসন্ধান</div><div class="dmeta">কিতাব: '+esc(current.bn)+'</div></div><div id="wholeSearchResults"></div>';
+ $('wholeSearchBack').onclick=()=>{ $('hadiths').innerHTML='';$('chapters').classList.remove('hidden');$('detailPanel').classList.remove('hidden');$('loading').textContent=''; };
+ const output=$('wholeSearchResults');let matches=0,checked=0;const limit=Math.min(ids.length,8000);
+ $('loading').textContent='পুরো কিতাবে অনুসন্ধান শুরু হয়েছে…';
+ for(let i=0;i<limit;i+=12){
+  const batch=ids.slice(i,i+12);
+  const results=await Promise.all(batch.map(async id=>{try{const j=await fetchHadithJson(current.api+id+'.json');return {id,h:j.hadith||j}}catch(e){return null}}));
+  for(const item of results){checked++;if(!item)continue;const h=item.h;const hay=normalizeHadithSearch([h.ar,h.bn,h.narrator,h.note].join(' '));if(hay.includes(query)){output.insertAdjacentHTML('beforeend',hadithCard(h,item.id));matches++;if(matches>=100)break}}
+  $('loading').textContent='পুরো কিতাবে পরীক্ষা: '+bn(checked)+' / '+bn(limit)+' · মিল: '+bn(matches);
+  if(matches>=100)break;
+ }
+ if(!matches)output.innerHTML='<div class="status">এই কিতাবে শব্দটির কোনো মিল পাওয়া যায়নি।</div>';
+ $('loading').textContent=matches?'মিল পাওয়া গেছে: '+bn(matches)+(matches>=100?' (প্রথম ১০০টি দেখানো হয়েছে)':''):'অনুসন্ধান সম্পন্ন।';
 }
 function normalizeHadithSearch(value){return String(value||'').toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/\s+/g,' ').trim()}
 async function searchHadithText(){
