@@ -1933,7 +1933,9 @@ public class MainActivity extends Activity {
                     notifyBookProgress(name, target.length(), target.length());
                     // Do not open the reader automatically: leave the book list visible
                     // so users can start or finish other book downloads independently.
-                    notifyBook(name, true, "ডাউনলোড সম্পূর্ণ হয়েছে। অফলাইনে পড়তে কিতাবটিতে আবার চাপ দিন।");
+                    notifyBook(name, true, "ডাউনলোড সম্পূর্ণ হয়েছে। কিতাব খুলছে…");
+                    // Open the downloaded PDF immediately after the first tap.
+                    openOfflineBook(name);
                 } catch (Exception e) {
                     temp.delete();
                     notifyBook(name, false, "ডাউনলোড হয়নি: " + e.getMessage());
