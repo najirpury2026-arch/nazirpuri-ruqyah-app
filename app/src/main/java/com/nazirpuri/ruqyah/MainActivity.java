@@ -1793,25 +1793,66 @@ public class MainActivity extends Activity {
                 showHome();
             }).setNegativeButton("বন্ধ",null).show();
     }
+    private Uri getInstalledApkUri() throws Exception {
+        android.content.pm.ApplicationInfo info =
+            getPackageManager().getApplicationInfo(getPackageName(), 0);
+        File apkFile = new File(info.sourceDir);
+        if (!apkFile.isFile() || apkFile.length() == 0)
+            throw new Exception("ইনস্টল করা APK ফাইল পাওয়া যায়নি");
+        return new Uri.Builder()
+            .scheme("content")
+            .authority(getPackageName() + ".files")
+            .appendPath("installed_apk")
+            .appendPath("nazirpuri.apk")
+            .build();
+    }
+
+    private void shareInstalledApk() {
+        try {
+            Uri apkUri = getInstalledApkUri();
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("application/vnd.android.package-archive");
+            share.putExtra(Intent.EXTRA_STREAM, apkUri);
+            share.putExtra(Intent.EXTRA_SUBJECT, "নাজিরপুরী রুকইয়া ও দাওয়াখানা অ্যাপ");
+            share.putExtra(Intent.EXTRA_TEXT, "নাজিরপুরী রুকইয়া ও দাওয়াখানা অ্যাপের APK ফাইল");
+            share.setClipData(android.content.ClipData.newUri(getContentResolver(),
+                "নাজিরপুরী অ্যাপ APK", apkUri));
+            share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(share, "APK ফাইল শেয়ার করুন"));
+        } catch (Exception e) {
+            android.widget.Toast.makeText(this, "APK ফাইল শেয়ার করা যায়নি: " +
+                (e.getMessage() == null ? "অজানা সমস্যা" : e.getMessage()),
+                android.widget.Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void copyInstalledApk() {
+        try {
+            Uri apkUri = getInstalledApkUri();
+            android.content.ClipboardManager clipboard =
+                (android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+            android.content.ClipData clip = android.content.ClipData.newUri(
+                getContentResolver(), "নাজিরপুরী অ্যাপ APK", apkUri);
+            clipboard.setPrimaryClip(clip);
+            android.widget.Toast.makeText(this,
+                "APK ফাইলের URI কপি হয়েছে। যেসব অ্যাপ ফাইল পেস্ট সমর্থন করে সেখানে পেস্ট করুন; না হলে ‘APK ফাইল শেয়ার করুন’ ব্যবহার করুন।",
+                android.widget.Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            android.widget.Toast.makeText(this, "APK কপি করা যায়নি: " +
+                (e.getMessage() == null ? "অজানা সমস্যা" : e.getMessage()),
+                android.widget.Toast.LENGTH_LONG).show();
+        }
+    }
+
     private void showHomeMenu() {
         new android.app.AlertDialog.Builder(this).setTitle("অ্যাপ মেনু")
             .setItems(new String[]{"অ্যাপটি শেয়ার করুন","আমাদের সম্পর্কে জানুন","যোগাযোগ"},(d,w)->{
                 if(w==0){
-                    final String apkLink="https://github.com/najirpury2026-arch/nazirpuri-ruqyah-app/releases/download/latest-apk/nazirpuri.apk";
                     new android.app.AlertDialog.Builder(MainActivity.this)
                         .setTitle("অ্যাপটি শেয়ার করুন")
-                        .setItems(new String[]{"APK লিংক শেয়ার করুন","APK লিংক কপি করুন"},(dialog,choice)->{
-                            if(choice==0){
-                                Intent share=new Intent(Intent.ACTION_SEND);
-                                share.setType("text/plain");
-                                share.putExtra(Intent.EXTRA_SUBJECT,"নাজিরপুরী রুকইয়া ও দাওয়াখানা অ্যাপ");
-                                share.putExtra(Intent.EXTRA_TEXT,"নাজিরপুরী রুকইয়া ও দাওয়াখানা অ্যাপ ডাউনলোড করুন। নিচের লিংকে চাপ দিয়ে APK ডাউনলোড করে ইনস্টল করুন:\\n"+apkLink);
-                                startActivity(Intent.createChooser(share,"APK শেয়ার করুন"));
-                            }else{
-                                android.content.ClipboardManager clipboard=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-                                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Nazirpuri APK",apkLink));
-                                android.widget.Toast.makeText(MainActivity.this,"APK ডাউনলোড লিংক কপি হয়েছে",android.widget.Toast.LENGTH_LONG).show();
-                            }
+                        .setItems(new String[]{"আসল APK ফাইল শেয়ার করুন","APK ফাইল কপি করুন"},(dialog,choice)->{
+                            if(choice==0) shareInstalledApk();
+                            else copyInstalledApk();
                         }).setNegativeButton("বন্ধ",null).show();
                 }
                 else if(w==1)showAboutDialog();else showContactDialog();
