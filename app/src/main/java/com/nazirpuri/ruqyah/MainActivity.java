@@ -1383,21 +1383,48 @@ public class MainActivity extends Activity {
         addInfoHeading(page, "আমাদের সেবার নীতি");
         addInfoText(page, "রুকইয়া শরয়ী কুরআন ও সহিহ সুন্নাহভিত্তিক একটি আধ্যাত্মিক সহায়তা। শিফা একমাত্র আল্লাহ তাআলার পক্ষ থেকে আসে। আমরা সাধ্যমতো আন্তরিক সেবা ও পরামর্শ দেওয়ার চেষ্টা করি।");
         
-        TextView servicesButton = text("আমাদের সেবা  ›", 18, Color.WHITE, true);
-        servicesButton.setGravity(Gravity.CENTER);
-        servicesButton.setPadding(dp(18), dp(15), dp(18), dp(15));
-        GradientDrawable buttonBg = new GradientDrawable();
-        buttonBg.setColor(Color.rgb(12,104,72));
-        buttonBg.setCornerRadius(dp(14));
-        servicesButton.setBackground(buttonBg);
-        LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(-1,-2);
-        bp.topMargin = dp(22);
-        bp.bottomMargin = dp(14);
-        page.addView(servicesButton, bp);
-        servicesButton.setOnClickListener(v -> showInstitutionServices());
-
         addInfoHeading(page, "প্রতিষ্ঠানের ঠিকানা ও যোগাযোগ");
         addInfoText(page, "নাজিরপুরী রুকইয়া ও দাওয়াখানা\nফাইভ স্টার সুপার মার্কেট, ৫ম তলা, সিপাহীপাড়া চৌরাস্তা, রামপাল, মুন্সীগঞ্জ সদর, মুন্সীগঞ্জ।\nচেম্বার: প্রতিদিন সকাল ৯টা থেকে রাত ১১টা পর্যন্ত।\nWhatsApp: 01614-776592\nসিরিয়াল: 01814-778862\nকামাল শেখ: 01410-776592");
+
+        // Introductory video is deliberately the final section on this page.
+        addInfoHeading(page, "প্রতিষ্ঠানের পরিচিতিমূলক ভিডিও");
+        addInfoText(page, "প্রথমবার ভিডিওতে চাপ দিলে ইন্টারনেটের মাধ্যমে ভিডিওটি ডাউনলোড হবে। ডাউনলোড শেষ হলে চালানো যাবে এবং পরবর্তীতে ইন্টারনেট ছাড়াই দেখা যাবে।");
+        VideoView introVideo = new VideoView(this);
+        int videoWidthDp = (int) (getResources().getDisplayMetrics().widthPixels / getResources().getDisplayMetrics().density) - dp(36);
+        LinearLayout.LayoutParams videoParams = new LinearLayout.LayoutParams(-1, Math.max(dp(180), videoWidthDp * 9 / 16));
+        videoParams.topMargin = dp(10);
+        page.addView(introVideo, videoParams);
+        TextView videoStatus = text("", 13, Color.rgb(65,78,68), false);
+        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(-1,-2);
+        statusParams.topMargin = dp(8);
+        page.addView(videoStatus, statusParams);
+        ProgressBar videoProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        videoProgress.setMax(100);
+        videoProgress.setVisibility(View.GONE);
+        page.addView(videoProgress, new LinearLayout.LayoutParams(-1, dp(6)));
+        TextView videoAction = text("ভিডিও ডাউনলোড / চালান", 16, Color.WHITE, true);
+        videoAction.setGravity(Gravity.CENTER);
+        videoAction.setPadding(dp(14), dp(14), dp(14), dp(14));
+        GradientDrawable videoButtonBg = new GradientDrawable();
+        videoButtonBg.setColor(Color.rgb(12,104,72));
+        videoButtonBg.setCornerRadius(dp(14));
+        videoAction.setBackground(videoButtonBg);
+        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1,-2);
+        actionParams.topMargin = dp(12);
+        page.addView(videoAction, actionParams);
+        File savedIntroVideo = new File(getFilesDir(), "institution_intro.mp4");
+        if (savedIntroVideo.exists() && savedIntroVideo.length() > 0) {
+            videoStatus.setText("ভিডিওটি এই ডিভাইসে সংরক্ষিত আছে। অফলাইনেও চালানো যাবে।");
+            videoAction.setText("▶ ভিডিও চালান");
+        }
+        videoAction.setOnClickListener(v -> {
+            if (savedIntroVideo.exists() && savedIntroVideo.length() > 0) {
+                playInstitutionVideo(introVideo, savedIntroVideo);
+            } else {
+                downloadInstitutionVideo(savedIntroVideo, videoProgress, videoStatus, videoAction, introVideo);
+            }
+        });
+
         scroll.addView(page);
         root.addView(scroll, new LinearLayout.LayoutParams(-1,0,1));
         setContentView(root);
@@ -1450,43 +1477,6 @@ public class MainActivity extends Activity {
         page.addView(backButton, rb);
         backButton.setOnClickListener(v -> showInstitutionAbout());
 
-        // Introductory video is deliberately the final section on this page.
-        addInfoHeading(page, "প্রতিষ্ঠানের পরিচিতিমূলক ভিডিও");
-        addInfoText(page, "প্রথমবার ভিডিওতে চাপ দিলে ইন্টারনেটের মাধ্যমে ভিডিওটি ডাউনলোড হবে। ডাউনলোড শেষ হলে চালানো যাবে এবং পরবর্তীতে ইন্টারনেট ছাড়াই দেখা যাবে।");
-        VideoView introVideo = new VideoView(this);
-        LinearLayout.LayoutParams videoParams = new LinearLayout.LayoutParams(-1, dp(220));
-        videoParams.topMargin = dp(10);
-        page.addView(introVideo, videoParams);
-        TextView videoStatus = text("", 13, Color.rgb(65,78,68), false);
-        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(-1,-2);
-        statusParams.topMargin = dp(8);
-        page.addView(videoStatus, statusParams);
-        ProgressBar videoProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        videoProgress.setMax(100);
-        videoProgress.setVisibility(View.GONE);
-        page.addView(videoProgress, new LinearLayout.LayoutParams(-1, dp(6)));
-        TextView videoAction = text("ভিডিও ডাউনলোড / চালান", 16, Color.WHITE, true);
-        videoAction.setGravity(Gravity.CENTER);
-        videoAction.setPadding(dp(14), dp(14), dp(14), dp(14));
-        GradientDrawable videoButtonBg = new GradientDrawable();
-        videoButtonBg.setColor(Color.rgb(12,104,72));
-        videoButtonBg.setCornerRadius(dp(14));
-        videoAction.setBackground(videoButtonBg);
-        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(-1,-2);
-        actionParams.topMargin = dp(12);
-        page.addView(videoAction, actionParams);
-        File savedIntroVideo = new File(getFilesDir(), "institution_intro.mp4");
-        if (savedIntroVideo.exists() && savedIntroVideo.length() > 0) {
-            videoStatus.setText("ভিডিওটি এই ডিভাইসে সংরক্ষিত আছে। অফলাইনেও চালানো যাবে।");
-            videoAction.setText("▶ ভিডিও চালান");
-        }
-        videoAction.setOnClickListener(v -> {
-            if (savedIntroVideo.exists() && savedIntroVideo.length() > 0) {
-                playInstitutionVideo(introVideo, savedIntroVideo);
-            } else {
-                downloadInstitutionVideo(savedIntroVideo, videoProgress, videoStatus, videoAction, introVideo);
-            }
-        });
         scroll.addView(page);
         root.addView(scroll, new LinearLayout.LayoutParams(-1,0,1));
         setContentView(root);
