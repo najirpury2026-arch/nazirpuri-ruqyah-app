@@ -927,7 +927,7 @@ public class MainActivity extends Activity {
                     // Google Drive may report a compressed/partial response length.
             // Trust Content-Length only for identity encoding; prefer the full
             // object size from Content-Range when Drive provides it.
-            long total = conn.getContentLengthLong();
+            long total = connection.getContentLengthLong();
             String encoding = connection.getHeaderField("Content-Encoding");
             if (encoding != null && !encoding.trim().isEmpty() &&
                     !"identity".equalsIgnoreCase(encoding.trim())) total = -1L;
@@ -1520,14 +1520,14 @@ public class MainActivity extends Activity {
                 if (code < 200 || code >= 300 || (type != null && (type.contains("text/html") || type.contains("application/json")))) {
                     throw new java.io.IOException("Google Drive ভিডিও ফাইল সরাসরি দেয়নি (HTTP " + code + ")। লিংকের শেয়ারিং অনুমতি পরীক্ষা করুন।");
                 }
-                long total = connection.getContentLengthLong();
+                long total = conn.getContentLengthLong();
                 mainHandler.post(() -> {
                     progress.setIndeterminate(total <= 0);
                     if (total > 0) progress.setMax(100);
                 });
                 long downloaded = 0;
                 byte[] buffer = new byte[64 * 1024];
-                try (InputStream in = connection.getInputStream();
+                try (InputStream in = conn.getInputStream();
                      FileOutputStream out = new FileOutputStream(temp)) {
                     int count;
                     while ((count = in.read(buffer)) != -1) {
@@ -1575,7 +1575,7 @@ public class MainActivity extends Activity {
         }, "institution-video-download").start();
     }
 
-    private void playInstitutionVideo(VideoView player, File videoFile) {
+     playInstitutionVideo(VideoView player, File videoFile) {
         try {
             MediaController controls = new MediaController(this);
             controls.setAnchorView(player);
