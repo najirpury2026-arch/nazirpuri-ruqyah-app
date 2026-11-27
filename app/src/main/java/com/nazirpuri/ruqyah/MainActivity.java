@@ -1592,9 +1592,9 @@ public class MainActivity extends Activity {
             private boolean openInside(WebView view, String url) {
                 if (url == null) return true;
                 if (url.startsWith("file:///android_asset/")) {
-                    // Let WebView's native local-asset navigation handle links
-                    // between bundled HTML pages (e.g. Fatawa > Arabic books).
-                    return false;
+                    // Explicitly navigate bundled HTML pages in the same WebView.
+                    view.loadUrl(url);
+                    return true;
                 }
                 if (url.startsWith("https://") || url.startsWith("http://")) {
                     view.loadUrl(url);
