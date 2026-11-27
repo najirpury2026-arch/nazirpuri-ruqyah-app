@@ -1591,8 +1591,12 @@ public class MainActivity extends Activity {
             // Route both modern and legacy navigation callbacks into this WebView.
             private boolean openInside(WebView view, String url) {
                 if (url == null) return true;
-                if (url.startsWith("https://") || url.startsWith("http://")
-                        || url.startsWith("file:///android_asset/")) {
+                if (url.startsWith("file:///android_asset/")) {
+                    // Let WebView's native local-asset navigation handle links
+                    // between bundled HTML pages (e.g. Fatawa > Arabic books).
+                    return false;
+                }
+                if (url.startsWith("https://") || url.startsWith("http://")) {
                     view.loadUrl(url);
                     return true;
                 }
