@@ -744,7 +744,7 @@ public class MainActivity extends Activity {
         tile.setOnClickListener(v -> {
             tile.setAlpha(0.82f);
             tile.postDelayed(() -> tile.setAlpha(1f),90);
-            showWeb("file:///android_asset/tafsir.html");
+            showWeb("file:///android_asset/fatawa.html");
         });
         tile.setClickable(true);
         tile.setFocusable(true);
