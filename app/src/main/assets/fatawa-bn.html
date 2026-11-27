@@ -6,7 +6,7 @@ function showProgress(d,t){
  box.classList.add("show");const pct=t>0?Math.min(100,Math.floor(d*100/t)):0;fill.style.width=pct+"%";
  meta.textContent=t>0?"ডাউনলোড হয়েছে: "+mb(d)+" / মোট: "+mb(t)+" • বাকি: "+mb(Math.max(0,t-d))+" • "+pct+"%":"ডাউনলোড হয়েছে: "+mb(d)+" • মোট সাইজ নির্ধারণ হচ্ছে…"
 }
-function openAngtirBook(e){e.preventDefault();if(window.AndroidKitab&&AndroidKitab.downloadBook){setBookStatus("কিতাব ডাউনলোড হচ্ছে…");showProgress(0,0);AndroidKitab.downloadBook(bookName,"https://drive.google.com/file/d/1xmKjcWTDCaEUZcv-t4uUPGQD7Z_20bGt/view?usp=drivesdk")}else{window.location.href=e.currentTarget.href}}
+function openAngtirBook(e){e.preventDefault();if(window.AndroidKitab&&AndroidKitab.downloadBook){try{if(AndroidKitab.isBookDownloaded(bookName)){setBookStatus("✓ ডাউনলোড করা আছে • অফলাইনে পড়ুন");document.getElementById("dlBox").classList.add("show");document.getElementById("dlFill").style.width="100%";document.getElementById("dlMeta").textContent="কিতাবটি ডিভাইসে সংরক্ষিত আছে • অফলাইনে খুলছে…";AndroidKitab.openOfflineBook(bookName);return}}catch(err){}setBookStatus("কিতাব ডাউনলোড হচ্ছে…");showProgress(0,0);AndroidKitab.downloadBook(bookName,"https://drive.google.com/file/d/1xmKjcWTDCaEUZcv-t4uUPGQD7Z_20bGt/view?usp=drivesdk")}else{window.location.href=e.currentTarget.href}}
 window.onBookDownload=function(n,ok,msg){if(n===bookName){setBookStatus(ok?"✓ ডাউনলোড সম্পূর্ণ • অফলাইনে পড়ুন":"ডাউনলোডে সমস্যা • আবার ট্যাপ করুন");if(ok){showProgress(1,1);document.getElementById("dlMeta").textContent="ডাউনলোড সম্পূর্ণ • অফলাইনে পড়ার জন্য সংরক্ষিত"}}};
 window.onBookQueued=function(n){if(n===bookName)setBookStatus("ডাউনলোডের অপেক্ষায়…")};
 window.onBookStarted=function(n){if(n===bookName)setBookStatus("ডাউনলোড চলছে…")};
